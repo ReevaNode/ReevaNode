@@ -1,0 +1,521 @@
+body { 
+    font-family: Inter, sans-serif; 
+    background: #f9fafb; 
+}
+:where([class^="ri-"])::before { 
+    content: "\f3c2"; 
+}
+/* Reset y estilos base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #fafafa;
+    color: #0f172a;
+    line-height: 1.5;
+}
+
+/* Variables de colores para estados */
+:root {
+    /* En Atencion (verde oscuro) */
+    --box-atencion: #15803d; 
+    --box-atencion-bg: #d1fadf; 
+    --box-atencion-border: #0f5e2d;
+
+    /* Reservado (azul) */
+    --box-reservado: #1d4ed8;
+    --box-reservado-bg: #dbe7ff;
+    --box-reservado-border: #153a9f;
+
+    /* Libre (rojo) */
+    --box-libre: #b91c1c;
+    --box-libre-bg: #fde2e2;
+    --box-libre-border: #861616;
+
+    /* Finalizado (morado) */
+    --box-finalizado: #6d28d9;
+    --box-finalizado-bg: #ece1ff;
+    --box-finalizado-border: #5320a8;
+
+    /* Inhabilitado (gris) */
+    --box-inhabilitado: #475569;
+    --box-inhabilitado-bg: #f1f5f9;
+    --box-inhabilitado-border: #334155;
+}
+
+/* Layout principal */
+.dashboard {
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 1.875rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.last-update {
+    color: #64748b;
+}
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: #64748b;
+}
+
+.refresh-btn:hover {
+    background: #f8fafc;
+}
+
+/* Status Summary */
+.status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+}
+
+.status-badge.total {
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+/* Badges con mejores contrastes (fondo translucido + borde) */
+.status-badge.libre {
+    background: rgba(185, 28, 28, 0.18);
+    color: var(--box-libre);
+    border-color: rgba(185, 28, 28, 0.5);
+}
+.status-badge.atencion {
+    background: rgba(21, 128, 61, 0.18);
+    color: var(--box-atencion);
+    border-color: rgba(21, 128, 61, 0.5);
+}
+.status-badge.reservado {
+    background: rgba(29, 78, 216, 0.18);
+    color: var(--box-reservado);
+    border-color: rgba(29, 78, 216, 0.5);
+}
+.status-badge.finalizado {
+    background: rgba(109, 40, 217, 0.20);
+    color: var(--box-finalizado);
+    border-color: rgba(109, 40, 217, 0.55);
+}
+.status-badge.inhabilitado {
+    background: rgba(71, 85, 105, 0.18);
+    color: var(--box-inhabilitado);
+    border-color: rgba(71, 85, 105, 0.5);
+}
+
+.status-badge.active {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+}
+
+.status-badge:hover {
+    opacity: 0.8;
+}
+
+/* Grid de boxes */
+.boxes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Tarjeta de box */
+.box-card {
+    background: white;
+    border: 2px solid;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: all 0.2s;
+    animation: fadeIn 0.3s ease-in;
+    cursor: pointer;
+    position: relative;
+}
+
+.box-card:hover {
+    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.box-card.libre { border-color: var(--box-libre-border); background: var(--box-libre-bg); }
+.box-card.en-atencion { border-color: var(--box-atencion-border); background: var(--box-atencion-bg); }
+.box-card.paciente-esperando, .box-card.paciente-ausente { border-color: var(--box-reservado-border); background: var(--box-reservado-bg); }
+.box-card.finalizado { border-color: var(--box-finalizado-border); background: var(--box-finalizado-bg); }
+.box-card.inhabilitado { border-color: var(--box-inhabilitado-border); background: var(--box-inhabilitado-bg); }
+
+/* Header de la tarjeta */
+.box-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.box-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Ícono de estado circular */
+.status-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.status-icon.libre {
+    background: var(--box-libre);
+}
+
+.status-icon.en-atencion {
+    background: var(--box-atencion);
+}
+
+.status-icon.paciente-esperando,
+.status-icon.paciente-ausente {
+    background: var(--box-reservado);
+}
+
+.status-icon.finalizado {
+    background: var(--box-finalizado);
+}
+
+.status-icon.inhabilitado {
+    background: var(--box-inhabilitado);
+}
+
+/* Título y subtítulo del box */
+.box-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+}
+
+.box-subtitle {
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Porcentaje de ocupación */
+.ocupacion-info {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.ocupacion-percentage {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1f2937;
+    margin-bottom: 0.125rem;
+}
+
+.ocupacion-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Estado general badge */
+.box-status-label {
+    padding: 0.25rem 0.75rem;
+    border: 1px solid currentColor;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+/* Labels de estado */
+.box-status-label.libre { background: rgba(185,28,28,0.15); color: var(--box-libre); border-color: rgba(185,28,28,0.45); }
+.box-status-label.en-atencion { background: rgba(21,128,61,0.15); color: var(--box-atencion); border-color: rgba(21,128,61,0.45); }
+.box-status-label.reservado { background: rgba(29,78,216,0.15); color: var(--box-reservado); border-color: rgba(29,78,216,0.45); }
+.box-status-label.finalizado { background: rgba(109,40,217,0.18); color: var(--box-finalizado); border-color: rgba(109,40,217,0.50); }
+.box-status-label.inhabilitado { background: rgba(71,85,105,0.15); color: var(--box-inhabilitado); border-color: rgba(71,85,105,0.45); }
+
+/* Información del médico */
+.medico-section {
+    margin: 1rem 0;
+}
+
+.medico-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.medico-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #6b7280;
+}
+
+.medico-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.medico-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Estado del paciente */
+.patient-section {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+}
+
+.box-card.en-atencion .patient-section{
+    display: none;
+}
+
+.patient-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.patient-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #6b7280;
+}
+
+.patient-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.patient-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Barra de progreso */
+.progress-section {
+    margin-top: 1rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.progress-percentage {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 0.5rem;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 0.25rem;
+}
+
+.progress-fill.libre {
+    background: var(--box-libre);
+}
+
+.progress-fill.en-atencion {
+    background: var(--box-atencion);
+}
+
+.progress-fill.reservado {
+    background: var(--box-reservado);
+}
+
+.progress-fill.finalizado {
+    background: var(--box-finalizado);
+}
+
+.progress-fill.inhabilitado {
+    background: var(--box-inhabilitado);
+}
+.especialidad-section {
+    margin-bottom: 2rem;
+}
+
+.especialidad-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1e293b;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Mensaje sin resultados */
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .boxes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .box-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+/* Navigation styles */
+.nav-link {
+    color: #64748b;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+/* Filter styles */
+.filter-section {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Botones filtros (alto contraste translúcido) */
+.status-filter-btn {display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .9rem;font-size:.72rem;font-weight:500;letter-spacing:.25px;border:1px solid transparent;border-radius:.55rem;cursor:pointer;user-select:none;backdrop-filter:saturate(1.4) blur(2px);-webkit-backdrop-filter:saturate(1.4) blur(2px);transition:.18s ease-in-out;line-height:1.1;}
+.status-filter-btn:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px;}
+.status-filter-btn.status-active{box-shadow:0 0 0 2px #0f172a inset;}
+.status-filter-total{background:rgba(100,116,139,.22);color:#334155;border-color:rgba(100,116,139,.55);}
+.status-filter-libre{background:rgba(185,28,28,.22);color:#b91c1c;border-color:rgba(185,28,28,.55);}
+.status-filter-reservado{background:rgba(29,78,216,.22);color:#1d4ed8;border-color:rgba(29,78,216,.55);}
+.status-filter-atencion{background:rgba(21,128,61,.22);color:#15803d;border-color:rgba(21,128,61,.55);}
+.status-filter-finalizado{background:rgba(109,40,217,.25);color:#6d28d9;border-color:rgba(109,40,217,.60);}
+.status-filter-inhabilitado{background:rgba(71,85,105,.20);color:#475569;border-color:rgba(71,85,105,.55);}
+.status-filter-btn:hover{filter:brightness(1.05);}
+.status-filter-btn:active{transform:translateY(1px);}

@@ -1,0 +1,222 @@
+service: aws-cognito-jwt-login
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  role: arn:aws:iam::905418353372:role/LabRole
+  environment:
+    USER_POOL_ID: { Ref: CognitoUserPool }
+    USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }
+    USER_TABLE: { Ref: UserTable }
+  logs:
+    httpApi: true
+  httpApi:
+    authorizers:
+      cognitoJwt:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl:
+          !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}"
+        audience:
+          - !Ref CognitoUserPoolClient
+
+functions:
+  # === AUTENTICACIÓN ===
+  login:
+    handler: src/handlers/login.login
+    events:
+      - httpApi:
+          method: POST
+          path: /auth/login
+
+  refresh:
+    handler: src/handlers/refresh.refresh
+    events:
+      - httpApi:
+          method: POST
+          path: /auth/refresh
+
+  # === INFORMACIÓN DE USUARIO ===
+  me:
+    handler: src/handlers/me.me
+    events:
+      - httpApi:
+          method: GET
+          path: /me
+          authorizer:
+            name: cognitoJwt
+  
+  getAuthInfo:
+    handler: src/handlers/permission.getAuthInfo
+    events:
+      - httpApi:
+          method: GET
+          path: /auth/info
+          authorizer:
+            name: cognitoJwt
+
+  # === GESTIÓN DE PERMISOS Y ROLES (PÚBLICO) ===
+  getPermissions:
+    handler: src/handlers/permission.getPermissions
+    events:
+      - httpApi:
+          method: GET
+          path: /auth/permissions
+
+  getRoles:
+    handler: src/handlers/permission.getRoles
+    events:
+      - httpApi:
+          method: GET
+          path: /auth/roles
+
+  # === ADMINISTRACIÓN (REQUIERE AUTENTICACIÓN)(duda) ===
+  assignRole:
+    handler: src/handlers/permission.assignRole
+    events:
+      - httpApi:
+          method: POST
+          path: /admin/assign-role
+          authorizer:
+            name: cognitoJwt
+
+  removeRole:
+    handler: src/handlers/permission.removeRole
+    events:
+      - httpApi:
+          method: POST
+          path: /admin/remove-role
+          authorizer:
+            name: cognitoJwt
+
+  listUsers:
+    handler: src/handlers/permission.listUsers
+    events:
+      - httpApi:
+          method: GET
+          path: /admin/users
+          authorizer:
+            name: cognitoJwt
+
+plugins:
+  - serverless-offline
+
+package:
+  individually: true
+  patterns:
+    - '!**/*.md'
+    - '!**/*.test.*'
+    - '!node_modules/**'
+    - '!.git/**'
+
+resources:
+  Resources:
+    # === COGNITO USER POOL ===
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-${sls:stage}-pool
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: false
+            RequireUppercase: true
+        # Configuración de mensajes personalizados (opcional)
+        VerificationMessageTemplate:
+          DefaultEmailOption: CONFIRM_WITH_CODE
+          EmailMessage: 'Tu código de verificación es {####}'
+          EmailSubject: 'Código de verificación'
+
+    # === COGNITO USER POOL CLIENT ===
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-${sls:stage}-app
+        GenerateSecret: false
+        UserPoolId: { Ref: CognitoUserPool }
+        PreventUserExistenceErrors: ENABLED
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_SRP_AUTH  # Para autenticación más segura
+        # Configuración de tokens
+        AccessTokenValidity: 5    
+        IdTokenValidity: 5          
+        RefreshTokenValidity: 30  
+        TokenValidityUnits:
+          AccessToken: minutes
+          IdToken: minutes
+          RefreshToken: days
+        # Configuración adicional de seguridad
+        ReadAttributes:
+          - email
+          - email_verified
+        WriteAttributes:
+          - email
+
+    # === DYNAMODB TABLE PARA USUARIOS ===
+    UserTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${sls:stage}-users
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        # Índice global secundario para buscar por email
+        GlobalSecondaryIndexes:
+          - IndexName: EmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        # Configuración de backup y punto en tiempo
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
+  # === OUTPUTS ===
+  Outputs:
+    UserPoolId:
+      Description: 'Cognito User Pool ID'
+      Value: { Ref: CognitoUserPool }
+      Export:
+        Name: ${self:service}-${sls:stage}-UserPoolId
+
+    UserPoolClientId:
+      Description: 'Cognito User Pool Client ID'
+      Value: { Ref: CognitoUserPoolClient }
+      Export:
+        Name: ${self:service}-${sls:stage}-UserPoolClientId
+
+    UserTableName:
+      Description: 'DynamoDB User Table Name'
+      Value: { Ref: UserTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-UserTableName
+
+    ApiEndpoint:
+      Description: 'API Gateway Endpoint URL'
+      Value:
+        Fn::Sub: 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+      Export:
+        Name: ${self:service}-${sls:stage}-ApiEndpoint

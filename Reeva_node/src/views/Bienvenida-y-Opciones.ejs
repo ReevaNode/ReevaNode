@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reeva - Inicio</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#9b4f88',secondary:'#6b7280'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <link rel="stylesheet" href="/css/Bienvenida-y-Opciones.css" /> 
+</head>
+<body>
+    <header class="w-full bg-white py-4 px-6 shadow-sm">
+  <div class="container mx-auto flex items-center justify-between">
+    <!-- Logo a la izquierda -->
+    <div class="flex items-center gap-4 flex-none">
+      <img
+        src="/images/icono.png"
+        alt="Logo Hospital Padre Hurtado"
+        class="w-32 h-auto object-contain"
+      />
+    </div>
+    
+    <!-- Desktop Navigation -->
+    <div class="hidden md:flex flex-1 justify-center gap-8">
+      <a href="/inicio" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+        <i class="ri-home-4-line ri-lg"></i>
+        <span class="font-medium">Inicio</span>
+      </a>
+      <a href="/dashboard" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+        <i class="ri-line-chart-line ri-lg"></i>
+        <span class="font-medium">Dashboard</span>
+      </a>
+      <a href="/box-matriz" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+        <i class="ri-grid-line ri-lg"></i>
+        <span class="font-medium">Matriz Box</span>
+      </a>
+      <a href="/agenda"  class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+        <i class="ri-calendar-2-line ri-lg"></i>
+        <span class="font-medium">Agenda</span>
+      </a>
+    </div>
+
+    
+
+    <!-- Desktop Profile -->
+    <div class="hidden md:flex items-center gap-8 flex-none relative">
+      <a href="" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
+        <i class="ri-user-line ri-lg"></i>
+        <span class="font-medium">Perfil</span>
+      </a>
+      <!-- Menú desplegable, aparece al hacer click en Perfil -->
+      <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 z-50 hidden">
+        <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
+          <i class="ri-user-line ri-lg"></i>
+          <span class="font-medium">Mi Espacio</span>
+        </a>
+        <div class="border-t my-2"></div>
+        <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+          <i class="ri-logout-box-r-line ri-lg"></i>
+          <span class="font-medium">Cerrar Sesión</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Hamburger button para mobile -->
+    <div class="md:hidden">
+      <button id="mobileMenuBtn" class="text-gray-700 hover:text-primary p-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+
+<!-- Mobile Menu Overlay -->
+<div id="mobileMenuOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"></div>
+
+<!-- Mobile Menu Sidebar -->
+<div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50 md:hidden">
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-xl font-semibold text-gray-800">Menú</h2>
+    </div>
+    
+    <nav class="space-y-4">
+      <a href="/inicio" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-home-4-line ri-lg"></i>
+        <span class="font-medium">Inicio</span>
+      </a>
+      
+      <a href="/dashboard" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-line-chart-line ri-lg"></i>
+        <span class="font-medium">Dashboard</span>
+      </a>
+      
+      <a href="/box-matriz" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-grid-line ri-lg"></i>
+        <span class="font-medium">Matriz Box</span>
+      </a>
+      
+      <a href="/agenda" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-calendar-2-line ri-lg"></i>
+        <span class="font-medium">Agenda</span>
+      </a>
+      
+      <hr class="my-4 border-gray-200">
+      
+      <a href="/bienvenida" class="flex items-center gap-3 text-primary font-semibold py-2">
+        <i class="ri-user-line ri-lg"></i>
+        <span class="font-medium">Mi Espacio</span>
+      </a>
+      
+      <a href="/logout"  class="flex items-center gap-3 text-red-600 hover:text-red-700 transition-colors py-2">
+        <i class="ri-logout-box-r-line ri-lg"></i>
+        <span class="font-medium">Cerrar Sesión</span>
+      </a>
+    </nav>
+  </div>
+</div>
+
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden">
+        <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10"></div>
+        <div class="container mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row items-center relative z-20">
+            <div class="w-full md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">Bienvenido a BoxCare</h1>
+                <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0">
+                    Tu sistema de gestión de boxes de atención médica.
+                </p>
+            </div>
+        </div>
+        <img src="/images/hospital.jpeg"  alt="Hospital Padre Hurtado" class="absolute top-0 right-0 h-full w-full md:w-1/2 object-cover opacity-30 md:opacity-100">
+    </section>
+
+    <!-- Welcome Message -->
+    <section class="bg-white py-6 md:py-8">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-col items-center text-center mb-6 md:mb-8">
+      <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Bienvenido/a</h2>
+      <p class="text-gray-600 text-base md:text-lg mb-4 md:mb-6">¿Qué desea hacer hoy?</p>
+    </div>
+    <!-- Primeros Pasos -->
+    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-left">Primeros Pasos</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <!-- Tarjeta Dashboard -->
+      <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
+        <div class="flex items-center mb-3 md:mb-4">
+          <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+            <i class="ri-dashboard-line ri-lg"></i>
+          </div>
+          <h3 class="text-base md:text-lg font-semibold text-primary ml-2">Dashboard</h3>
+        </div>
+        <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+          <p class="text-gray-600 text-sm md:text-base mb-2">Accede a estadísticas clave del hospital, métricas de rendimiento, indicadores de calidad y reportes en tiempo real.</p>
+          <ul class="space-y-1 text-primary text-sm md:text-base">
+            <li>• Estadísticas de ocupación</li>
+            <li>• Métricas de atención</li>
+            <li>• Reportes mensuales</li>
+          </ul>
+        </div>
+        <a href="/dashboard" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
+          Ir a Dashboard
+        </a>
+      </div>
+
+
+      <!-- Tarjeta Matriz Box -->
+      <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
+        <div class="flex items-center mb-3 md:mb-4">
+          <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+            <i class="ri-grid-line ri-lg"></i>
+          </div>
+          <h3 class="text-base md:text-lg font-semibold text-primary ml-2">Matriz Box</h3>
+        </div>
+        <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+          <p class="text-gray-600 text-sm md:text-base mb-2">Visualiza el estado de cada box médico, porcentaje de ocupación y disponibilidad en tiempo real.</p>
+          <ul class="space-y-1 text-primary text-sm md:text-base">
+            <li>• Estado de cada box</li>
+            <li>• % de ocupación</li>
+            <li>• Disponibilidad inmediata</li>
+          </ul>
+        </div>
+        <a href="/box-matriz" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
+          Ver Matriz Box
+        </a>
+      </div>
+      <!-- Tarjeta Agenda -->
+      <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
+        <div class="flex items-center mb-3 md:mb-4">
+          <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+            <i class="ri-calendar-2-line ri-lg"></i>
+          </div>
+          <h3 class="text-base md:text-lg font-semibold text-primary ml-2">Agenda</h3>
+        </div>
+        <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+          <p class="text-gray-600 text-sm md:text-base mb-2">Consulta el calendario de cada box por día, semana o mes. Programa y gestiona citas médicas.</p>
+          <ul class="space-y-1 text-primary text-sm md:text-base">
+            <li>• Calendario por box</li>
+            <li>• Vista día/semana/mes</li>
+            <li>• Gestión de citas</li>
+          </ul>
+        </div>
+        <a href="/agenda" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
+          Ver Agenda
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <!-- Relevant Information Section -->
+    <section class="bg-gray-50 py-8 md:py-12">
+        <div class="container mx-auto px-4">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8">Información Relevante</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-2">
+                <!-- Next Appointment -->
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                    <div class="flex items-center mb-3 md:mb-4">
+                        <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
+                            <i class="ri-calendar-event-line ri-lg"></i>
+                        </div>
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2">Próxima Cita</h3>
+                    </div>
+                    <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600 text-sm md:text-base">Fecha:</span>
+                            <span class="font-medium text-sm md:text-base"><%= next_appointment_date %></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600 text-sm md:text-base">Hora:</span>
+                            <span class="font-medium text-sm md:text-base"><%= next_appointment_time %></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 text-sm md:text-base">Tipo Consulta:</span>
+                            <span class="font-medium text-sm md:text-base"><%= tipo_consulta %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                    <div class="flex items-center mb-3 md:mb-4">
+                        <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
+                            <i class="ri-notification-3-line ri-lg"></i>
+                        </div>
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2">Notificaciones</h3>
+                    </div>
+                    <ul class="space-y-3 md:space-y-4">
+                        <li class="flex items-start">
+                            <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
+                            <div>
+                                <p class="text-gray-800 text-sm md:text-base">Reunión de personal médico - 19 Agosto, 9:00</p>
+                                <p class="text-xs md:text-sm text-gray-500">Sala de conferencias principal</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
+                            <div>
+                                <p class="text-gray-800 text-sm md:text-base">Actualización de protocolos COVID-19</p>
+                                <p class="text-xs md:text-sm text-gray-500">Nuevas directrices disponibles</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2"></div>
+                            <div>
+                                <p class="text-gray-800">Mantenimiento sistema - 18 Septiembre</p>
+                                <p class="text-sm text-gray-500">De 22:00 a 23:30</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <%- include('footer') %>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Functionality can be added here if needed
+        });
+    </script>
+    
+    <!-- JavaScript para sidebar móvil -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      
+      function toggleMobileMenu() {
+        if (mobileMenu.classList.contains('translate-x-full')) {
+          // Abrir
+          mobileMenuOverlay.classList.remove('hidden');
+          mobileMenu.classList.remove('translate-x-full');
+          mobileMenu.classList.add('translate-x-0');
+        } else {
+          // Cerrar
+          mobileMenu.classList.remove('translate-x-0');
+          mobileMenu.classList.add('translate-x-full');
+          setTimeout(() => {
+            mobileMenuOverlay.classList.add('hidden');
+          }, 300);
+        }
+      }
+      
+      if (mobileMenuBtn && mobileMenu && mobileMenuOverlay) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
+      }
+    });
+    </script>
+    
+    <script>
+    // Mostrar menú al hacer click en Perfil (solo desktop)
+    document.addEventListener('DOMContentLoaded', function() {
+        const perfilBtn = document.getElementById('perfil-btn');
+        const perfilMenu = document.getElementById('perfil-menu');
+        
+        if (perfilBtn && perfilMenu) {
+            perfilBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                perfilMenu.classList.toggle('hidden');
+            });
+            
+            // Ocultar menú al hacer click fuera
+            document.addEventListener('click', function(e) {
+                if (!perfilBtn.contains(e.target) && !perfilMenu.contains(e.target)) {
+                    perfilMenu.classList.add('hidden');
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>
