@@ -9,7 +9,7 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res
   try {
     // Traer la última agenda según horainicio
     const [rows] = await db.query(
-      "SELECT horainicio, horatermino, idtipoconsulta FROM agenda ORDER BY horainicio DESC LIMIT 1"
+      "SELECT horainicio, horatermino, idtipoconsulta FROM Agenda ORDER BY horainicio DESC LIMIT 1"
     );
 
     let next_appointment_date = null;
