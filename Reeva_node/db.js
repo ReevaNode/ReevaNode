@@ -4,8 +4,8 @@ import mysql from "mysql2/promise";
 const db = mysql.createPool({
   host: "localhost",      // cambiar por tu host
   user: "root",          // cambiar por tu usuario
-  password: "2108",     // cambiar por tu contraseña
-  database: "reeva_db", // cambiar por el nombre de tu base de datos
+  password: "123456",     // cambiar por tu contraseña
+  database: "agendareeva", // cambiar por el nombre de tu base de datos
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
