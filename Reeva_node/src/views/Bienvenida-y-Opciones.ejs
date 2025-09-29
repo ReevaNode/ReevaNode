@@ -47,7 +47,18 @@
     
 
     <!-- Desktop Profile -->
-    <div class="hidden md:flex items-center gap-8 flex-none relative">
+    <div class="hidden md:flex items-center gap-6 flex-none relative">
+      <div id="language-wrapper" class="relative">
+        <button id="language-toggle" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-primary transition-colors">
+          <span class="uppercase">ES</span>
+          <i class="ri-arrow-down-s-line text-base"></i>
+        </button>
+        <div id="language-menu" class="hidden absolute right-0 mt-2 w-24 bg-white border border-gray-200 rounded shadow-lg py-1 z-50">
+          <button data-language-option="es" class="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-primary/10 hover:text-primary">ES</button>
+          <button data-language-option="en" class="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-primary/10 hover:text-primary">EN</button>
+        </div>
+      </div>
+
       <a href="" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
         <i class="ri-user-line ri-lg"></i>
         <span class="font-medium">Perfil</span>
@@ -315,6 +326,51 @@
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
       }
+    });
+    </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const wrapper = document.getElementById('language-wrapper');
+      const toggle = document.getElementById('language-toggle');
+      const menu = document.getElementById('language-menu');
+      const options = document.querySelectorAll('[data-language-option]');
+      const label = toggle ? toggle.querySelector('span') : null;
+      const STORAGE_KEY = 'reeva-language';
+
+      if (!wrapper || !toggle || !menu || !label) {
+        return;
+      }
+
+      const setLanguage = (lang) => {
+        const value = (lang || 'es').toLowerCase();
+        label.textContent = value.toUpperCase();
+        toggle.dataset.language = value;
+        document.documentElement.lang = value;
+        localStorage.setItem(STORAGE_KEY, value);
+        menu.classList.add('hidden');
+      };
+
+      const saved = localStorage.getItem(STORAGE_KEY);
+      setLanguage(saved || 'es');
+
+      toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        menu.classList.toggle('hidden');
+      });
+
+      options.forEach((option) => {
+        option.addEventListener('click', () => {
+          const { languageOption } = option.dataset;
+          setLanguage(languageOption);
+        });
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!wrapper.contains(event.target)) {
+          menu.classList.add('hidden');
+        }
+      });
     });
     </script>
     
