@@ -1,0 +1,193 @@
+service: reeva-dynamo
+
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  role: arn:aws:iam::590184053614:role/LabRole
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:BatchWriteItem
+            - dynamodb:DeleteItem
+            - dynamodb:DescribeTable
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/agenda
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/agenda/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/box
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/box/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/estadobox
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/estadobox/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/items
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/items/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personalizacion
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personalizacion/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/registroagenda
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/registroagenda/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipobox
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipobox/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoconsulta
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoconsulta/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoestado
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoestado/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoitem
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoitem/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipousuario
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipousuario/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tiprofesional
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tiprofesional/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/usuario
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/usuario/index/*
+  environment:
+    AGENDA_TABLE: agenda
+    BOX_TABLE: box
+    ESTADO_BOX_TABLE: estadobox
+    ITEMS_TABLE: items
+    PERSONALIZACION_TABLE: personalizacion
+    REGISTRO_AGENDA_TABLE: registroagenda
+    TIPO_BOX_TABLE: tipobox
+    TIPO_CONSULTA_TABLE: tipoconsulta
+    TIPO_ESTADO_TABLE: tipoestado
+    TIPO_ITEM_TABLE: tipoitem
+    TIPO_PROFESIONAL_TABLE: tipoprofesional
+    TIPO_USUARIO_TABLE: tipousuario
+    USUARIO_TABLE: usuario
+
+package:
+  patterns:
+    - '!README.md'
+    - '!node_modules/.bin/**'
+    - '!package-lock.json'
+
+functions:
+  # ===== Poblar catálogos =====
+  seedTipoProfesional:
+    handler: src/tipos/profesionales.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.TIPO_PROFESIONAL_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/tipo-profesional
+
+  seedTipoUsuario:
+    handler: src/tipos/usuarios.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.TIPO_USUARIO_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/tipo-usuario
+
+  seedTipoConsulta:
+    handler: src/tipos/consultas.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.TIPO_CONSULTA_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/tipo-consulta
+
+  seedTipoEstado:
+    handler: src/tipos/estados.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.TIPO_ESTADO_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/tipo-estado
+
+  seedTipoBox:
+    handler: src/tipos/box.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.TIPO_BOX_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/tipo-box
+
+  seedPersonalizacion:
+    handler: src/personalizacion/seed.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.PERSONALIZACION_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/personalizacion
+
+  seedEstadoBox:
+    handler: src/estadobox/seed.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.ESTADO_BOX_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/estado-box
+
+  seedTipoItem:
+    handler: src/tipoitem/seed.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.TIPO_ITEM_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/tipo-item
+
+  # ===== Poblar entidades principales =====
+  seedUsuarios:
+    handler: src/usuarios/seed.handler
+    environment:
+      TABLE_NAME: ${self:provider.environment.USUARIO_TABLE}
+      PERSONALIZACION_TABLE: ${self:provider.environment.PERSONALIZACION_TABLE}
+      TIPO_USUARIO_TABLE: ${self:provider.environment.TIPO_USUARIO_TABLE}
+      TIPO_PROFESIONAL_TABLE: ${self:provider.environment.TIPO_PROFESIONAL_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/usuarios
+
+  seedAgenda:
+    handler: src/agenda/seed.handler
+    environment:
+      TABLE_NAME: ${self:provider.environment.AGENDA_TABLE}
+      REGISTRO_AGENDA_TABLE: ${self:provider.environment.REGISTRO_AGENDA_TABLE}
+      BOX_TABLE: ${self:provider.environment.BOX_TABLE}
+      USUARIO_TABLE: ${self:provider.environment.USUARIO_TABLE}
+      TIPO_CONSULTA_TABLE: ${self:provider.environment.TIPO_CONSULTA_TABLE}
+      TIPO_ESTADO_TABLE: ${self:provider.environment.TIPO_ESTADO_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/agenda
+
+  seedBox:
+    handler: src/box/seed.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.BOX_TABLE}
+      ESTADO_BOX_TABLE: ${self:provider.environment.ESTADO_BOX_TABLE}
+      TIPO_BOX_TABLE: ${self:provider.environment.TIPO_BOX_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/box
+
+  seedItems:
+    handler: src/items/seed.seed
+    environment:
+      TABLE_NAME: ${self:provider.environment.ITEMS_TABLE}
+      BOX_TABLE: ${self:provider.environment.BOX_TABLE}
+      TIPO_ITEM_TABLE: ${self:provider.environment.TIPO_ITEM_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/items

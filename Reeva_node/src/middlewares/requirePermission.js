@@ -9,7 +9,12 @@ export function requirePermission(permission) {
 
     if (!user.permissions || !user.permissions.includes(permission)) {
       console.warn(`Usuario ${user.email} no tiene el permiso ${permission}`);
-      return res.render("Bienvenida-y-Opciones", { user }); 
+      return res.render("Bienvenida-y-Opciones", {
+        user,
+        next_appointment_date: null,
+        next_appointment_time: null,
+        tipo_consulta: null,
+      });
     }
 
     next();

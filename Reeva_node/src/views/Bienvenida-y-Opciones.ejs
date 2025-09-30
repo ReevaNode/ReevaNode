@@ -18,7 +18,7 @@
     <!-- Logo a la izquierda -->
     <div class="flex items-center gap-4 flex-none">
       <img
-        src="/images/icono.png"
+        src="/images/icono2.png"
         alt="Logo Hospital Padre Hurtado"
         class="w-32 h-auto object-contain"
       />
@@ -47,7 +47,18 @@
     
 
     <!-- Desktop Profile -->
-    <div class="hidden md:flex items-center gap-8 flex-none relative">
+    <div class="hidden md:flex items-center gap-6 flex-none relative">
+      <div id="language-wrapper" class="relative">
+        <button id="language-toggle" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-primary transition-colors">
+          <span class="uppercase">ES</span>
+          <i class="ri-arrow-down-s-line text-base"></i>
+        </button>
+        <div id="language-menu" class="hidden absolute right-0 mt-2 w-24 bg-white border border-gray-200 rounded shadow-lg py-1 z-50">
+          <button data-language-option="es" class="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-primary/10 hover:text-primary">ES</button>
+          <button data-language-option="en" class="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-primary/10 hover:text-primary">EN</button>
+        </div>
+      </div>
+
       <a href="" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
         <i class="ri-user-line ri-lg"></i>
         <span class="font-medium">Perfil</span>
@@ -57,6 +68,10 @@
         <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
           <i class="ri-user-line ri-lg"></i>
           <span class="font-medium">Mi Espacio</span>
+        </a>
+        <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+          <i class="ri-settings-3-line ri-lg"></i>
+          <span class="font-medium">Personalización</span>
         </a>
         <div class="border-t my-2"></div>
         <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -115,19 +130,110 @@
         <i class="ri-user-line ri-lg"></i>
         <span class="font-medium">Mi Espacio</span>
       </a>
+
+      <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-settings-3-line ri-lg"></i>
+        <span class="font-medium">Personalización</span>
+      </a>
       
       <a href="/logout"  class="flex items-center gap-3 text-red-600 hover:text-red-700 transition-colors py-2">
         <i class="ri-logout-box-r-line ri-lg"></i>
         <span class="font-medium">Cerrar Sesión</span>
       </a>
     </nav>
-  </div>
 </div>
+</div>
+
+
+<!-- Panel de Personalización -->
+<div id="personalization-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
+<aside id="personalization-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="personalization-title" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out z-50 flex flex-col pointer-events-none">
+  <div class="flex items-start gap-3 px-6 py-5 border-b border-gray-200">
+    <div class="personalization-icon text-xl">
+      <i class="ri-magic-line"></i>
+    </div>
+    <div class="flex-1">
+      <h2 id="personalization-title" class="text-xl font-semibold text-gray-800">Personalización</h2>
+      <p class="text-sm text-gray-500">Configura la apariencia e idioma de la plataforma</p>
+    </div>
+    <button id="personalization-close" class="text-gray-400 hover:text-primary transition-colors text-xl" aria-label="Cerrar panel">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+  <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+    <section class="personalization-card">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="personalization-icon text-lg">
+          <i class="ri-brush-line"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Apariencia</h3>
+          <p class="text-sm text-gray-500">Elige el modo que mejor se adapte a ti</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <button type="button" data-theme-option="claro" class="personalization-option" aria-pressed="false">
+          <span class="personalization-option-icon">
+            <i class="ri-sun-line"></i>
+          </span>
+          <span>Claro</span>
+        </button>
+        <button type="button" data-theme-option="oscuro" class="personalization-option" aria-pressed="false">
+          <span class="personalization-option-icon">
+            <i class="ri-moon-clear-line"></i>
+          </span>
+          <span>Oscuro</span>
+        </button>
+        <button type="button" data-theme-option="sistema" class="personalization-option" aria-pressed="false">
+          <span class="personalization-option-icon">
+            <i class="ri-macbook-line"></i>
+          </span>
+          <span>Sistema</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="personalization-card">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="personalization-icon text-lg">
+          <i class="ri-translate-2"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Idioma</h3>
+          <p class="text-sm text-gray-500">Selecciona el idioma preferido de la interfaz</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <button type="button" data-language-option="es" class="personalization-language" aria-pressed="false">
+          <span class="flex items-center gap-3">
+            <span class="personalization-option-icon">
+              <i class="ri-flag-2-line"></i>
+            </span>
+            <span>Español</span>
+          </span>
+          <i class="ri-check-line personalization-language-check" aria-hidden="true"></i>
+        </button>
+        <button type="button" data-language-option="en" class="personalization-language" aria-pressed="false">
+          <span class="flex items-center gap-3">
+            <span class="personalization-option-icon">
+              <i class="ri-earth-line"></i>
+            </span>
+            <span>Inglés</span>
+          </span>
+          <i class="ri-check-line personalization-language-check" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+  </div>
+  <div class="px-6 py-5 border-t border-gray-200">
+    <p class="text-xs text-gray-400">BoxCare v1.0.0 · Hospital Padre Hurtado</p>
+  </div>
+</aside>
 
 
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
-        <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10"></div>
+        <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10 hero-gradient"></div>
         <div class="container mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row items-center relative z-20">
             <div class="w-full md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
                 <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">Bienvenido a BoxCare</h1>
@@ -315,6 +421,221 @@
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
       }
+    });
+    </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const wrapper = document.getElementById('language-wrapper');
+      const toggle = document.getElementById('language-toggle');
+      const menu = document.getElementById('language-menu');
+      const options = document.querySelectorAll('[data-language-option]');
+      const label = toggle ? toggle.querySelector('span') : null;
+      const STORAGE_KEY = 'reeva-language';
+
+      if (!wrapper || !toggle || !menu || !label) {
+        return;
+      }
+
+      const setLanguage = (lang) => {
+        const value = (lang || 'es').toLowerCase();
+        label.textContent = value.toUpperCase();
+        toggle.dataset.language = value;
+        document.documentElement.lang = value;
+        localStorage.setItem(STORAGE_KEY, value);
+        menu.classList.add('hidden');
+        document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
+      };
+
+      window.reevaSetLanguage = setLanguage;
+      window.reevaGetLanguage = () => localStorage.getItem(STORAGE_KEY) || 'es';
+
+      const saved = localStorage.getItem(STORAGE_KEY);
+      setLanguage(saved || 'es');
+
+      toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        menu.classList.toggle('hidden');
+      });
+
+      options.forEach((option) => {
+        option.addEventListener('click', () => {
+          const { languageOption } = option.dataset;
+          setLanguage(languageOption);
+        });
+      });
+
+    document.addEventListener('click', (event) => {
+        if (!wrapper.contains(event.target)) {
+          menu.classList.add('hidden');
+        }
+      });
+    });
+    </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const overlay = document.getElementById('personalization-overlay');
+      const panel = document.getElementById('personalization-panel');
+      const closeBtn = document.getElementById('personalization-close');
+      const triggers = document.querySelectorAll('[data-personalizacion-trigger]');
+      const perfilMenu = document.getElementById('perfil-menu');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      const themeButtons = panel ? panel.querySelectorAll('[data-theme-option]') : [];
+      const languageButtons = panel ? panel.querySelectorAll('.personalization-language[data-language-option]') : [];
+      const THEME_KEY = 'reeva-theme';
+      let systemThemeUnsubscribe = null;
+
+      if (!overlay || !panel) {
+        return;
+      }
+
+      const updateActiveState = (elements, value, key) => {
+        elements.forEach((element) => {
+          const isActive = element.dataset[key] === value;
+          element.classList.toggle('is-active', isActive);
+          element.setAttribute('aria-pressed', String(isActive));
+        });
+      };
+
+      const applyLanguageHighlight = (language) => {
+        if (!languageButtons.length) {
+          return;
+        }
+        updateActiveState(languageButtons, language, 'languageOption');
+      };
+
+      const applyThemeHighlight = (theme) => {
+        if (!themeButtons.length) {
+          return;
+        }
+        updateActiveState(themeButtons, theme, 'themeOption');
+      };
+
+      const applySystemTheme = () => {
+        if (!window.matchMedia) {
+          return;
+        }
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.classList.toggle('theme-dark', prefersDark);
+        document.body.classList.toggle('theme-light', !prefersDark);
+      };
+
+      const setTheme = (theme) => {
+        const normalized = (theme || 'claro').toLowerCase();
+        localStorage.setItem(THEME_KEY, normalized);
+        document.body.dataset.theme = normalized;
+        document.body.classList.remove('theme-light', 'theme-dark');
+
+        if (systemThemeUnsubscribe) {
+          systemThemeUnsubscribe();
+          systemThemeUnsubscribe = null;
+        }
+
+        if (normalized === 'oscuro') {
+          document.body.classList.add('theme-dark');
+        } else if (normalized === 'claro') {
+          document.body.classList.add('theme-light');
+        } else if (window.matchMedia) {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          const syncSystemTheme = () => applySystemTheme();
+          mediaQuery.addEventListener('change', syncSystemTheme);
+          systemThemeUnsubscribe = () => mediaQuery.removeEventListener('change', syncSystemTheme);
+          applySystemTheme();
+        }
+
+        applyThemeHighlight(normalized);
+        document.dispatchEvent(new CustomEvent('reeva:theme-change', { detail: { theme: normalized } }));
+      };
+
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'claro';
+      setTheme(savedTheme);
+      applyLanguageHighlight((window.reevaGetLanguage && window.reevaGetLanguage()) || 'es');
+
+      themeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const { themeOption } = button.dataset;
+          setTheme(themeOption);
+        });
+      });
+
+      languageButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const { languageOption } = button.dataset;
+          if (window.reevaSetLanguage) {
+            window.reevaSetLanguage(languageOption);
+          }
+        });
+      });
+
+      document.addEventListener('reeva:language-change', (event) => {
+        if (event && event.detail && event.detail.language) {
+          applyLanguageHighlight(event.detail.language);
+        }
+      });
+
+      const closeMobileMenuIfOpen = () => {
+        if (!mobileMenu || !mobileMenuOverlay) {
+          return;
+        }
+        if (!mobileMenu.classList.contains('translate-x-full')) {
+          mobileMenu.classList.remove('translate-x-0');
+          mobileMenu.classList.add('translate-x-full');
+          setTimeout(() => {
+            mobileMenuOverlay.classList.add('hidden');
+          }, 300);
+        }
+      };
+
+      const openPanel = () => {
+        if (perfilMenu) {
+          perfilMenu.classList.add('hidden');
+        }
+        closeMobileMenuIfOpen();
+
+        overlay.classList.remove('pointer-events-none');
+        panel.classList.remove('pointer-events-none');
+
+        requestAnimationFrame(() => {
+          overlay.classList.remove('opacity-0');
+          overlay.classList.add('opacity-100');
+          panel.classList.remove('translate-x-full');
+          panel.classList.add('translate-x-0');
+        });
+
+        document.body.style.overflow = 'hidden';
+        panel.setAttribute('aria-hidden', 'false');
+      };
+
+      const closePanel = () => {
+        overlay.classList.add('pointer-events-none');
+        panel.classList.add('pointer-events-none');
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        panel.classList.remove('translate-x-0');
+        panel.classList.add('translate-x-full');
+        document.body.style.overflow = '';
+        panel.setAttribute('aria-hidden', 'true');
+      };
+
+      overlay.addEventListener('click', closePanel);
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closePanel);
+      }
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closePanel();
+        }
+      });
+
+      triggers.forEach((trigger) => {
+        trigger.addEventListener('click', (event) => {
+          event.preventDefault();
+          openPanel();
+        });
+      });
     });
     </script>
     
