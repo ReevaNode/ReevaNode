@@ -6,9 +6,7 @@ provider:
   runtime: nodejs20.x
   region: ${opt:region, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-
-  role: arn:aws:iam::590184053614:role/LabRole
-
+  role: arn:aws:sts::767397714550:role/LabRole
   environment:
     USER_POOL_ID: { Ref: CognitoUserPool }
     USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }

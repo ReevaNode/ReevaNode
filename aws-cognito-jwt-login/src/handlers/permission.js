@@ -5,7 +5,7 @@ const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const cognitoClient = new CognitoIdentityProviderClient({});
 
-// === CONFIGURACIÓN DE PERMISOS Y ROLES ===
+// === CONFIGURACION DE PERMISOS Y ROLES ===
 const PERMISSIONS = [
   "agenda.read", "agenda.write",
   "bienvenidos.read", "bienvenidos.write", 
@@ -88,7 +88,7 @@ async function saveUser(userData) {
   }
 }
 
-// Función para verificar si un usuario existe en Cognito
+// Funcion para verificar si un usuario existe en Cognito
 async function checkUserExistsInCognito(email) {
   try {
     const command = new AdminGetUserCommand({
@@ -108,7 +108,7 @@ async function checkUserExistsInCognito(email) {
   }
 }
 
-// Función helper para crear usuario desde email
+// Funcion helper para crear usuario desde email
 async function createUserFromEmail(email) {
   try {
     // Obtener el usuario real de Cognito para sacar el sub
@@ -176,7 +176,7 @@ module.exports.getAuthInfo = async (event) => {
   }
 };
 
-// Asignar rol a usuario (modificado para crear si no existe)
+// Asignar rol a usuario (crear si no existe)
 module.exports.assignRole = async (event) => {
   try {
     const claims = event?.requestContext?.authorizer?.jwt?.claims;

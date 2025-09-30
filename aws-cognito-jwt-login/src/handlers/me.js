@@ -6,7 +6,7 @@
  */
 module.exports.me = async (event) => {
   const claims = event?.requestContext?.authorizer?.jwt?.claims || {};
-  // Ejemplo de respuesta con campos útiles
+  // Ejemplo de respuesta
   return {
     statusCode: 200,
     headers: { "content-type": "application/json" },
