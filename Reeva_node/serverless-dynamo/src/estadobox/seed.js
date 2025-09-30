@@ -4,10 +4,10 @@ const { BatchWriteCommand, DynamoDBDocumentClient } = require("@aws-sdk/lib-dyna
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const ESTADOS_BOX = [
-  { idEstado: "1", estado: "Habilitado" },
-  { idEstado: "2", estado: "Inhabilitado" },
-  { idEstado: "3", estado: "habilitado" },
-  { idEstado: "4", estado: "inhabilitado" },
+  { idEstadoBox: "1", estado: "Habilitado" },
+  { idEstadoBox: "2", estado: "Inhabilitado" },
+  { idEstadoBox: "3", estado: "habilitado" },
+  { idEstadoBox: "4", estado: "inhabilitado" },
 ];
 
 exports.seed = async () => {

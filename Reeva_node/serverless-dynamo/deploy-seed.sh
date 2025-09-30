@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-# Ejecuta el despliegue de la pila Serverless y luego invoca
-# cada función seed en el orden requerido para poblar todas las
-# tablas de DynamoDB.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAGE="${1:-dev}"

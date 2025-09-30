@@ -1,23 +1,32 @@
 import { Router } from "express";
 import { requirePermission } from "../middlewares/requirePermission.js";
+import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 import db from '../../db.js';
 
 const router = Router();
 
 router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res) => {
-
   try {
-    // Traer la última agenda según horainicio
-    const [rows] = await db.query(
-      "SELECT horainicio, horatermino, idtipoconsulta FROM agenda ORDER BY horainicio DESC LIMIT 1"
-    );
+    // Obtener todas las agendas y ordenar por horainicio descendente
+    const command = new ScanCommand({
+      TableName: "agenda",
+    });
 
+    const result = await db.send(command);
+    
     let next_appointment_date = null;
     let next_appointment_time = null;
     let tipo_consulta = null;
 
-    if (rows.length > 0) {
-      const agenda = rows[0];
+    if (result.Items && result.Items.length > 0) {
+      // Ordenar por horainicio descendente para obtener la mas reciente
+      const sortedAgendas = result.Items.sort((a, b) => {
+        const dateA = new Date(a.horainicio);
+        const dateB = new Date(b.horainicio);
+        return dateB - dateA; // Orden descendente
+      });
+
+      const agenda = sortedAgendas[0];
 
       const inicio = new Date(agenda.horainicio);
       const termino = new Date(agenda.horatermino);
@@ -47,7 +56,7 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res
       tipo_consulta,
     });
   } catch (error) {
-    console.error("Error obteniendo agenda:", error);
+    console.error("Error obteniendo agenda desde DynamoDB:", error);
     res.status(500).send("Error interno del servidor");
   }
 });

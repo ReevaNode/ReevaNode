@@ -1,26 +1,21 @@
-import mysql from "mysql2/promise";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-// Crear el pool de conexiones
-const db = mysql.createPool({
-  host: "localhost",      // cambiar por tu host
-
-  user: "reeva_user",          // cambiar por tu usuario
-  password: "reeva123",     // cambiar por tu contraseña
-  database: "reeva_db", // cambiar por el nombre de tu base de datos
-
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+// Crear el cliente DynamoDB
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || "us-east-1",
+  // Credenciales locales, AWS CLI
 });
 
-// Probar conexión
+const db = DynamoDBDocumentClient.from(client);
+
+// Probar conexión 
 (async () => {
   try {
-    const connection = await db.getConnection();
-    console.log("Conexión exitosa a MySQL");
-    connection.release();
+    // verificar conectividad
+    console.log("Cliente DynamoDB configurado correctamente");
   } catch (err) {
-    console.error("Error al conectar con MySQL:", err);
+    console.error("Error al configurar DynamoDB:", err);
   }
 })();
 
