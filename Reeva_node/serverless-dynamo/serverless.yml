@@ -7,7 +7,7 @@ provider:
   runtime: nodejs20.x
   region: ${opt:region, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-  role: arn:aws:iam::590184053614:role/LabRole
+  role: arn:aws:iam::767397714550:role/LabRole
   iam:
     role:
       statements:
@@ -191,3 +191,163 @@ functions:
       - httpApi:
           method: POST
           path: /seed/items
+
+resources:
+  Resources:
+    # Catálogo tables
+    TipoProfesionalTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tipoprofesional
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idTipoProfesional
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idTipoProfesional
+            KeyType: HASH
+
+    TipoUsuarioTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tipousuario
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idTipoUsuario
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idTipoUsuario
+            KeyType: HASH
+
+    TipoConsultaTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tipoconsulta
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idTipoConsulta
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idTipoConsulta
+            KeyType: HASH
+
+    TipoEstadoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tipoestado
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idTipoEstado
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idTipoEstado
+            KeyType: HASH
+
+    TipoBoxTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tipobox
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idTipoBox
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idTipoBox
+            KeyType: HASH
+
+    TipoItemTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tipoitem
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idTipoItem
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idTipoItem
+            KeyType: HASH
+
+    PersonalizacionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: personalizacion
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idPersonalizacion
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idPersonalizacion
+            KeyType: HASH
+
+    EstadoBoxTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: estadobox
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idEstadoBox
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idEstadoBox
+            KeyType: HASH
+
+    # Main entity tables
+    UsuarioTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: usuario
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idUsuario
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idUsuario
+            KeyType: HASH
+
+    BoxTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: box
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idBox
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idBox
+            KeyType: HASH
+
+    ItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: items
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idItem
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idItem
+            KeyType: HASH
+
+    AgendaTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: agenda
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idAgenda
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idAgenda
+            KeyType: HASH
+
+    RegistroAgendaTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: registroagenda
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idRegistroAgenda
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idRegistroAgenda
+            KeyType: HASH
