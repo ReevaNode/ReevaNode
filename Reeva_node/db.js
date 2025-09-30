@@ -3,9 +3,11 @@ import mysql from "mysql2/promise";
 // Crear el pool de conexiones
 const db = mysql.createPool({
   host: "localhost",      // cambiar por tu host
+
   user: "root",          // cambiar por tu usuario
   password: "123456",     // cambiar por tu contraseña
   database: "agendareeva", // cambiar por el nombre de tu base de datos
+
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
