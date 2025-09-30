@@ -15,6 +15,7 @@ import {
   GetCommand,
   PutCommand
 } from "@aws-sdk/lib-dynamodb";
+import { sendAuthNotification, sendErrorNotification } from "../services/notificationService.js";
 
 const router = Router();
 const client = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || "us-east-1" });
@@ -129,6 +130,20 @@ router.post("/auth/login", async (req, res) => {
     // Actualizar lastLogin
     await saveUser({ ...user, lastLogin: new Date().toISOString() });
 
+    // Preparar datos para notificación
+    const notificationData = {
+      email: user.email,
+      username: user.username,
+      roles: user.roles || [],
+      userAgent: req.get('User-Agent'),
+      ip: req.ip || req.connection.remoteAddress
+    };
+
+    // Enviar notificación de login (asíncrono, no bloquea la respuesta)
+    sendAuthNotification('LOGIN', notificationData).catch(err => {
+      console.error('Error enviando notificación de login:', err);
+    });
+
     // Guardar en sesión
     req.session.user = {
       idToken: auth.IdToken,
@@ -154,15 +169,52 @@ router.post("/auth/login", async (req, res) => {
 
   } catch (err) {
     console.error("Error en login:", err);
+    
+    // Enviar notificación de error crítico
+    sendErrorNotification('LOGIN_ERROR', {
+      error: err.message,
+      username: req.body?.username,
+      userAgent: req.get('User-Agent'),
+      ip: req.ip || req.connection.remoteAddress
+    }).catch(notifErr => {
+      console.error('Error enviando notificación de error:', notifErr);
+    });
+    
     return res.status(401).json({ ok: false, error: "Credenciales inválidas o usuario no confirmado" });
   }
 });
 
 // === LOGOUT ===
-router.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/login");
-  });
+router.get("/logout", async (req, res) => {
+  try {
+    // Obtener datos del usuario antes de destruir sesión
+    const userData = req.session?.user;
+    
+    if (userData) {
+      const notificationData = {
+        email: userData.email,
+        username: userData.username,
+        roles: userData.roles || [],
+        userAgent: req.get('User-Agent'),
+        ip: req.ip || req.connection.remoteAddress
+      };
+
+      // Enviar notificación de logout (asíncrono)
+      sendAuthNotification('LOGOUT', notificationData).catch(err => {
+        console.error('Error enviando notificación de logout:', err);
+      });
+    }
+
+    req.session.destroy(() => {
+      res.redirect("/login");
+    });
+    
+  } catch (error) {
+    console.error("Error en logout:", error);
+    req.session.destroy(() => {
+      res.redirect("/login");
+    });
+  }
 });
 
 export default router;
