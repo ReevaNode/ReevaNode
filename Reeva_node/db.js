@@ -1,19 +1,19 @@
+// cliente de dynamodb
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { config } from "./src/config/index.js";
 
-// Crear el cliente DynamoDB
+// crear cliente
 const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  // Credenciales locales, AWS CLI
+  region: config.aws.region,
 });
 
 const db = DynamoDBDocumentClient.from(client);
 
-// Probar conexión 
+// probar conexion
 (async () => {
   try {
-    // verificar conectividad
-    console.log("Cliente DynamoDB configurado correctamente");
+    console.log(`✓ Cliente DynamoDB configurado para region: ${config.aws.region}`);
   } catch (err) {
     console.error("Error al configurar DynamoDB:", err);
   }

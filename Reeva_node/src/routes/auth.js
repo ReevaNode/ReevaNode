@@ -1,5 +1,4 @@
-// src/routes/auth.js
-
+// rutas de autenticacion
 import { Router } from "express";
 import jwt from "jsonwebtoken"; 
 import {
@@ -16,36 +15,37 @@ import {
   PutCommand
 } from "@aws-sdk/lib-dynamodb";
 import { sendAuthNotification, sendErrorNotification } from "../services/notificationService.js";
+import { config } from "../config/index.js";
 
 const router = Router();
-const client = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || "us-east-1" });
+const client = new CognitoIdentityProviderClient({ region: config.aws.region });
 
-// DynamoDB
-const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || "us-east-1" });
+// dynamo
+const dynamoClient = new DynamoDBClient({ region: config.aws.region });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-// === HELPERS ===
+// helpers
 
-// Obtener usuario por sub (ID de Cognito)
-async function getUser(userId) {
+// obtener usuario por sub
+async function obtenerUsuario(userId) {
   try {
     const command = new GetCommand({
-      TableName: process.env.USER_TABLE,
+      TableName: config.dynamodb.tablas.users,
       Key: { userId },
     });
     const result = await docClient.send(command);
     return result.Item || null;
   } catch (err) {
-    console.error("Error getUser:", err);
+    console.error("Error obtenerUsuario:", err);
     return null;
   }
 }
 
-// Guardar usuario existente (actualiza login u otros campos)
-async function saveUser(user) {
+// guardar usuario
+async function guardarUsuario(user) {
   try {
     const command = new PutCommand({
-      TableName: process.env.USER_TABLE,
+      TableName: config.dynamodb.tablas.users,
       Item: {
         ...user,
         updatedAt: new Date().toISOString(),
@@ -54,19 +54,21 @@ async function saveUser(user) {
     await docClient.send(command);
     return true;
   } catch (err) {
-    console.error("Error saveUser:", err);
+    console.error("Error guardarUsuario:", err);
     return false;
   }
 }
 
-// === RUTAS ===
-// Mostrar login
+// rutas
+
+// mostrar login
 router.get("/login", (req, res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   res.setHeader("Surrogate-Control", "no-store");
-  // Bloqueo: si ya hay sesión, no permitir entrar al login 
+  
+  // si ya hay sesion mandar a bienvenida
   if (req.session.user) {
     return res.redirect("/bienvenida");
   }
@@ -75,7 +77,7 @@ router.get("/login", (req, res) => {
   res.render("login", { error: errorMsg });
 });
 
-// Redirección raíz
+// redireccion raiz
 router.get("/", (req, res) => {
   if (req.session?.user) {
     return res.redirect("/bienvenida");
@@ -83,7 +85,7 @@ router.get("/", (req, res) => {
   res.redirect("/login");
 });
 
-// === LOGIN POST ===
+// login post
 router.post("/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -91,10 +93,10 @@ router.post("/auth/login", async (req, res) => {
       return res.status(400).json({ ok: false, error: "username y password son obligatorios" });
     }
 
-    // Cognito auth
+    // autenticar con cognito
     const cmd = new InitiateAuthCommand({
       AuthFlow: "USER_PASSWORD_AUTH",
-      ClientId: process.env.USER_POOL_CLIENT_ID,
+      ClientId: config.cognito.userPoolClientId,
       AuthParameters: {
         USERNAME: username,
         PASSWORD: password,
@@ -109,29 +111,29 @@ router.post("/auth/login", async (req, res) => {
 
     const auth = out.AuthenticationResult || {};
 
-    // Decodificar token con librería jwt
+    // decodificar token
     const claims = jwt.decode(auth.IdToken);
 
     if (!claims) {
-      return res.status(401).json({ ok: false, error: "Token no válido" });
+      return res.status(401).json({ ok: false, error: "Token no valido" });
     }
 
-    // Buscar usuario en Dynamo
-    let user = await getUser(claims.sub);
+    // buscar usuario en dynamo
+    let user = await obtenerUsuario(claims.sub);
 
-    // Cambio: ya NO creamos usuario automáticamente
+    // no crear usuario automaticamente, debe existir
     if (!user) {
       return res.status(403).json({
         ok: false,
-        error: "Usuario no registrado en el sistema. Contacte con un administrador."
+        error: "Usuario no registrado en el sistema. Contacta con un administrador."
       });
     }
 
-    // Actualizar lastLogin
-    await saveUser({ ...user, lastLogin: new Date().toISOString() });
+    // actualizar ultimo login
+    await guardarUsuario({ ...user, lastLogin: new Date().toISOString() });
 
-    // Preparar datos para notificación
-    const notificationData = {
+    // datos para notificacion
+    const datosNotif = {
       email: user.email,
       username: user.username,
       roles: user.roles || [],
@@ -139,12 +141,12 @@ router.post("/auth/login", async (req, res) => {
       ip: req.ip || req.connection.remoteAddress
     };
 
-    // Enviar notificación de login (asíncrono, no bloquea la respuesta)
-    sendAuthNotification('LOGIN', notificationData).catch(err => {
-      console.error('Error enviando notificación de login:', err);
+    // enviar notificacion (async, no bloquea)
+    sendAuthNotification('LOGIN', datosNotif).catch(err => {
+      console.error('Error enviando notificacion de login:', err);
     });
 
-    // Guardar en sesión
+    // guardar en sesion
     req.session.user = {
       idToken: auth.IdToken,
       accessToken: auth.AccessToken,
@@ -170,28 +172,28 @@ router.post("/auth/login", async (req, res) => {
   } catch (err) {
     console.error("Error en login:", err);
     
-    // Enviar notificación de error crítico
+    // notificar error critico
     sendErrorNotification('LOGIN_ERROR', {
       error: err.message,
       username: req.body?.username,
       userAgent: req.get('User-Agent'),
       ip: req.ip || req.connection.remoteAddress
     }).catch(notifErr => {
-      console.error('Error enviando notificación de error:', notifErr);
+      console.error('Error enviando notificacion de error:', notifErr);
     });
     
-    return res.status(401).json({ ok: false, error: "Credenciales inválidas o usuario no confirmado" });
+    return res.status(401).json({ ok: false, error: "Credenciales invalidas o usuario no confirmado" });
   }
 });
 
-// === LOGOUT ===
+// logout
 router.get("/logout", async (req, res) => {
   try {
-    // Obtener datos del usuario antes de destruir sesión
+    // guardar datos del usuario antes de destruir
     const userData = req.session?.user;
     
     if (userData) {
-      const notificationData = {
+      const datosNotif = {
         email: userData.email,
         username: userData.username,
         roles: userData.roles || [],
@@ -199,9 +201,9 @@ router.get("/logout", async (req, res) => {
         ip: req.ip || req.connection.remoteAddress
       };
 
-      // Enviar notificación de logout (asíncrono)
-      sendAuthNotification('LOGOUT', notificationData).catch(err => {
-        console.error('Error enviando notificación de logout:', err);
+      // notificar logout (async)
+      sendAuthNotification('LOGOUT', datosNotif).catch(err => {
+        console.error('Error enviando notificacion de logout:', err);
       });
     }
 

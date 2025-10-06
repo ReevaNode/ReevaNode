@@ -85,22 +85,59 @@ cp .env.example .env
 
 **Ejemplo de .env:**
 ```env
-# AWS Configuration
+# Config AWS
 AWS_REGION=us-east-1
 AWS_ACCOUNT_ID=XXXXXXXXXXXX
+AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXX
+AWS_SESSION_TOKEN=XXXXXXXXXXXX
+
+# LabRol AWS
+LABROLE=XXXXXXXXXXXX
+
+# Config Cognito
+USER_POOL_ID=XXXXXXXXXXXX
+USER_POOL_CLIENT_ID=XXXXXXXXXXXX
+USER_TABLE=XXXXXXXXXXXX
 
 # DynamoDB Tables
 AGENDA_TABLE=agenda
 BOX_TABLE=box
+ESTADO_BOX_TABLE=estadobox
+ITEMS_TABLE=items
+PERSONALIZACION_TABLE=personalizacion
+REGISTRO_AGENDA_TABLE=registroagenda
+TIPO_BOX_TABLE=tipobox
+TIPO_CONSULTA_TABLE=tipoconsulta
+TIPO_ESTADO_TABLE=tipoestado
+TIPO_ITEM_TABLE=tipoitem
+TIPO_PROFESIONAL_TABLE=tipoprofesional
+TIPO_USUARIO_TABLE=tipousuario
 USUARIO_TABLE=usuario
 
-# Cognito Configuration
-USER_POOL_ID=us-east-1_XXXXXXXXX
-CLIENT_ID=your-cognito-client-id
+STAGE=dev
 
-# Application
+# Seguridad - CLAVES GENERADAS ALEATORIAMENTE (sugerido 32 caracteres minimo)
+JWT_SECRET=xxxx
+SESSION_SECRET=xxxx
+
+# Aplicacion
+NODE_ENV=development
+LOG_LEVEL=debug
+SESSION_MAX_AGE=300000
+SESSION_SAME_SITE=lax
+
+# Rate
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+
+# Config App
 PORT=3000
 NODE_ENV=development
+
+# Config SNS
+SNS_TOPIC_ARN=XXXXXXXXXXXX
+ADMIN_EMAIL=XXXXXXXXXXXX
 ```
 
 ## Despliegue de Base de Datos (DynamoDB)

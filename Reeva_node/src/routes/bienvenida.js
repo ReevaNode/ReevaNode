@@ -1,62 +1,84 @@
+// ruta de bienvenida
 import { Router } from "express";
 import { requirePermission } from "../middlewares/requirePermission.js";
-import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import db from '../../db.js';
+import { config } from "../config/index.js";
+import Logger from "../utils/logger.js";
 
 const router = Router();
+const logger = new Logger('BIENVENIDA');
 
 router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res) => {
+  const inicio = Date.now();
+  
   try {
-    // Obtener todas las agendas y ordenar por horainicio descendente
-    const command = new ScanCommand({
-      TableName: "agenda",
+    // usar query con indice en vez de scan (mas rapido)
+    const userId = req.session.user.sub;
+    
+    const command = new QueryCommand({
+      TableName: config.dynamodb.tablas.agenda,
+      IndexName: "UsuarioIndex",
+      KeyConditionExpression: "idUsuario = :userId",
+      ExpressionAttributeValues: {
+        ":userId": userId,
+      },
+      ScanIndexForward: false, // ordenar desc por horainicio
+      Limit: 10,
     });
 
     const result = await db.send(command);
     
-    let next_appointment_date = null;
-    let next_appointment_time = null;
+    logger.trace('Query agenda completada', Date.now() - inicio, {
+      itemsRetornados: result.Items?.length || 0,
+      userId,
+    });
+    
+    let proxima_cita_fecha = null;
+    let proxima_cita_hora = null;
     let tipo_consulta = null;
 
     if (result.Items && result.Items.length > 0) {
-      // Ordenar por horainicio descendente para obtener la mas reciente
-      const sortedAgendas = result.Items.sort((a, b) => {
-        const dateA = new Date(a.horainicio);
-        const dateB = new Date(b.horainicio);
-        return dateB - dateA; // Orden descendente
-      });
+      // tomar la mas reciente
+      const agenda = result.Items[0];
 
-      const agenda = sortedAgendas[0];
+      const fechaInicio = new Date(agenda.horainicio);
+      const fechaTermino = new Date(agenda.horatermino);
 
-      const inicio = new Date(agenda.horainicio);
-      const termino = new Date(agenda.horatermino);
-
-      // Fecha tipo "22 septiembre, 2025"
-      next_appointment_date = inicio.toLocaleDateString("es-ES", {
+      // formato fecha
+      proxima_cita_fecha = fechaInicio.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "long",
         year: "numeric",
       });
 
-      console.log("Fecha de la próxima cita:", next_appointment_date);
+      logger.debug("Proxima cita encontrada", { 
+        fecha: proxima_cita_fecha,
+        userId,
+      });
 
-      // Hora tipo "14:00 - 15:00"
-      next_appointment_time =
-        inicio.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) +
+      // formato hora
+      proxima_cita_hora =
+        fechaInicio.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) +
         " - " +
-        termino.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+        fechaTermino.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
       tipo_consulta = agenda.idtipoconsulta;
+    } else {
+      logger.info('No se encontraron agendas para el usuario', { userId });
     }
 
     res.render("Bienvenida-y-Opciones", {
       user: req.session.user,
-      next_appointment_date,
-      next_appointment_time,
+      next_appointment_date: proxima_cita_fecha,
+      next_appointment_time: proxima_cita_hora,
       tipo_consulta,
     });
   } catch (error) {
-    console.error("Error obteniendo agenda desde DynamoDB:", error);
+    logger.error("Error obteniendo agenda desde DynamoDB", { 
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).send("Error interno del servidor");
   }
 });
