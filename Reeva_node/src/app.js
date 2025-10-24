@@ -1,4 +1,7 @@
-// configuracion principal de express
+// src/app.js
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -14,15 +17,6 @@ import Logger from "./utils/logger.js";
 // rutas
 import authRouter from "./routes/auth.js";
 import bienvenidaRouter from "./routes/bienvenida.js";
-
-// validar config al arrancar
-validarConfig();
-
-const logger = new Logger('APP');
-logger.info('Iniciando aplicacion Reeva', { 
-  ambiente: config.app.nodeEnv,
-  stage: config.app.stage,
-});
 
 const app = express();
 

@@ -9,6 +9,12 @@ const snsClient = new SNSClient({ region: process.env.AWS_REGION || "us-east-1" 
  * @param {Object} userData - Datos del usuario
  */
 export async function sendAuthNotification(eventType, userData) {
+  // verificar si las notificaciones estan habilitadas
+  if (process.env.ENABLE_SNS_NOTIFICATIONS === 'false') {
+    console.log(`[SNS DISABLED] Notificación ${eventType} omitida para ${userData.email}`);
+    return { success: true, disabled: true };
+  }
+  
   try {
     const timestamp = dayjs().format('DD/MM/YYYY HH:mm:ss');
     const eventTypeText = eventType === 'LOGIN' ? 'INICIO DE SESION' : 'CIERRE DE SESION';
@@ -86,6 +92,12 @@ Mensaje automatico - No responder
  * @param {Object} errorData - Datos del error
  */
 export async function sendErrorNotification(errorType, errorData) {
+  // verificar si las notificaciones estan habilitadas
+  if (process.env.ENABLE_SNS_NOTIFICATIONS === 'false') {
+    console.log(`[SNS DISABLED] Notificación de error omitida: ${errorType}`);
+    return { success: true, disabled: true };
+  }
+  
   try {
     const timestamp = dayjs().format('DD/MM/YYYY HH:mm:ss');
     

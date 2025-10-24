@@ -3,63 +3,103 @@ import { Router } from "express";
 import { requirePermission } from "../middlewares/requirePermission.js";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import db from '../../db.js';
-import { config } from "../config/index.js";
-import Logger from "../utils/logger.js";
+import { retryWithBackoff, CircuitBreaker, SimpleCache } from '../utils/resilience.js';
 
 const router = Router();
 const logger = new Logger('BIENVENIDA');
 
-router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res) => {
-  const inicio = Date.now();
-  
-  try {
-    // usar query con indice en vez de scan (mas rapido)
-    const userId = req.session.user.sub;
-    
-    const command = new QueryCommand({
-      TableName: config.dynamodb.tablas.agenda,
-      IndexName: "UsuarioIndex",
-      KeyConditionExpression: "idUsuario = :userId",
-      ExpressionAttributeValues: {
-        ":userId": userId,
-      },
-      ScanIndexForward: false, // ordenar desc por horainicio
-      Limit: 10,
-    });
+// inicializar Circuit Breaker y Cache 
+const agendaCircuitBreaker = new CircuitBreaker({
+  failureThreshold: 3,    // abrir despues de 3 fallos
+  successThreshold: 2,    // cerrar despues de 2 exitos
+  timeout: 30000          // 30 segundos antes de reintentar
+});
 
-    const result = await db.send(command);
-    
-    logger.trace('Query agenda completada', Date.now() - inicio, {
-      itemsRetornados: result.Items?.length || 0,
-      userId,
-    });
-    
-    let proxima_cita_fecha = null;
-    let proxima_cita_hora = null;
+const agendaCache = new SimpleCache({
+  ttl: 30000,    // 30 segundos de cache
+  maxSize: 50
+});
+
+router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res) => {
+  const cacheKey = 'agenda_latest';
+  let agendaData = null;
+  let fromCache = false;
+  let systemDegraded = false;
+
+  try {
+    // 1. intentar obtener desde cache
+    const cachedData = agendaCache.get(cacheKey);
+    if (cachedData) {
+      agendaData = cachedData;
+      fromCache = true;
+      console.log('[BIENVENIDA] Usando datos del cache');
+    } else {
+      // 2. si no hay cache, consultar DynamoDB con Circuit Breaker + Retry
+      console.log('[BIENVENIDA] Cache miss - consultando DynamoDB');
+      
+      // funcion que consulta DynamoDB
+      const fetchAgenda = async () => {
+        return await retryWithBackoff(
+          async () => {
+            const command = new ScanCommand({ TableName: "agenda" });
+            return await db.send(command);
+          },
+          {
+            maxRetries: 3,
+            initialDelay: 100,
+            maxDelay: 2000,
+            factor: 2,
+            onRetry: (attempt, delay, error) => {
+              console.log(`[BIENVENIDA] Retry ${attempt}/3 después de ${delay}ms debido a: ${error.message}`);
+            }
+          }
+        );
+      };
+
+      // fallback si Circuit Breaker esta abierto o falla
+      const fallbackAgenda = async () => {
+        console.log('[BIENVENIDA] ⚠️  Usando fallback - DynamoDB no disponible');
+        systemDegraded = true;
+        return { Items: [] }; // retornar datos vacios
+      };
+
+      // ejecutar con Circuit Breaker
+      const result = await agendaCircuitBreaker.execute(fetchAgenda, fallbackAgenda);
+      
+      if (result.Items && result.Items.length > 0) {
+        // guardar en cache
+        agendaCache.set(cacheKey, result.Items);
+        agendaData = result.Items;
+      } else {
+        agendaData = [];
+      }
+    }
+
+    // 3. procesar datos de agenda
+    let next_appointment_date = null;
+    let next_appointment_time = null;
     let tipo_consulta = null;
 
-    if (result.Items && result.Items.length > 0) {
-      // tomar la mas reciente
-      const agenda = result.Items[0];
+    if (agendaData && agendaData.length > 0) {
+      // ordenar por horainicio descendente
+      const sortedAgendas = agendaData.sort((a, b) => {
+        const dateA = new Date(a.horainicio);
+        const dateB = new Date(b.horainicio);
+        return dateB - dateA;
+      });
 
-      const fechaInicio = new Date(agenda.horainicio);
-      const fechaTermino = new Date(agenda.horatermino);
+      const agenda = sortedAgendas[0];
+      const inicio = new Date(agenda.horainicio);
+      const termino = new Date(agenda.horatermino);
 
-      // formato fecha
-      proxima_cita_fecha = fechaInicio.toLocaleDateString("es-ES", {
+      next_appointment_date = inicio.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "long",
         year: "numeric",
       });
 
-      logger.debug("Proxima cita encontrada", { 
-        fecha: proxima_cita_fecha,
-        userId,
-      });
-
-      // formato hora
-      proxima_cita_hora =
-        fechaInicio.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) +
+      next_appointment_time =
+        inicio.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) +
         " - " +
         fechaTermino.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
@@ -68,18 +108,33 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res
       logger.info('No se encontraron agendas para el usuario', { userId });
     }
 
+    // 4. renderizar vista con indicadores de estado
     res.render("Bienvenida-y-Opciones", {
       user: req.session.user,
       next_appointment_date: proxima_cita_fecha,
       next_appointment_time: proxima_cita_hora,
       tipo_consulta,
+      // indicadores de resiliencia
+      systemDegraded,
+      fromCache,
+      warningMessage: systemDegraded 
+        ? "⚠️ El sistema está experimentando problemas temporales. Algunos datos pueden no estar actualizados." 
+        : null
     });
+
   } catch (error) {
-    logger.error("Error obteniendo agenda desde DynamoDB", { 
-      error: error.message,
-      stack: error.stack,
+    console.error("[BIENVENIDA] Error crítico:", error);
+    
+    // Graceful Degradation: renderizar pagina con mensaje para usuario
+    res.render("Bienvenida-y-Opciones", {
+      user: req.session.user,
+      next_appointment_date: null,
+      next_appointment_time: null,
+      tipo_consulta: null,
+      systemDegraded: true,
+      fromCache: false,
+      warningMessage: "El sistema está temporalmente fuera de servicio. Por favor, intente más tarde."
     });
-    res.status(500).send("Error interno del servidor");
   }
 });
 

@@ -321,13 +321,30 @@
   </div>
 </section>
 
-    <!-- Relevant Information Section -->
+    <!-- system degradatino -->
+    <% if (warningMessage) { %>
+    <section class="bg-yellow-50 border-l-4 border-yellow-400 py-4">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center gap-3">
+                <i class="ri-error-warning-line text-2xl text-yellow-600"></i>
+                <div>
+                    <p class="text-yellow-800 font-medium"><%= warningMessage %></p>
+                    <% if (fromCache) { %>
+                    <p class="text-yellow-700 text-sm mt-1">Mostrando datos desde caché</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </section>
+    <% } %>
+
+    <!-- info relevante -->
     <section class="bg-gray-50 py-8 md:py-12">
         <div class="container mx-auto px-4">
             <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8">Información Relevante</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-2">
-                <!-- Next Appointment -->
+                <!-- proxima cita -->
                 <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
                     <div class="flex items-center mb-3 md:mb-4">
                         <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
@@ -336,6 +353,7 @@
                         <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2">Próxima Cita</h3>
                     </div>
                     <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+                        <% if (next_appointment_date) { %>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-600 text-sm md:text-base">Fecha:</span>
                             <span class="font-medium text-sm md:text-base"><%= next_appointment_date %></span>
@@ -348,10 +366,19 @@
                             <span class="text-gray-600 text-sm md:text-base">Tipo Consulta:</span>
                             <span class="font-medium text-sm md:text-base"><%= tipo_consulta %></span>
                         </div>
+                        <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="ri-calendar-close-line text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600 text-sm md:text-base">No hay citas programadas</p>
+                            <% if (systemDegraded) { %>
+                            <p class="text-gray-500 text-xs mt-2">El sistema está temporalmente degradado</p>
+                            <% } %>
+                        </div>
+                        <% } %>
                     </div>
                 </div>
 
-                <!-- Notifications -->
+                <!-- notificaciones -->
                 <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
                     <div class="flex items-center mb-3 md:mb-4">
                         <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
@@ -390,11 +417,10 @@
     <%- include('footer') %>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Functionality can be added here if needed
         });
     </script>
     
-    <!-- JavaScript para sidebar móvil -->
+    <!-- JavaScript para sidebar movil -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
