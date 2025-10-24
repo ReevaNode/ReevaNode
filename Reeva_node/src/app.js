@@ -1,9 +1,11 @@
 // src/app.js
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import path from "path";
-import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import requireAuth from "./middlewares/requireAuth.js";
 
@@ -11,8 +13,6 @@ import requireAuth from "./middlewares/requireAuth.js";
 // Routers
 import authRouter from "./routes/auth.js";
 import bienvenidaRouter from "./routes/bienvenida.js";
-
-dotenv.config();
 
 const app = express();
 
