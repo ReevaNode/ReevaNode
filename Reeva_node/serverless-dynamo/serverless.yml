@@ -5,49 +5,10 @@ frameworkVersion: '4'
 provider:
   name: aws
   runtime: nodejs20.x
-  region: ${opt:region, 'us-east-1'}
-  stage: ${opt:stage, 'dev'}
-  role: arn:aws:iam::767397714550:role/LabRole
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:BatchWriteItem
-            - dynamodb:DeleteItem
-            - dynamodb:DescribeTable
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:UpdateItem
-          Resource:
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/agenda
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/agenda/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/box
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/box/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/estadobox
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/estadobox/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/items
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/items/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personalizacion
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personalizacion/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/registroagenda
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/registroagenda/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipobox
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipobox/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoconsulta
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoconsulta/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoestado
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoestado/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoitem
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipoitem/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipousuario
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tipousuario/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tiprofesional
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/tiprofesional/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/usuario
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/usuario/index/*
+  region: ${opt:region, env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, env:STAGE, 'dev'}
+  # usando LABROLE para AWS Academy (ya tiene todos los permisos)
+  role: ${env:LABROLE}
   environment:
     AGENDA_TABLE: agenda
     BOX_TABLE: box
@@ -336,9 +297,28 @@ resources:
         AttributeDefinitions:
           - AttributeName: idAgenda
             AttributeType: S
+          - AttributeName: horainicio
+            AttributeType: S
+          - AttributeName: idUsuario
+            AttributeType: S
         KeySchema:
           - AttributeName: idAgenda
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: HoraInicioIndex
+            KeySchema:
+              - AttributeName: horainicio
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: UsuarioIndex
+            KeySchema:
+              - AttributeName: idUsuario
+                KeyType: HASH
+              - AttributeName: horainicio
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
 
     RegistroAgendaTable:
       Type: AWS::DynamoDB::Table

@@ -1,10 +1,12 @@
+// ruta de bienvenida
 import { Router } from "express";
 import { requirePermission } from "../middlewares/requirePermission.js";
-import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import db from '../../db.js';
 import { retryWithBackoff, CircuitBreaker, SimpleCache } from '../utils/resilience.js';
 
 const router = Router();
+const logger = new Logger('BIENVENIDA');
 
 // inicializar Circuit Breaker y Cache 
 const agendaCircuitBreaker = new CircuitBreaker({
@@ -99,16 +101,18 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res
       next_appointment_time =
         inicio.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) +
         " - " +
-        termino.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+        fechaTermino.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
       tipo_consulta = agenda.idtipoconsulta;
+    } else {
+      logger.info('No se encontraron agendas para el usuario', { userId });
     }
 
     // 4. renderizar vista con indicadores de estado
     res.render("Bienvenida-y-Opciones", {
       user: req.session.user,
-      next_appointment_date,
-      next_appointment_time,
+      next_appointment_date: proxima_cita_fecha,
+      next_appointment_time: proxima_cita_hora,
       tipo_consulta,
       // indicadores de resiliencia
       systemDegraded,
