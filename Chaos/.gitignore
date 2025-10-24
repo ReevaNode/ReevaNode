@@ -1,0 +1,18 @@
+# Environment variables
+.env
+
+# Results directory (contiene datos de experimentos)
+results/
+
+# Artillery temp files
+/tmp/reeva-chaos-test.yml
+
+# Node modules (por si acaso)
+node_modules/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
