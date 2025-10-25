@@ -52,6 +52,12 @@
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
+      <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
+      <a href="/admin-bdd" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'admin-bdd') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+        <i class="ri-database-2-line ri-lg"></i>
+        <span class="font-medium">Admin BD</span>
+      </a>
+      <% } %>
     </div>
     
     <!-- Desktop Profile -->
@@ -128,6 +134,13 @@
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
+      
+      <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
+      <a href="/admin-bdd" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'admin-bdd') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+        <i class="ri-database-2-line ri-lg"></i>
+        <span class="font-medium">Admin BD</span>
+      </a>
+      <% } %>
       
       <hr class="my-4 border-gray-200">
       

@@ -17,6 +17,7 @@ import Logger from "./utils/logger.js";
 // rutas
 import authRouter from "./routes/auth.js";
 import bienvenidaRouter from "./routes/bienvenida.js";
+import adminBDDRouter from "./routes/adminBDD.js";
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.set("view engine", "ejs");
 // rutas
 app.use("/", authRouter);
 app.use("/", requireAuth, bienvenidaRouter);
+app.use("/", requireAuth, adminBDDRouter);
 
 // 404
 app.use((req, res) => {
