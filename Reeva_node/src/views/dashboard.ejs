@@ -167,20 +167,30 @@
     </div>
 
     <!-- KPIs secundarios -->
+    <% 
+      const bestSpecialtyHasData = hasBestSpecialtyUsage;
+      const bestSpecialtyNameText = bestSpecialtyHasData ? (bestSpecialtyUsageData.nombre ?? bestSpecialtyUsageData.label ?? 'Especialidad') : 'Sin datos en este período';
+      const bestSpecialtyMetaText = bestSpecialtyHasData
+        ? `${bestSpecialtyUsageData.conteo ?? 0} agendas • ${bestSpecialtyUsageData.porcentaje ?? 0}% del período`
+        : 'No hay agendamientos registrados.';
+      const bestSpecialtyPeriodText = selectedSpecialtyPeriodDescription || 'Sin período seleccionado';
+
+      const bestBoxHasData = hasBestBoxUsage;
+      const bestBoxNameText = bestBoxHasData ? `Box #${bestBoxUsageData.numero ?? '—'}` : 'Sin datos en este período';
+      const bestBoxMetaText = bestBoxHasData
+        ? `${bestBoxUsageData.porcentaje ?? 0}% del tiempo ocupado`
+        : 'No hay agendamientos registrados.';
+      const bestBoxPeriodText = selectedBoxPeriodDescription || 'Sin período seleccionado';
+    %>
     <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <article class="bg-white border rounded-lg p-5 shadow-sm flex flex-col gap-4">
         <div class="flex justify-between items-start gap-4">
           <div class="flex-1 min-w-0">
             <p class="text-xs md:text-sm text-gray-500 mb-1">Especialidad más ocupada</p>
-            <% if (hasBestSpecialtyUsage) { %>
-              <p class="text-lg md:text-2xl font-semibold leading-tight"><%= bestSpecialtyUsageData.nombre %></p>
-              <div class="mt-1 text-xs text-gray-500">
-                <%= bestSpecialtyUsageData.conteo ?? 0 %> agendas • <%= bestSpecialtyUsageData.porcentaje %>% del período
-              </div>
-            <% } else { %>
-              <p class="text-lg font-semibold text-gray-400">Sin datos en este período</p>
-              <div class="mt-1 text-xs text-gray-400">No hay agendamientos registrados.</div>
-            <% } %>
+            <p class="text-lg md:text-2xl font-semibold leading-tight <%= bestSpecialtyHasData ? 'text-gray-900' : 'text-gray-400' %>" id="best-specialty-name"><%= bestSpecialtyNameText %></p>
+            <div class="mt-1 text-xs <%= bestSpecialtyHasData ? 'text-gray-500' : 'text-gray-400' %>" id="best-specialty-meta">
+              <%= bestSpecialtyMetaText %>
+            </div>
           </div>
           <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 flex-shrink-0">
             <i class="ri-eye-line ri-lg"></i>
@@ -198,8 +208,8 @@
           <% }) %>
         </div>
 
-        <div class="text-xs text-gray-400">
-          Período: <%= selectedSpecialtyPeriodDescription %>
+        <div class="text-xs text-gray-400" id="best-specialty-period">
+          Período: <%= bestSpecialtyPeriodText %>
         </div>
       </article>
 
@@ -207,13 +217,8 @@
         <div class="flex justify-between items-start gap-4">
           <div class="flex-1 min-w-0">
             <p class="text-xs md:text-sm text-gray-500 mb-1">Box más utilizado</p>
-            <% if (hasBestBoxUsage) { %>
-              <p class="text-lg md:text-2xl font-semibold leading-tight">Box #<%= bestBoxUsageData.numero %></p>
-              <div class="mt-1 text-xs text-gray-500"><%= bestBoxUsageData.porcentaje %>% del tiempo ocupado</div>
-            <% } else { %>
-              <p class="text-lg font-semibold text-gray-400">Sin datos en este período</p>
-              <div class="mt-1 text-xs text-gray-400">No hay agendamientos registrados.</div>
-            <% } %>
+            <p class="text-lg md:text-2xl font-semibold leading-tight <%= bestBoxHasData ? 'text-gray-900' : 'text-gray-400' %>" id="best-box-name"><%= bestBoxNameText %></p>
+            <div class="mt-1 text-xs <%= bestBoxHasData ? 'text-gray-500' : 'text-gray-400' %>" id="best-box-meta"><%= bestBoxMetaText %></div>
           </div>
           <div class="w-10 h-10 flex items-center justify-center rounded-full bg-amber-100 text-amber-500 flex-shrink-0">
             <i class="ri-star-line ri-lg"></i>
@@ -231,8 +236,8 @@
           <% }) %>
         </div>
 
-        <div class="text-xs text-gray-400">
-          Período: <%= selectedBoxPeriodDescription %>
+        <div class="text-xs text-gray-400" id="best-box-period">
+          Período: <%= bestBoxPeriodText %>
         </div>
       </article>
     </section>
@@ -528,6 +533,84 @@
     });
     window.addEventListener('resize', () => horizontalBar.resize());
 
+    const ACTIVE_PERIOD_CLASSES = ['bg-primary', 'text-white', 'border-primary', 'shadow-sm'];
+    const INACTIVE_PERIOD_CLASSES = ['bg-white', 'border-gray-200', 'text-gray-600'];
+    const bestSpecialtyNameEl = document.getElementById('best-specialty-name');
+    const bestSpecialtyMetaEl = document.getElementById('best-specialty-meta');
+    const bestSpecialtyPeriodEl = document.getElementById('best-specialty-period');
+    const bestBoxNameEl = document.getElementById('best-box-name');
+    const bestBoxMetaEl = document.getElementById('best-box-meta');
+    const bestBoxPeriodEl = document.getElementById('best-box-period');
+    const boxPeriodValueEl = document.getElementById('box-period-value');
+    const specialtyPeriodValueEl = document.getElementById('specialty-period-value');
+    let boxPeriodButtonsList = [];
+    let specialtyPeriodButtonsList = [];
+    let fetchAndUpdateRef = null;
+
+    const applyPeriodButtonState = (button, isActive) => {
+      if (!button) return;
+      ACTIVE_PERIOD_CLASSES.forEach((cls) => button.classList.toggle(cls, isActive));
+      INACTIVE_PERIOD_CLASSES.forEach((cls) => button.classList.toggle(cls, !isActive));
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    };
+
+    const setPeriodButtonsState = (buttons, activeValue, datasetKey) => {
+      if (!Array.isArray(buttons) || !buttons.length) return;
+      const normalized = activeValue != null ? String(activeValue) : null;
+      buttons.forEach((button) => {
+        const value = button?.dataset?.[datasetKey] != null ? String(button.dataset[datasetKey]) : null;
+        applyPeriodButtonState(button, normalized != null ? value === normalized : false);
+      });
+    };
+
+    const updateBestSpecialtyCard = (info = null, periodDescription = '') => {
+      const hasData = info && typeof info === 'object';
+      const nameText = hasData ? (info.nombre ?? info.label ?? 'Especialidad') : 'Sin datos en este período';
+      const count = Number(info?.conteo ?? info?.total ?? 0);
+      const percentage = Number(info?.porcentaje ?? 0);
+      const metaText = hasData
+        ? `${count} agendas • ${percentage}% del período`
+        : 'No hay agendamientos registrados.';
+
+      if (bestSpecialtyNameEl) {
+        bestSpecialtyNameEl.textContent = nameText;
+        bestSpecialtyNameEl.classList.toggle('text-gray-400', !hasData);
+        bestSpecialtyNameEl.classList.toggle('text-gray-900', hasData);
+      }
+      if (bestSpecialtyMetaEl) {
+        bestSpecialtyMetaEl.textContent = metaText;
+        bestSpecialtyMetaEl.classList.toggle('text-gray-400', !hasData);
+        bestSpecialtyMetaEl.classList.toggle('text-gray-500', hasData);
+      }
+      if (bestSpecialtyPeriodEl) {
+        const description = periodDescription || 'Sin período seleccionado';
+        bestSpecialtyPeriodEl.textContent = `Período: ${description}`;
+      }
+    };
+
+    const updateBestBoxCard = (info = null, periodDescription = '') => {
+      const hasData = info && typeof info === 'object';
+      const numero = info?.numero ?? info?.boxId ?? null;
+      const percentage = Number(info?.porcentaje ?? 0);
+      const nameText = hasData && numero != null ? `Box #${numero}` : 'Sin datos en este período';
+      const metaText = hasData ? `${percentage}% del tiempo ocupado` : 'No hay agendamientos registrados.';
+
+      if (bestBoxNameEl) {
+        bestBoxNameEl.textContent = nameText;
+        bestBoxNameEl.classList.toggle('text-gray-400', !hasData);
+        bestBoxNameEl.classList.toggle('text-gray-900', hasData);
+      }
+      if (bestBoxMetaEl) {
+        bestBoxMetaEl.textContent = metaText;
+        bestBoxMetaEl.classList.toggle('text-gray-400', !hasData);
+        bestBoxMetaEl.classList.toggle('text-gray-500', hasData);
+      }
+      if (bestBoxPeriodEl) {
+        const description = periodDescription || 'Sin período seleccionado';
+        bestBoxPeriodEl.textContent = `Período: ${description}`;
+      }
+    };
+
     /* Weekly data managed via ECharts */
     let applyWeeklyData;
     let weeklyTrendLabels = [];
@@ -794,6 +877,66 @@
 
           applyWeeklyData(defaultLabel);
         }
+
+        if (Object.prototype.hasOwnProperty.call(data, 'best_specialty_usage') || Object.prototype.hasOwnProperty.call(data, 'best_specialty_period_description')) {
+          const specialtyValue = Object.prototype.hasOwnProperty.call(data, 'best_specialty_period_value')
+            ? (data.best_specialty_period_value ?? '')
+            : specialtyPeriodValueEl?.value ?? '';
+          if (specialtyPeriodValueEl) {
+            specialtyPeriodValueEl.value = specialtyValue;
+          }
+          if (!specialtyPeriodButtonsList.length) {
+            specialtyPeriodButtonsList = Array.from(document.querySelectorAll('[data-specialty-period]'));
+          }
+          setPeriodButtonsState(specialtyPeriodButtonsList, specialtyValue, 'specialtyPeriod');
+          updateBestSpecialtyCard(
+            data.best_specialty_usage,
+            data.best_specialty_period_description
+          );
+        }
+
+        if (Object.prototype.hasOwnProperty.call(data, 'best_box_usage') || Object.prototype.hasOwnProperty.call(data, 'best_box_period_description')) {
+          const boxValue = Object.prototype.hasOwnProperty.call(data, 'best_box_period_value')
+            ? (data.best_box_period_value ?? '')
+            : boxPeriodValueEl?.value ?? '';
+          if (boxPeriodValueEl) {
+            boxPeriodValueEl.value = boxValue;
+          }
+          if (!boxPeriodButtonsList.length) {
+            boxPeriodButtonsList = Array.from(document.querySelectorAll('[data-box-period]'));
+          }
+          setPeriodButtonsState(boxPeriodButtonsList, boxValue, 'boxPeriod');
+          updateBestBoxCard(
+            data.best_box_usage,
+            data.best_box_period_description
+          );
+        }
+
+        if (Array.isArray(data.specialty_usage_options)) {
+          if (!specialtyPeriodButtonsList.length) {
+            specialtyPeriodButtonsList = Array.from(document.querySelectorAll('[data-specialty-period]'));
+          }
+          specialtyPeriodButtonsList.forEach((button) => {
+            const value = button?.dataset?.specialtyPeriod;
+            const option = data.specialty_usage_options.find((item) => String(item.value) === String(value));
+            if (option && option.label) {
+              button.textContent = option.label;
+            }
+          });
+        }
+
+        if (Array.isArray(data.box_usage_options)) {
+          if (!boxPeriodButtonsList.length) {
+            boxPeriodButtonsList = Array.from(document.querySelectorAll('[data-box-period]'));
+          }
+          boxPeriodButtonsList.forEach((button) => {
+            const value = button?.dataset?.boxPeriod;
+            const option = data.box_usage_options.find((item) => String(item.value) === String(value));
+            if (option && option.label) {
+              button.textContent = option.label;
+            }
+          });
+        }
       }
 
       async function fetchAndUpdate(event) {
@@ -811,6 +954,8 @@
         }
       }
 
+      fetchAndUpdateRef = fetchAndUpdate;
+
       formHoras?.addEventListener('submit', fetchAndUpdate);
       formDias?.addEventListener('submit', fetchAndUpdate);
 
@@ -827,34 +972,35 @@
     })();
 
     document.addEventListener('DOMContentLoaded', function () {
-      const boxPeriodButtons = document.querySelectorAll('[data-box-period]');
-      const boxPeriodValueEl = document.getElementById('box-period-value');
-      if (boxPeriodButtons.length) {
-        boxPeriodButtons.forEach((button) => {
+      boxPeriodButtonsList = Array.from(document.querySelectorAll('[data-box-period]'));
+      specialtyPeriodButtonsList = Array.from(document.querySelectorAll('[data-specialty-period]'));
+
+      if (boxPeriodButtonsList.length) {
+        boxPeriodButtonsList.forEach((button) => {
           button.addEventListener('click', () => {
-            const params = new URLSearchParams(window.location.search);
-            params.set('box_period', button.dataset.boxPeriod);
+            const value = button.dataset.boxPeriod ?? '';
             if (boxPeriodValueEl) {
-              boxPeriodValueEl.value = button.dataset.boxPeriod;
+              boxPeriodValueEl.value = value;
             }
-            window.location.search = params.toString();
+            setPeriodButtonsState(boxPeriodButtonsList, value, 'boxPeriod');
+            fetchAndUpdateRef?.();
           });
         });
+        setPeriodButtonsState(boxPeriodButtonsList, boxPeriodValueEl?.value ?? null, 'boxPeriod');
       }
 
-      const specialtyPeriodButtons = document.querySelectorAll('[data-specialty-period]');
-      const specialtyPeriodValueEl = document.getElementById('specialty-period-value');
-      if (specialtyPeriodButtons.length) {
-        specialtyPeriodButtons.forEach((button) => {
+      if (specialtyPeriodButtonsList.length) {
+        specialtyPeriodButtonsList.forEach((button) => {
           button.addEventListener('click', () => {
-            const params = new URLSearchParams(window.location.search);
-            params.set('specialty_period', button.dataset.specialtyPeriod);
+            const value = button.dataset.specialtyPeriod ?? '';
             if (specialtyPeriodValueEl) {
-              specialtyPeriodValueEl.value = button.dataset.specialtyPeriod;
+              specialtyPeriodValueEl.value = value;
             }
-            window.location.search = params.toString();
+            setPeriodButtonsState(specialtyPeriodButtonsList, value, 'specialtyPeriod');
+            fetchAndUpdateRef?.();
           });
         });
+        setPeriodButtonsState(specialtyPeriodButtonsList, specialtyPeriodValueEl?.value ?? null, 'specialtyPeriod');
       }
 
       weeklyTrendSelectEl = document.getElementById('especialidad');

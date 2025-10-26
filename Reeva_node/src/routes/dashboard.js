@@ -977,6 +977,18 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
         weekly_all_months: viewModel.weeklyAllMonths,
         weekly_selected_year: viewModel.weeklySelectedYear,
         weekly_selected_month: viewModel.weeklySelectedMonth,
+        best_specialty_usage: viewModel.bestSpecialtyUsageData,
+        best_specialty_has_data: viewModel.hasBestSpecialtyUsage,
+        best_specialty_period_value: viewModel.selectedSpecialtyPeriodValue,
+        best_specialty_period_label: viewModel.selectedSpecialtyPeriodLabel,
+        best_specialty_period_description: viewModel.selectedSpecialtyPeriodDescription,
+        specialty_usage_options: viewModel.specialtyUsageOptions,
+        best_box_usage: viewModel.bestBoxUsageData,
+        best_box_has_data: viewModel.hasBestBoxUsage,
+        best_box_period_value: viewModel.selectedBoxPeriodValue,
+        best_box_period_label: viewModel.selectedBoxPeriodLabel,
+        best_box_period_description: viewModel.selectedBoxPeriodDescription,
+        box_usage_options: viewModel.boxUsageOptions,
       });
     }
 
