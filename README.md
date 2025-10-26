@@ -138,8 +138,11 @@ NODE_ENV=development
 # Config SNS
 SNS_TOPIC_ARN=XXXXXXXXXXXX
 ADMIN_EMAIL=XXXXXXXXXXXX
-```
 
+# Parameters Table
+PARAMETERS_TABLE=aws-cognito-jwt-login-dev-parameters-new
+AUTH_API_BASE=https://<tu-api-id>.execute-api.us-east-1.amazonaws.com
+```
 ## Despliegue de Base de Datos (DynamoDB)
 
 ### 1. Navegar al Directorio Serverless

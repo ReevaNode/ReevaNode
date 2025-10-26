@@ -1,6 +1,6 @@
 service: reeva-dynamo
 
-frameworkVersion: '4'
+frameworkVersion: '3'
 
 provider:
   name: aws
@@ -8,7 +8,7 @@ provider:
   region: ${opt:region, env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, env:STAGE, 'dev'}
   # usando LABROLE para AWS Academy (ya tiene todos los permisos)
-  role: ${env:LABROLE}
+  role: arn:aws:iam::905418353372:role/LabRole
   environment:
     AGENDA_TABLE: agenda
     BOX_TABLE: box
@@ -152,6 +152,14 @@ functions:
       - httpApi:
           method: POST
           path: /seed/items
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  dotenv:
+    path: ../.env
 
 resources:
   Resources:

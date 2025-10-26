@@ -6,14 +6,32 @@ provider:
   runtime: nodejs20.x
   region: ${opt:region, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-  role: ${env:LABROLE}
+  role: arn:aws:iam::905418353372:role/LabRole
   environment:
     USER_POOL_ID: { Ref: CognitoUserPool }
     USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }
     USER_TABLE: { Ref: UserTable }
+    PARAMETERS_TABLE: { Ref: CustomParametersTable }
   logs:
     httpApi: true
   httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Amz-Date
+        - X-Api-Key
+        - X-Amz-Security-Token
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowCredentials: false
+      maxAge: 3600
     authorizers:
       cognitoJwt:
         type: jwt
@@ -73,7 +91,7 @@ functions:
           method: GET
           path: /auth/roles
 
-  # === ADMINISTRACIÓN (REQUIERE AUTENTICACIÓN)(duda) ===
+  # === ADMINISTRACIÓN (REQUIERE AUTENTICACIÓN) ===
   assignRole:
     handler: src/handlers/permission.assignRole
     events:
@@ -100,9 +118,42 @@ functions:
           path: /admin/users
           authorizer:
             name: cognitoJwt
+  
+  # === PERSONALIZACION ===
+  getPersonalization:
+    handler: src/handlers/personalization.getPersonalization
+    events:
+      - httpApi:
+          method: GET
+          path: /personalization
+          authorizer:
+            name: cognitoJwt
+
+  updatePersonalization:
+    handler: src/handlers/personalization.updatePersonalization
+    events:
+      - httpApi:
+          method: PUT
+          path: /personalization
+          authorizer:
+            name: cognitoJwt
+
+  deletePersonalization:
+    handler: src/handlers/personalization.deletePersonalization
+    events:
+      - httpApi:
+          method: DELETE
+          path: /personalization
+          authorizer:
+            name: cognitoJwt
 
 plugins:
+  - serverless-dotenv-plugin
   - serverless-offline
+
+custom:
+  dotenv:
+    path: ../.env
 
 package:
   individually: true
@@ -130,7 +181,6 @@ resources:
             RequireNumbers: true
             RequireSymbols: false
             RequireUppercase: true
-        # Configuración de mensajes personalizados (opcional)
         VerificationMessageTemplate:
           DefaultEmailOption: CONFIRM_WITH_CODE
           EmailMessage: 'Tu código de verificación es {####}'
@@ -147,8 +197,7 @@ resources:
         ExplicitAuthFlows:
           - ALLOW_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
-          - ALLOW_USER_SRP_AUTH  # Para autenticación más segura
-        # Configuración de tokens
+          - ALLOW_USER_SRP_AUTH
         AccessTokenValidity: 5    
         IdTokenValidity: 5          
         RefreshTokenValidity: 30  
@@ -156,7 +205,6 @@ resources:
           AccessToken: minutes
           IdToken: minutes
           RefreshToken: days
-        # Configuración adicional de seguridad
         ReadAttributes:
           - email
           - email_verified
@@ -177,7 +225,6 @@ resources:
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-        # Índice global secundario para buscar por email
         GlobalSecondaryIndexes:
           - IndexName: EmailIndex
             KeySchema:
@@ -185,7 +232,27 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-        # Configuración de backup y punto en tiempo
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
+    # === TABLA DE PARAMETROS DE PERSONALIZACION ===
+    CustomParametersTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${sls:stage}-parameters-new
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: idUser
+            AttributeType: S
+        KeySchema:
+          - AttributeName: idUser
+            KeyType: HASH
         PointInTimeRecoverySpecification:
           PointInTimeRecoveryEnabled: true
         Tags:
@@ -213,6 +280,12 @@ resources:
       Value: { Ref: UserTable }
       Export:
         Name: ${self:service}-${sls:stage}-UserTableName
+
+    ParametersTableName:
+      Description: 'DynamoDB Parameters Table Name'
+      Value: { Ref: CustomParametersTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-ParametersTableName
 
     ApiEndpoint:
       Description: 'API Gateway Endpoint URL'

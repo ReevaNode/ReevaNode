@@ -18,6 +18,7 @@ import Logger from "./utils/logger.js";
 import authRouter from "./routes/auth.js";
 import bienvenidaRouter from "./routes/bienvenida.js";
 import adminBDDRouter from "./routes/adminBDD.js";
+import agendaRouter from "./routes/agenda.js";
 
 const app = express();
 
@@ -31,12 +32,12 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   rolling: true,
-  name: 'reeva.sid', // nombre custom para ocultar que es express
+  name: 'reeva.sid', 
   cookie: {
     maxAge: config.seguridad.sessionMaxAge,
-    httpOnly: true, // contra XSS
-    secure: config.seguridad.sessionSecure, // solo HTTPS en prod
-    sameSite: config.seguridad.sessionSameSite, // contra CSRF
+    httpOnly: true, 
+    secure: config.seguridad.sessionSecure, 
+    sameSite: config.seguridad.sessionSameSite, 
     path: '/',
   }
 }));
@@ -48,12 +49,43 @@ app.use(cors({
   origin: config.cors.origin,
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
-app.use(morgan("dev"));
-app.use(loggerRequest); // logger custom
 
-// archivos estaticos
+app.use((req, res, next) => {
+  // Usuario
+  res.locals.user = req.session.user || null;
+  
+  // Preferencias de personalización con valores por defecto
+  res.locals.userLang = req.session.userLang || 'es';
+  res.locals.userTheme = req.session.userTheme || 'claro';
+  
+  // Variables de entorno necesarias en el frontend
+  const authApiBase = process.env.AUTH_API_BASE || config.api?.authBase;
+  res.locals.AUTH_API_BASE = authApiBase;
+  
+  // Debug detallado (puedes comentar despues de verificar)
+  if (req.session.user) {
+    console.log('Sesión actual:', {
+      email: req.session.user.email,
+      idioma: res.locals.userLang,
+      aspecto: res.locals.userTheme,
+      hasToken: !!req.session.user.idToken
+    });
+  }
+  
+  // Advertencia si falta AUTH_API_BASE
+  if (!process.env.AUTH_API_BASE) {
+    console.warn('AUTH_API_BASE no está definida en .env, usando fallback:', authApiBase);
+  }
+  
+  next();
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
+app.use(loggerRequest); 
+
+// archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 
 // motor de vistas
@@ -64,6 +96,7 @@ app.set("view engine", "ejs");
 app.use("/", authRouter);
 app.use("/", requireAuth, bienvenidaRouter);
 app.use("/", requireAuth, adminBDDRouter);
+app.use("/", requireAuth, agendaRouter);
 
 // 404
 app.use((req, res) => {

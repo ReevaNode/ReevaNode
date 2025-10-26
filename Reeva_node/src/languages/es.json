@@ -1,0 +1,39 @@
+{
+  "header": {
+    "home": "Inicio",
+    "dashboard": "Dashboard",
+    "boxMatrix": "Matriz Box",
+    "agenda": "Agenda",
+    "adminDB": "Admin BD",
+    "profile": "Perfil",
+    "mySpace": "Mi Espacio",
+    "personalization": "Personalización",
+    "logout": "Cerrar Sesión"
+  },
+  "personalization": {
+    "title": "Personalización",
+    "subtitle": "Configura la apariencia e idioma de la plataforma",
+    "appearance": {
+      "title": "Apariencia",
+      "subtitle": "Elige el modo que mejor se adapte a ti",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    },
+    "language": {
+      "title": "Idioma",
+      "subtitle": "Selecciona el idioma preferido de la interfaz",
+      "spanish": "Español",
+      "english": "Inglés"
+    }
+  },
+  "common": {
+    "menu": "Menú",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  }
+}
