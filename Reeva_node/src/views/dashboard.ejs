@@ -26,6 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/header.css" />
   <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 <body class="font-sans min-h-screen flex flex-col">
@@ -1211,7 +1212,7 @@
         if (event.target === reportModal) hideModal();
       });
 
-      const mobileBtn = document.getElementById('mobile-menu-btn');
+      const mobileBtn = document.getElementById('mobileMenuBtn');
       const closeBtn = document.querySelector('#mobileMenu button');
       const overlay = document.getElementById('mobileMenuOverlay');
 
@@ -1238,6 +1239,23 @@
       document.addEventListener('click', (event) => {
         if (perfilBtn && perfilMenu && !perfilBtn.contains(event.target) && !perfilMenu.contains(event.target)) {
           perfilMenu.classList.add('hidden');
+        }
+      });
+
+      if (typeof window.reevaSetLanguage === 'function') {
+        const currentLanguage = (window.reevaGetLanguage && window.reevaGetLanguage()) || 'es';
+        window.reevaSetLanguage(currentLanguage);
+      }
+
+      window.reevaInitPersonalization?.();
+      window.reevaInitLanguage?.();
+
+      document.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-personalizacion-trigger]');
+        if (trigger) {
+          event.preventDefault();
+          window.reevaInitPersonalization?.();
+          window.reevaOpenPersonalizationPanel?.();
         }
       });
     });

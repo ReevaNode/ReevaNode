@@ -272,18 +272,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Selector de idioma
-document.addEventListener('DOMContentLoaded', function() {
+const initLanguageSelector = () => {
   const wrapper = document.getElementById('language-wrapper');
   const toggle = document.getElementById('language-toggle');
   const menu = document.getElementById('language-menu');
   const options = document.querySelectorAll('[data-language-option]');
   const label = toggle ? toggle.querySelector('span') : null;
   const STORAGE_KEY = 'reeva-language';
-  
+
   if (!wrapper || !toggle || !menu || !label) {
     return;
   }
-  
+
+  if (toggle.dataset.bound === 'true') {
+    return;
+  }
+  toggle.dataset.bound = 'true';
+
   const setLanguage = (lang) => {
     const value = (lang || 'es').toLowerCase();
     label.textContent = value.toUpperCase();
@@ -293,34 +298,37 @@ document.addEventListener('DOMContentLoaded', function() {
     menu.classList.add('hidden');
     document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
   };
-  
+
   window.reevaSetLanguage = setLanguage;
   window.reevaGetLanguage = () => localStorage.getItem(STORAGE_KEY) || 'es';
-  
+
   const saved = localStorage.getItem(STORAGE_KEY);
   setLanguage(saved || 'es');
-  
+
   toggle.addEventListener('click', (event) => {
     event.preventDefault();
     menu.classList.toggle('hidden');
   });
-  
+
   options.forEach((option) => {
     option.addEventListener('click', () => {
       const { languageOption } = option.dataset;
       setLanguage(languageOption);
     });
   });
-  
+
   document.addEventListener('click', (event) => {
     if (!wrapper.contains(event.target)) {
       menu.classList.add('hidden');
     }
   });
-});
+};
+
+document.addEventListener('DOMContentLoaded', initLanguageSelector);
+window.reevaInitLanguage = initLanguageSelector;
 
 // Panel de personalización
-document.addEventListener('DOMContentLoaded', function() {
+const initPersonalizationPanel = () => {
   const overlay = document.getElementById('personalization-overlay');
   const panel = document.getElementById('personalization-panel');
   const closeBtn = document.getElementById('personalization-close');
@@ -336,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!overlay || !panel) {
     return;
   }
-  
+
   const updateActiveState = (elements, value, key) => {
     elements.forEach((element) => {
       const isActive = element.dataset[key] === value;
@@ -344,21 +352,66 @@ document.addEventListener('DOMContentLoaded', function() {
       element.setAttribute('aria-pressed', String(isActive));
     });
   };
-  
+
   const applyLanguageHighlight = (language) => {
     if (!languageButtons.length) {
       return;
     }
     updateActiveState(languageButtons, language, 'languageOption');
   };
-  
+
   const applyThemeHighlight = (theme) => {
     if (!themeButtons.length) {
       return;
     }
     updateActiveState(themeButtons, theme, 'themeOption');
   };
-  
+
+  const closeMobileMenuIfOpen = () => {
+    if (!mobileMenu || !mobileMenuOverlay) {
+      return;
+    }
+    if (!mobileMenu.classList.contains('translate-x-full')) {
+      mobileMenu.classList.remove('translate-x-0');
+      mobileMenu.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileMenuOverlay.classList.add('hidden');
+      }, 300);
+    }
+  };
+
+  const openPanel = () => {
+    perfilMenu?.classList.add('hidden');
+    closeMobileMenuIfOpen();
+    overlay.classList.remove('pointer-events-none');
+    panel.classList.remove('pointer-events-none');
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      panel.classList.remove('translate-x-full');
+      panel.classList.add('translate-x-0');
+    });
+    document.body.style.overflow = 'hidden';
+    panel.setAttribute('aria-hidden', 'false');
+  };
+
+  const closePanel = () => {
+    overlay.classList.add('pointer-events-none');
+    panel.classList.add('pointer-events-none');
+    overlay.classList.remove('opacity-100');
+    overlay.classList.add('opacity-0');
+    panel.classList.remove('translate-x-0');
+    panel.classList.add('translate-x-full');
+    document.body.style.overflow = '';
+    panel.setAttribute('aria-hidden', 'true');
+  };
+
+  window.reevaOpenPersonalizationPanel = () => {
+    initPersonalizationPanel();
+    panel.dataset.bound = 'true';
+    openPanel();
+  };
+
   const applySystemTheme = () => {
     if (!window.matchMedia) {
       return;
@@ -479,7 +532,44 @@ document.addEventListener('DOMContentLoaded', function() {
       openPanel();
     });
   });
-});
+};
+
+document.addEventListener('DOMContentLoaded', initPersonalizationPanel);
+window.reevaInitPersonalization = initPersonalizationPanel;
+window.reevaOpenPersonalizationPanel = () => {
+  initPersonalizationPanel();
+  const overlay = document.getElementById('personalization-overlay');
+  const panel = document.getElementById('personalization-panel');
+  const perfilMenu = document.getElementById('perfil-menu');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+  const closeMobileMenuIfOpen = () => {
+    if (!mobileMenu || !mobileMenuOverlay) {
+      return;
+    }
+    if (!mobileMenu.classList.contains('translate-x-full')) {
+      mobileMenu.classList.remove('translate-x-0');
+      mobileMenu.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileMenuOverlay.classList.add('hidden');
+      }, 300);
+    }
+  };
+  if (overlay && panel) {
+    perfilMenu?.classList.add('hidden');
+    closeMobileMenuIfOpen();
+    overlay.classList.remove('pointer-events-none');
+    panel.classList.remove('pointer-events-none');
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      panel.classList.remove('translate-x-full');
+      panel.classList.add('translate-x-0');
+    });
+    document.body.style.overflow = 'hidden';
+    panel.setAttribute('aria-hidden', 'false');
+  }
+};
 
 // Menú de perfil desktop
 document.addEventListener('DOMContentLoaded', function() {
