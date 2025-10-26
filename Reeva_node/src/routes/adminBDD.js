@@ -425,9 +425,14 @@ router.post('/admin-bdd/api/agenda/update-multiple', requireAdmin, async (req, r
     const result = await db.send(scanCmd);
     let agendas = result.Items || [];
     
-    // filtrar por rango de fechas
-    const fechaInicio = new Date(filters.fecha_inicio + 'T00:00:00Z');
-    const fechaFin = new Date(filters.fecha_fin + 'T23:59:59Z');
+    // filtrar por rango de fechas con hora
+    // si hora_inicio no se especifica, usar 00:00:00
+    // si hora_fin no se especifica, usar 23:59:59
+    const horaInicio = filters.hora_inicio || '00:00:00';
+    const horaFin = filters.hora_fin || '23:59:59';
+    
+    const fechaInicio = new Date(filters.fecha_inicio + 'T' + horaInicio + 'Z');
+    const fechaFin = new Date(filters.fecha_fin + 'T' + horaFin + 'Z');
     
     agendas = agendas.filter(a => {
       const horainicio = new Date(a.horainicio);

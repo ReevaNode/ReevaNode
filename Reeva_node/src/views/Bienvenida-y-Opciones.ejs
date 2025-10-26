@@ -21,50 +21,54 @@
 
 <!-- Mobile Menu Sidebar -->
 <div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50 md:hidden">
-  <div class="p-6">
-    <div class="flex items-center justify-between mb-8">
-      <h2 class="text-xl font-semibold text-gray-800">Menú</h2>
+  <div class="p-4">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Menú</h2>
+      <button id="close-mobile-menu" class="text-gray-500 hover:text-gray-700">
+        <i class="ri-close-line ri-xl"></i>
+      </button>
     </div>
     
     <nav class="space-y-4">
-      <a href="/inicio" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-home-4-line ri-lg"></i>
-        <span class="font-medium">Inicio</span>
+      <a href="/bienvenida" class="flex items-center gap-3 text-primary font-medium py-2">
+        <i class="ri-home-4-line"></i>
+        <span>Inicio</span>
       </a>
       
       <a href="/dashboard" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-line-chart-line ri-lg"></i>
-        <span class="font-medium">Dashboard</span>
+        <i class="ri-line-chart-line"></i>
+        <span>Dashboard</span>
       </a>
       
-      <a href="/box-matriz" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-grid-line ri-lg"></i>
-        <span class="font-medium">Matriz Box</span>
+      <a href="/matriz-box" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-grid-line"></i>
+        <span>Matriz Box</span>
       </a>
       
       <a href="/agenda" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-calendar-2-line ri-lg"></i>
-        <span class="font-medium">Agenda</span>
+        <i class="ri-calendar-2-line"></i>
+        <span>Agenda</span>
       </a>
       
-      <hr class="my-4 border-gray-200">
-      
-      <a href="/bienvenida" class="flex items-center gap-3 text-primary font-semibold py-2">
-        <i class="ri-user-line ri-lg"></i>
-        <span class="font-medium">Mi Espacio</span>
+      <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
+      <a href="/admin-bdd" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-database-2-line"></i>
+        <span>Admin BDD</span>
       </a>
-
-      <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-settings-3-line ri-lg"></i>
-        <span class="font-medium">Personalización</span>
-      </a>
-      
-      <a href="/logout"  class="flex items-center gap-3 text-red-600 hover:text-red-700 transition-colors py-2">
-        <i class="ri-logout-box-r-line ri-lg"></i>
-        <span class="font-medium">Cerrar Sesión</span>
-      </a>
+      <% } %>
     </nav>
-</div>
+    
+    <div class="absolute bottom-4 left-4 right-4">
+      <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2 mb-2">
+        <i class="ri-settings-3-line"></i>
+        <span>Personalización</span>
+      </a>
+      <a href="/logout" class="flex items-center gap-3 text-red-600 hover:text-red-700 transition-colors py-2">
+        <i class="ri-logout-box-r-line"></i>
+        <span>Cerrar Sesión</span>
+      </a>
+    </div>
+  </div>
 </div>
 
 
@@ -216,7 +220,7 @@
             <li>• Disponibilidad inmediata</li>
           </ul>
         </div>
-        <a href="/box-matriz" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
+        <a href="/matriz-box" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
           Ver Matriz Box
         </a>
       </div>
@@ -338,89 +342,6 @@
         </div>
     </section>
     <%- include('footer') %>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-        });
-    </script>
-    
-    <!-- JavaScript para sidebar movil -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const mobileMenu = document.getElementById('mobileMenu');
-      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-      
-      function toggleMobileMenu() {
-        if (mobileMenu.classList.contains('translate-x-full')) {
-          // Abrir
-          mobileMenuOverlay.classList.remove('hidden');
-          mobileMenu.classList.remove('translate-x-full');
-          mobileMenu.classList.add('translate-x-0');
-        } else {
-          // Cerrar
-          mobileMenu.classList.remove('translate-x-0');
-          mobileMenu.classList.add('translate-x-full');
-          setTimeout(() => {
-            mobileMenuOverlay.classList.add('hidden');
-          }, 300);
-        }
-      }
-      
-      if (mobileMenuBtn && mobileMenu && mobileMenuOverlay) {
-        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-        mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
-      }
-    });
-    </script>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const wrapper = document.getElementById('language-wrapper');
-      const toggle = document.getElementById('language-toggle');
-      const menu = document.getElementById('language-menu');
-      const options = document.querySelectorAll('[data-language-option]');
-      const label = toggle ? toggle.querySelector('span') : null;
-      const STORAGE_KEY = 'reeva-language';
-
-      if (!wrapper || !toggle || !menu || !label) {
-        return;
-      }
-
-      const setLanguage = (lang) => {
-        const value = (lang || 'es').toLowerCase();
-        label.textContent = value.toUpperCase();
-        toggle.dataset.language = value;
-        document.documentElement.lang = value;
-        localStorage.setItem(STORAGE_KEY, value);
-        menu.classList.add('hidden');
-        document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
-      };
-
-      window.reevaSetLanguage = setLanguage;
-      window.reevaGetLanguage = () => localStorage.getItem(STORAGE_KEY) || 'es';
-
-      const saved = localStorage.getItem(STORAGE_KEY);
-      setLanguage(saved || 'es');
-
-      toggle.addEventListener('click', (event) => {
-        event.preventDefault();
-        menu.classList.toggle('hidden');
-      });
-
-      options.forEach((option) => {
-        option.addEventListener('click', () => {
-          const { languageOption } = option.dataset;
-          setLanguage(languageOption);
-        });
-      });
-
-    document.addEventListener('click', (event) => {
-        if (!wrapper.contains(event.target)) {
-          menu.classList.add('hidden');
-        }
-      });
-    });
-    </script>
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -585,28 +506,6 @@
           openPanel();
         });
       });
-    });
-    </script>
-    
-    <script>
-    // Mostrar menú al hacer click en Perfil (solo desktop)
-    document.addEventListener('DOMContentLoaded', function() {
-        const perfilBtn = document.getElementById('perfil-btn');
-        const perfilMenu = document.getElementById('perfil-menu');
-        
-        if (perfilBtn && perfilMenu) {
-            perfilBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                perfilMenu.classList.toggle('hidden');
-            });
-            
-            // Ocultar menú al hacer click fuera
-            document.addEventListener('click', function(e) {
-                if (!perfilBtn.contains(e.target) && !perfilMenu.contains(e.target)) {
-                    perfilMenu.classList.add('hidden');
-                }
-            });
-        }
     });
     </script>
 </body>
