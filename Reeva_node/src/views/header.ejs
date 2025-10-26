@@ -68,7 +68,7 @@
     </div>
     
     <!-- Desktop Profile -->
-    <div class="hidden md:flex items-center gap-6 flex-none relative">
+    <div class="hidden md:flex items-center gap-6 flex-none">
       <div id="language-wrapper" class="relative">
         <button id="language-toggle" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-primary transition-colors">
           <span class="uppercase">ES</span>
@@ -79,25 +79,27 @@
           <button data-language-option="en" class="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-primary/10 hover:text-primary">EN</button>
         </div>
       </div>
-      <a href="" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
-        <i class="ri-user-line ri-lg"></i>
-        <span class="font-medium">Perfil</span>
-      </a>
-      <!-- Menú desplegable, aparece al hacer click en Perfil -->
-      <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 z-50 hidden">
-        <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
+      <div id="perfil-wrapper" class="relative">
+        <a href="#" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
           <i class="ri-user-line ri-lg"></i>
-          <span class="font-medium">Mi Espacio</span>
+          <span class="font-medium">Perfil</span>
         </a>
-        <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
-          <i class="ri-settings-3-line ri-lg"></i>
-          <span class="font-medium">Personalización</span>
-        </a>
-        <div class="border-t my-2"></div>
-        <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
-          <i class="ri-logout-box-r-line ri-lg"></i>
-          <span class="font-medium">Cerrar Sesión</span>
-        </a>
+        <!-- Menú desplegable, aparece al hacer click en Perfil -->
+        <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 hidden" style="z-index: 9999;">
+          <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
+            <i class="ri-user-line ri-lg"></i>
+            <span class="font-medium">Mi Espacio</span>
+          </a>
+          <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+            <i class="ri-settings-3-line ri-lg"></i>
+            <span class="font-medium">Personalización</span>
+          </a>
+          <div class="border-t my-2"></div>
+          <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+            <i class="ri-logout-box-r-line ri-lg"></i>
+            <span class="font-medium">Cerrar Sesión</span>
+          </a>
+        </div>
       </div>
     </div>
     <!-- Hamburger button para mobile -->
@@ -566,21 +568,58 @@ window.reevaOpenPersonalizationPanel = () => {
 };
 
 // Menú de perfil desktop
-document.addEventListener('DOMContentLoaded', function() {
+const initPerfilMenu = () => {
   const perfilBtn = document.getElementById('perfil-btn');
   const perfilMenu = document.getElementById('perfil-menu');
   
-  if (perfilBtn && perfilMenu) {
-    perfilBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      perfilMenu.classList.toggle('hidden');
-    });
-    
-    document.addEventListener('click', function(e) {
-      if (!perfilBtn.contains(e.target) && !perfilMenu.contains(e.target)) {
-        perfilMenu.classList.add('hidden');
-      }
-    });
+  console.log('Inicializando menú de perfil...', { perfilBtn, perfilMenu });
+  
+  if (!perfilBtn || !perfilMenu) {
+    console.warn('No se encontraron elementos del menú de perfil');
+    return;
   }
-});
+  
+  // Prevenir múltiples inicializaciones
+  if (perfilBtn.dataset.menuInitialized === 'true') {
+    console.log('Menú de perfil ya inicializado');
+    return;
+  }
+  perfilBtn.dataset.menuInitialized = 'true';
+  
+  perfilBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Click en botón de perfil, estado actual:', perfilMenu.classList.contains('hidden'));
+    
+    const isHidden = perfilMenu.classList.contains('hidden');
+    
+    if (isHidden) {
+      perfilMenu.classList.remove('hidden');
+      perfilMenu.style.display = 'block';
+      console.log('Menú desplegado');
+    } else {
+      perfilMenu.classList.add('hidden');
+      perfilMenu.style.display = 'none';
+      console.log('Menú ocultado');
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (!perfilBtn.contains(e.target) && !perfilMenu.contains(e.target)) {
+      perfilMenu.classList.add('hidden');
+      perfilMenu.style.display = 'none';
+    }
+  });
+  
+  console.log('Menú de perfil inicializado correctamente');
+};
+
+document.addEventListener('DOMContentLoaded', initPerfilMenu);
+
+// Por si acaso el DOMContentLoaded ya pasó
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPerfilMenu);
+} else {
+  initPerfilMenu();
+}
 </script>

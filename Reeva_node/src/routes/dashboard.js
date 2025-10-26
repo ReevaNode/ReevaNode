@@ -228,9 +228,9 @@ async function fetchBoxAggregates() {
   const especialidades = especialidadesBox;
 
   const labelColors = [
-    { key: "Ocupado", color: "#B4447C" },
-    { key: "Disponible", color: "#22C55E" },
-    { key: "Inhabilitado", color: "#F59E0B" },
+    { key: "Ocupado", color: "#22C55E" },      // Verde
+    { key: "Disponible", color: "#EF4444" },   // Rojo
+    { key: "Inhabilitado", color: "#6B7280" }, // Gris
   ].map((item) => ({ ...item, id: slugify(item.key) }));
 
   return {
@@ -656,9 +656,9 @@ function buildStaticDashboardData(query = {}) {
   );
 
   const labelColors = [
-    { key: "Ocupado", color: "#B4447C" },
-    { key: "Disponible", color: "#22C55E" },
-    { key: "Mantenimiento", color: "#F59E0B" },
+    { key: "Ocupado", color: "#22C55E" },      // Verde
+    { key: "Disponible", color: "#EF4444" },   // Rojo
+    { key: "Mantenimiento", color: "#6B7280" }, // Gris
   ].map((item) => ({ ...item, id: slugify(item.key) }));
 
   const especialidades = ["Todas", "Oftalmología", "Cardiología", "Neurología", "Urgencia"];
