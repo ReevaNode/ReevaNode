@@ -317,31 +317,78 @@
           <h2 class="text-xl font-semibold">Agendas finalizadas por día de la semana</h2>
           <p class="text-sm text-gray-500">Últimos 7 días, solo agendas finalizadas</p>
         </div>
-        <form id="form-dias" method="get" class="flex flex-col md:flex-row md:items-center md:space-x-3 space-y-3 md:space-y-0">
-          <label for="especialidad" class="text-sm font-medium text-gray-600">Especialidad</label>
-          <select name="especialidad" id="especialidad" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
-            <% const weeklyOptions = Object.keys(weeklySpecialtySeries || {}); %>
-            <% if ((weeklySpecialtySeries || {})['Todas']) { %>
-              <option value="Todas" <%= (especSeleccionada === 'Todas' || (!especSeleccionada && weeklySpecialtyDefault === 'Todas')) ? 'selected' : '' %>>Todas</option>
-            <% } %>
-            <% (weeklyOptions.length ? weeklyOptions : especialidades)
-              .filter((esp) => esp !== 'Todas')
-              .forEach((esp) => { %>
-              <option value="<%= esp %>" <%= esp === (especSeleccionada || weeklySpecialtyDefault) ? 'selected' : '' %>><%= esp %></option>
-            <% }) %>
-          </select>
-          <input type="hidden" name="fecha" value="<%= fechaSeleccionada %>">
-          <input type="hidden" name="prof_code" value="<%= profSeleccionado %>">
-          <input type="hidden" name="box_number" value="<%= boxSeleccionado %>">
-          <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition text-sm font-medium">Filtrar</button>
+        <form id="form-dias" method="get" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+          <div class="flex flex-col">
+            <label for="especialidad" class="text-sm font-medium text-gray-600 mb-1">Especialidad</label>
+            <select name="especialidad" id="especialidad" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+              <% const weeklyOptionsList = Array.isArray(weeklySpecialtyOptions) && weeklySpecialtyOptions.length ? weeklySpecialtyOptions : Object.keys(weeklySpecialtySeries || {}); %>
+              <% weeklyOptionsList.forEach((esp) => { %>
+                <option value="<%= esp %>" <%= esp === (especSeleccionada || weeklySpecialtyDefault || 'Todas') ? 'selected' : '' %>><%= esp %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label for="weekly-year" class="text-sm font-medium text-gray-600 mb-1">Año</label>
+            <select name="weekly_year" id="weekly-year" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+              <option value="" <%= !weeklySelectedYear ? 'selected' : '' %>>Todos</option>
+              <% (weeklyAvailableYears || []).forEach((year) => { %>
+                <option value="<%= year %>" <%= weeklySelectedYear === year ? 'selected' : '' %>><%= year %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label for="weekly-month" class="text-sm font-medium text-gray-600 mb-1">Mes</label>
+            <select name="weekly_month" id="weekly-month" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+              <option value="" <%= !weeklySelectedMonth ? 'selected' : '' %>>Todos</option>
+              <% const spanishMonths = [null, 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']; %>
+              <% (weeklyAvailableMonths || []).forEach((monthNumber) => { %>
+                <option value="<%= monthNumber %>" <%= weeklySelectedMonth === monthNumber ? 'selected' : '' %>><%= spanishMonths[monthNumber] %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label for="weekly-period" class="text-sm font-medium text-gray-600 mb-1">Período</label>
+            <div class="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50">Distribución semanal</div>
+          </div>
+          <div class="flex flex-col md:items-end justify-end">
+            <input type="hidden" name="fecha" value="<%= fechaSeleccionada %>">
+            <input type="hidden" name="prof_code" value="<%= profSeleccionado %>">
+            <input type="hidden" name="box_number" value="<%= boxSeleccionado %>">
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition text-sm font-medium w-full md:w-auto">Filtrar</button>
+          </div>
         </form>
       </div>
       <div class="w-full overflow-x-auto">
-        <canvas id="weekly-trend-chart" height="140"></canvas>
+        <div id="weekly-trend-chart" class="min-w-[320px] h-[18rem] md:h-[20rem]"></div>
+      </div>
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Día más activo</p>
+          <p id="weekly-top-day" class="text-lg font-semibold text-gray-800 mt-1">—</p>
+          <p id="weekly-top-day-detail" class="text-xs text-gray-500 mt-1">Sin datos para el período seleccionado.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Concentración</p>
+          <p id="weekly-top-percentage" class="text-lg font-semibold text-gray-800 mt-1">0%</p>
+          <p class="text-xs text-gray-500 mt-1">Porcentaje de agendas en el día más activo.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Total período</p>
+          <p id="weekly-total-count" class="text-lg font-semibold text-gray-800 mt-1">0</p>
+          <p class="text-xs text-gray-500 mt-1">Agendas finalizadas en el período filtrado.</p>
+        </div>
       </div>
       <script id="weekly-labels" type="application/json"><%- JSON.stringify(weeklySpecialtyLabels) %></script>
       <script id="weekly-series" type="application/json"><%- JSON.stringify(weeklySpecialtySeries) %></script>
       <script id="weekly-default" type="application/json"><%- JSON.stringify(weeklySpecialtyDefault || especSeleccionada || null) %></script>
+      <script id="weekly-options" type="application/json"><%- JSON.stringify(weeklySpecialtyOptions) %></script>
+      <script id="weekly-summary" type="application/json"><%- JSON.stringify(weeklySummary) %></script>
+      <script id="weekly-years" type="application/json"><%- JSON.stringify(weeklyAvailableYears) %></script>
+      <script id="weekly-months" type="application/json"><%- JSON.stringify(weeklyAvailableMonths) %></script>
+      <script id="weekly-months-map" type="application/json"><%- JSON.stringify(weeklyMonthsByYear) %></script>
+      <script id="weekly-all-months" type="application/json"><%- JSON.stringify(weeklyAllMonths) %></script>
+      <script id="weekly-selected-year" type="application/json"><%- JSON.stringify(weeklySelectedYear) %></script>
+      <script id="weekly-selected-month" type="application/json"><%- JSON.stringify(weeklySelectedMonth) %></script>
     </section>
 
     <div class="pt-4 flex justify-center">
@@ -481,30 +528,191 @@
     });
     window.addEventListener('resize', () => horizontalBar.resize());
 
-    /* Weekly data managed via Chart.js */
+    /* Weekly data managed via ECharts */
     let applyWeeklyData;
+    let weeklyTrendLabels = [];
+    let weeklyTrendSeries = {};
+    let weeklySummary = {};
+    let weeklyMonthsByYear = {};
+    let weeklyAllMonths = [];
+    let weeklyTrendSelectEl = null;
+    let weeklyYearSelectEl = null;
+    let weeklyMonthSelectEl = null;
+    let weeklyChartInstance = null;
+    const WEEK_MONTH_NAMES = [
+      null,
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+
+    const populateYearOptions = (selectEl, years, selectedYear) => {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Todos';
+      if (!selectedYear) defaultOption.selected = true;
+      selectEl.appendChild(defaultOption);
+      (Array.isArray(years) ? years : []).forEach((year) => {
+        const option = document.createElement('option');
+        option.value = String(year);
+        option.textContent = String(year);
+        if (selectedYear && Number(selectedYear) === Number(year)) {
+      option.selected = true;
+    }
+    selectEl.appendChild(option);
+  });
+};
+
+    const resolveWeeklySpecialtyLabel = (label) => {
+      if (label && weeklyTrendSeries[label]) return label;
+      if (weeklyTrendSeries['Todas']) return 'Todas';
+      const keys = Object.keys(weeklyTrendSeries);
+      return keys.length ? keys[0] : null;
+    };
+
+    const populateMonthOptions = (selectEl, months, selectedMonth) => {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Todos';
+      if (!selectedMonth) defaultOption.selected = true;
+      selectEl.appendChild(defaultOption);
+      (Array.isArray(months) ? months : []).forEach((monthNumber) => {
+        const option = document.createElement('option');
+        option.value = String(monthNumber);
+        option.textContent = WEEK_MONTH_NAMES[monthNumber] || `Mes ${monthNumber}`;
+        if (selectedMonth && Number(selectedMonth) === Number(monthNumber)) {
+          option.selected = true;
+        }
+        selectEl.appendChild(option);
+      });
+    };
 
     (function() {
       const formHoras = document.getElementById('form-horas');
       const formDias = document.getElementById('form-dias');
       const txtAg = document.getElementById('txt-horas-agendadas');
       const txtRe = document.getElementById('txt-horas-realizadas');
-      let weeklyTrendSelectEl = null;
-      let weeklyTrendLabels = [];
-      let weeklyTrendSeries = {};
-      let weeklyLineChart = null;
+      const weeklyTopDayEl = document.getElementById('weekly-top-day');
+      const weeklyTopDayDetailEl = document.getElementById('weekly-top-day-detail');
+      const weeklyTopPercentageEl = document.getElementById('weekly-top-percentage');
+      const weeklyTotalCountEl = document.getElementById('weekly-total-count');
+
+      const ensureWeeklyChart = () => {
+        if (!weeklyChartInstance) {
+          const container = document.getElementById('weekly-trend-chart');
+          if (container) {
+            weeklyChartInstance = echarts.init(container);
+          }
+        }
+        return weeklyChartInstance;
+      };
+
+      const renderWeeklyChart = (label) => {
+        const chart = ensureWeeklyChart();
+        if (!chart) return null;
+        const selected = resolveWeeklySpecialtyLabel(label);
+        const data = Array.isArray(weeklyTrendSeries[selected])
+          ? weeklyTrendSeries[selected]
+          : [];
+        const maxValue = data.reduce((acc, value) => Math.max(acc, value), 0);
+        chart.setOption({
+          color: ['#B4447C'],
+          grid: { left: '3%', right: '4%', bottom: '5%', containLabel: true },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+            borderWidth: 0,
+            padding: 12,
+            textStyle: { color: '#f8fafc' },
+            formatter: (params = []) => {
+              const item = params[0];
+              if (!item) return '';
+              const value = Number(item.value || 0);
+              return `${item.axisValueLabel}<br/>${value} agendas`;
+            },
+          },
+          xAxis: {
+            type: 'category',
+            data: weeklyTrendLabels,
+            axisTick: { alignWithLabel: true },
+            axisLabel: { color: '#64748b' },
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+          },
+          yAxis: {
+            type: 'value',
+            min: 0,
+            max: maxValue === 0 ? 1 : undefined,
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { color: '#64748b', precision: 0 },
+            splitLine: { lineStyle: { color: '#e2e8f0' } },
+          },
+          series: [
+            {
+              type: 'bar',
+              data,
+              barWidth: '55%',
+              itemStyle: {
+                borderRadius: [8, 8, 4, 4],
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: 'rgba(180, 68, 124, 0.85)' },
+                  { offset: 1, color: 'rgba(180, 68, 124, 0.25)' },
+                ]),
+              },
+              emphasis: {
+                itemStyle: {
+                  color: '#B4447C',
+                },
+              },
+            },
+          ],
+        });
+        window.addEventListener('resize', () => chart.resize());
+        return selected;
+      };
+
+      const updateWeeklySummary = (label) => {
+        const info = weeklySummary[label] || {};
+        if (weeklyTopDayEl) {
+          weeklyTopDayEl.textContent = info.topDayLabel || 'Sin datos';
+        }
+        if (weeklyTopDayDetailEl) {
+          if (info.topDayLabel) {
+            const agendasText = info.topDayCount === 1 ? 'agenda' : 'agendas';
+            weeklyTopDayDetailEl.textContent = `${info.topDayCount || 0} ${agendasText} registradas en ${info.topDayLabel}.`;
+          } else {
+            weeklyTopDayDetailEl.textContent = 'Sin datos para el período seleccionado.';
+          }
+        }
+        if (weeklyTopPercentageEl) {
+          weeklyTopPercentageEl.textContent = `${info.topDayPercentage || 0}%`;
+        }
+        if (weeklyTotalCountEl) {
+          weeklyTotalCountEl.textContent = info.total || 0;
+        }
+      };
 
       applyWeeklyData = function(label) {
-        if (!weeklyLineChart || !label) return;
-        const dataset = weeklyTrendSeries[label] || Array(weeklyTrendLabels.length).fill(0);
-        weeklyLineChart.data.labels = weeklyTrendLabels;
-        weeklyLineChart.data.datasets[0].data = dataset;
-        weeklyLineChart.data.datasets[0].label = label;
-        weeklyLineChart.update('none');
-        if (weeklyTrendSelectEl && weeklyTrendSelectEl.value !== label) {
-          weeklyTrendSelectEl.value = label;
+        const selected = renderWeeklyChart(label);
+        updateWeeklySummary(selected || label);
+        if (weeklyTrendSelectEl && selected) {
+          weeklyTrendSelectEl.value = selected;
         }
-      }
+      };
 
       function buildParams() {
         const prof = document.getElementById('prof_code')?.value || '';
@@ -513,6 +721,8 @@
         const espec = document.getElementById('especialidad')?.value || 'Todas';
         const boxPeriod = document.getElementById('box-period-value')?.value || '';
         const specialtyPeriod = document.getElementById('specialty-period-value')?.value || '';
+        const weeklyYear = document.getElementById('weekly-year')?.value || '';
+        const weeklyMonth = document.getElementById('weekly-month')?.value || '';
         const params = new URLSearchParams();
         if (prof) params.set('prof_code', prof);
         if (box) params.set('box_number', box);
@@ -520,11 +730,15 @@
         if (espec) params.set('especialidad', espec);
         if (boxPeriod) params.set('box_period', boxPeriod);
         if (specialtyPeriod) params.set('specialty_period', specialtyPeriod);
+        if (weeklyYear) params.set('weekly_year', weeklyYear);
+        if (weeklyMonth) params.set('weekly_month', weeklyMonth);
         return params.toString();
       }
 
-     function updateFromData(data) {
+      function updateFromData(data) {
         weeklyTrendSelectEl = weeklyTrendSelectEl || document.getElementById('especialidad');
+        weeklyYearSelectEl = weeklyYearSelectEl || document.getElementById('weekly-year');
+        weeklyMonthSelectEl = weeklyMonthSelectEl || document.getElementById('weekly-month');
         if (txtAg) txtAg.textContent = data.horas_agendadas ?? '0';
         if (txtRe) txtRe.textContent = data.horas_realizadas ?? '0';
         const a = parseFloat(data.horas_agendadas_float || 0);
@@ -536,32 +750,49 @@
         if (data.weekly_labels && data.weekly_series) {
           weeklyTrendLabels = data.weekly_labels || [];
           weeklyTrendSeries = data.weekly_series || {};
-          const defaultLabel =
-            data.weekly_default ||
-            weeklyTrendSelectEl?.value ||
-            Object.keys(weeklyTrendSeries)[0] ||
-            null;
+          weeklySummary = data.weekly_summary || weeklySummary;
+          weeklyMonthsByYear = data.weekly_months_map || weeklyMonthsByYear;
+          weeklyAllMonths = data.weekly_all_months || weeklyAllMonths;
 
+          const availableOptions = Array.isArray(data.weekly_options)
+            ? data.weekly_options
+            : Object.keys(weeklyTrendSeries);
           if (weeklyTrendSelectEl) {
             weeklyTrendSelectEl.innerHTML = '';
-            const optionLabels = Object.keys(weeklyTrendSeries).sort((a, b) => {
-              if (a === 'Todas') return -1;
-              if (b === 'Todas') return 1;
-              return a.localeCompare(b, 'es', { sensitivity: 'base' });
-            });
-            optionLabels.forEach((label) => {
+            availableOptions.forEach((label) => {
               const option = document.createElement('option');
               option.value = label;
               option.textContent = label;
               weeklyTrendSelectEl.appendChild(option);
             });
+            weeklyTrendSelectEl.onchange = (event) => {
+              applyWeeklyData(event.target.value);
+            };
           }
 
-          if (defaultLabel) {
-            applyWeeklyData(defaultLabel);
-          } else if (weeklyTrendSelectEl && weeklyTrendSelectEl.value) {
-            applyWeeklyData(weeklyTrendSelectEl.value);
-          }
+          populateYearOptions(
+            weeklyYearSelectEl,
+            data.weekly_years || [],
+            data.weekly_selected_year ?? ''
+          );
+
+          const monthsForYear =
+            (data.weekly_selected_year && data.weekly_months_map?.[data.weekly_selected_year]) ||
+            data.weekly_months ||
+            weeklyAllMonths;
+
+          populateMonthOptions(
+            weeklyMonthSelectEl,
+            monthsForYear,
+            data.weekly_selected_month ?? ''
+          );
+
+          const defaultLabel =
+            data.weekly_default ||
+            weeklyTrendSelectEl?.value ||
+            resolveWeeklySpecialtyLabel('Todas');
+
+          applyWeeklyData(defaultLabel);
         }
       }
 
@@ -582,6 +813,17 @@
 
       formHoras?.addEventListener('submit', fetchAndUpdate);
       formDias?.addEventListener('submit', fetchAndUpdate);
+
+      weeklyYearSelectEl = document.getElementById('weekly-year');
+      weeklyMonthSelectEl = document.getElementById('weekly-month');
+      weeklyYearSelectEl?.addEventListener('change', (event) => {
+        const selected = event.target.value;
+        const months =
+          selected && weeklyMonthsByYear[selected]
+            ? weeklyMonthsByYear[selected]
+            : weeklyAllMonths;
+        populateMonthOptions(weeklyMonthSelectEl, months, '');
+      });
     })();
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -619,79 +861,55 @@
       const weeklyLabelsEl = document.getElementById('weekly-labels');
       const weeklySeriesEl = document.getElementById('weekly-series');
       const weeklyDefaultEl = document.getElementById('weekly-default');
-      const weeklyCanvas = document.getElementById('weekly-trend-chart');
-      if (weeklyCanvas && weeklyLabelsEl && weeklySeriesEl) {
-        weeklyTrendLabels = JSON.parse(weeklyLabelsEl.textContent || '[]');
-        weeklyTrendSeries = JSON.parse(weeklySeriesEl.textContent || '{}');
-        const weeklyCtx = weeklyCanvas.getContext('2d');
-        const gradientWeekly = weeklyCtx.createLinearGradient(0, 0, 0, 220);
-        gradientWeekly.addColorStop(0, 'rgba(180, 68, 124, 0.65)');
-        gradientWeekly.addColorStop(1, 'rgba(180, 68, 124, 0.12)');
+      const weeklyOptionsEl = document.getElementById('weekly-options');
+      const weeklySummaryEl = document.getElementById('weekly-summary');
+      const weeklyYearsEl = document.getElementById('weekly-years');
+      const weeklyMonthsEl = document.getElementById('weekly-months');
+      const weeklyMonthsMapEl = document.getElementById('weekly-months-map');
+      const weeklyAllMonthsEl = document.getElementById('weekly-all-months');
+      const weeklySelectedYearEl = document.getElementById('weekly-selected-year');
+      const weeklySelectedMonthEl = document.getElementById('weekly-selected-month');
 
-        weeklyLineChart = new Chart(weeklyCtx, {
-          type: 'bar',
-          data: {
-            labels: weeklyTrendLabels,
-            datasets: [{
-              label: 'Agendas finalizadas',
-              data: Array(weeklyTrendLabels.length).fill(0),
-              backgroundColor: gradientWeekly,
-              borderRadius: 6,
-            }],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { color: '#64748b', maxRotation: 0 },
-              },
-              y: {
-                beginAtZero: true,
-                grid: { color: '#f1f5f9' },
-                ticks: {
-                  color: '#64748b',
-                  precision: 0,
-                },
-                title: {
-                  display: true,
-                  text: 'Agendas',
-                  color: '#475569',
-                  font: { size: 12, weight: '600' },
-                },
-              },
-            },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                displayColors: false,
-                padding: 10,
-                backgroundColor: '#0f172a',
-                callbacks: {
-                  title: (items) => items[0]?.label || '',
-                  label: (context) => `${context.parsed.y || 0} agendas finalizadas`,
-                },
-              },
-            },
-          },
+      weeklyTrendLabels = JSON.parse(weeklyLabelsEl?.textContent || '[]');
+      weeklyTrendSeries = JSON.parse(weeklySeriesEl?.textContent || '{}');
+      weeklySummary = JSON.parse(weeklySummaryEl?.textContent || '{}');
+      weeklyMonthsByYear = JSON.parse(weeklyMonthsMapEl?.textContent || '{}');
+      weeklyAllMonths = JSON.parse(weeklyAllMonthsEl?.textContent || '[]');
+
+      const weeklyOptions = JSON.parse(weeklyOptionsEl?.textContent || '[]');
+      if (weeklyTrendSelectEl && weeklyOptions.length) {
+        weeklyTrendSelectEl.innerHTML = '';
+        weeklyOptions.forEach((label) => {
+          const option = document.createElement('option');
+          option.value = label;
+          option.textContent = label;
+          weeklyTrendSelectEl.appendChild(option);
         });
+        weeklyTrendSelectEl.onchange = (event) => {
+          applyWeeklyData(event.target.value);
+        };
+      }
 
-        const initialWeekly = JSON.parse(weeklyDefaultEl?.textContent || 'null')
-          || weeklyTrendSelectEl?.value
-          || Object.keys(weeklyTrendSeries)[0]
-          || null;
+      weeklyYearSelectEl = document.getElementById('weekly-year');
+      weeklyMonthSelectEl = document.getElementById('weekly-month');
+      const initialYear = JSON.parse(weeklySelectedYearEl?.textContent || 'null');
+      const initialMonth = JSON.parse(weeklySelectedMonthEl?.textContent || 'null');
+      const initialYears = JSON.parse(weeklyYearsEl?.textContent || '[]');
+      const initialMonths = JSON.parse(weeklyMonthsEl?.textContent || '[]');
 
-        if (weeklyTrendSelectEl && initialWeekly) {
-          weeklyTrendSelectEl.value = initialWeekly;
-          weeklyTrendSelectEl.addEventListener('change', (event) => {
-            applyWeeklyData(event.target.value);
-          });
-        }
+      populateYearOptions(weeklyYearSelectEl, initialYears, initialYear);
+      populateMonthOptions(
+        weeklyMonthSelectEl,
+        initialYear && weeklyMonthsByYear[initialYear] ? weeklyMonthsByYear[initialYear] : initialMonths,
+        initialMonth
+      );
 
-        if (initialWeekly) {
-          applyWeeklyData(initialWeekly);
-        }
+      const initialWeekly = JSON.parse(weeklyDefaultEl?.textContent || 'null')
+        || weeklyTrendSelectEl?.value
+        || resolveWeeklySpecialtyLabel('Todas');
+
+      if (initialWeekly) {
+        applyWeeklyData(initialWeekly);
       }
 
       const specialtyTrendLabelsEl = document.getElementById('specialty-trend-labels');

@@ -52,6 +52,16 @@ const BOX_USAGE_PERIODS = [
 ];
 
 const DEFAULT_BOX_USAGE_PERIOD = "week";
+const WEEK_DAY_LABELS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const WEEK_INDEX_FROM_DAY = {
+  1: 0,
+  2: 1,
+  3: 2,
+  4: 3,
+  5: 4,
+  6: 5,
+  0: 6,
+};
 
 function parseAgendaDate(value) {
   if (!value) return null;
@@ -362,76 +372,138 @@ function computeBestSpecialtyUsage(agendaItems, boxes, tipoBoxMap, periodConfig)
 }
 
 function computeWeeklyFinalized(agendaItems, boxes, tipoBoxMap, finalStateIds) {
+  return computeWeeklyFinalizedWithFilters(agendaItems, boxes, tipoBoxMap, finalStateIds, {});
+}
+
+function computeWeeklyFinalizedWithFilters(agendaItems, boxes, tipoBoxMap, finalStateIds, filters = {}) {
   const boxesTipoMap = new Map(
     boxes.map((box) => [String(box.idBox), box.idTipoBox ? String(box.idTipoBox) : null])
   );
 
-  const startOfWeek = dayjs().startOf("week");
-  const endOfWeek = startOfWeek.add(7, "day");
-  const labels = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-
+  const dayTotals = Array(WEEK_DAY_LABELS.length).fill(0);
   const series = {};
-  for (const [, label] of tipoBoxMap) {
-    series[label] = Array(labels.length).fill(0);
-  }
+  const availableLabels = new Set();
+  const availableYears = new Set();
+  const monthsByYear = new Map();
+  const allMonths = new Set();
+  const { year, month, specialty } = filters;
 
-  const toIndex = (date) => {
-    const day = date.day();
-    switch (day) {
-      case 1: return 0;
-      case 2: return 1;
-      case 3: return 2;
-      case 4: return 3;
-      case 5: return 4;
-      default: return null;
-    }
+  const normalizeLabel = (value, fallback) => {
+    if (typeof value === "string" && value.trim()) return value.trim();
+    return fallback;
   };
 
   for (const item of agendaItems) {
     const inicio = parseAgendaDate(item.horainicio || item.horaInicio);
-    const termino = parseAgendaDate(item.horaTermino || item.horatermino || item.horaFin);
-    if (!inicio || !termino) continue;
-    if (inicio.isBefore(startOfWeek) || !inicio.isBefore(endOfWeek)) continue;
+    if (!inicio) continue;
+
+    const eventYear = inicio.year();
+    const eventMonth = inicio.month() + 1;
+    availableYears.add(eventYear);
+    allMonths.add(eventMonth);
+    if (!monthsByYear.has(eventYear)) {
+      monthsByYear.set(eventYear, new Set());
+    }
+    monthsByYear.get(eventYear).add(eventMonth);
 
     const estadoId = String(item.idEstado ?? item.estado ?? "");
     const estadoNombre = (item.estadoNombre || "").toLowerCase();
     const esFinalizado = finalStateIds.has(estadoId) || estadoNombre.includes("finaliza");
     if (!esFinalizado) continue;
 
+    if (Number.isFinite(year) && eventYear !== year) continue;
+    if (Number.isFinite(month) && eventMonth !== month) continue;
+
+    const dayIndex = WEEK_INDEX_FROM_DAY[inicio.day()];
+    if (typeof dayIndex !== "number") continue;
+
     const boxId = String(item.idBox ?? item.boxId ?? "");
     const tipoId = boxesTipoMap.get(boxId);
     if (!tipoId) continue;
 
-    const label = tipoBoxMap.get(String(tipoId)) || `Especialidad ${tipoId}`;
+    const label = normalizeLabel(
+      tipoBoxMap.get(String(tipoId)),
+      `Especialidad ${tipoId}`
+    );
+
     if (!series[label]) {
-      series[label] = Array(labels.length).fill(0);
+      series[label] = Array(WEEK_DAY_LABELS.length).fill(0);
     }
 
-    const index = toIndex(inicio);
-    if (index === null) continue;
-    series[label][index] += 1;
+    series[label][dayIndex] += 1;
+    dayTotals[dayIndex] += 1;
+    availableLabels.add(label);
   }
 
-  const totalSeries = Array(labels.length).fill(0);
-  Object.values(series).forEach((values) => {
-    values.forEach((value, index) => {
-      totalSeries[index] += value;
-    });
+  tipoBoxMap.forEach((value, tipoId) => {
+    const label = normalizeLabel(value, `Especialidad ${tipoId}`);
+    if (!label) return;
+    availableLabels.add(label);
+    if (!series[label]) {
+      series[label] = Array(WEEK_DAY_LABELS.length).fill(0);
+    }
   });
 
+  const totalSeries = Array.from(dayTotals);
   series["Todas"] = totalSeries;
 
-  const orderedLabels = Object.keys(series).sort((a, b) => {
-    if (a === "Todas") return -1;
-    if (b === "Todas") return 1;
-    return a.localeCompare(b, "es", { sensitivity: "base" });
+  const orderedLabels = Array.from(availableLabels).sort((a, b) =>
+    a.localeCompare(b, "es", { sensitivity: "base" })
+  );
+  const options = ["Todas", ...orderedLabels.filter((label) => label !== "Todas")];
+
+  const hasData = (label) => {
+    const values = series[label];
+    return Array.isArray(values) && values.some((value) => value > 0);
+  };
+
+  let defaultSpecialty = "Todas";
+  if (specialty && hasData(specialty)) {
+    defaultSpecialty = specialty;
+  } else if (!hasData("Todas")) {
+    const firstWithData = options.find((label) => label !== "Todas" && hasData(label));
+    if (firstWithData) {
+      defaultSpecialty = firstWithData;
+    }
+  }
+
+  const summaries = {};
+  Object.entries(series).forEach(([label, values]) => {
+    if (!Array.isArray(values)) return;
+    const total = values.reduce((acc, value) => acc + value, 0);
+    const maxValue = values.reduce((acc, value) => Math.max(acc, value), 0);
+    const topIndex = total ? values.findIndex((value) => value === maxValue) : -1;
+    const topLabel = total && topIndex >= 0 ? WEEK_DAY_LABELS[topIndex] : null;
+    const percentage = total ? Math.round((maxValue * 100) / total) : 0;
+    summaries[label] = {
+      total,
+      topDayLabel: topLabel,
+      topDayCount: maxValue,
+      topDayPercentage: percentage,
+      distribution: values,
+    };
   });
-  const defaultSpecialty = orderedLabels.find((label) => series[label].some((value) => value > 0)) || orderedLabels[0] || null;
+
+  const availableYearsList = Array.from(availableYears).sort((a, b) => b - a);
+  const monthsByYearObj = Object.fromEntries(
+    [...monthsByYear.entries()].map(([yearKey, set]) => [
+      yearKey,
+      Array.from(set).sort((a, b) => a - b),
+    ])
+  );
+  const allMonthsList = Array.from(allMonths).sort((a, b) => a - b);
 
   return {
-    labels,
+    labels: WEEK_DAY_LABELS,
     series,
     defaultSpecialty,
+    options,
+    summaries,
+    availableYears: availableYearsList,
+    monthsByYear: monthsByYearObj,
+    allMonths: allMonthsList,
+    selectedYear: Number.isFinite(year) ? year : null,
+    selectedMonth: Number.isFinite(month) ? month : null,
   };
 }
 
@@ -698,6 +770,40 @@ function buildDashboardViewModel(data) {
   const weeklySpecialtySeries = data.weeklySpecialtySeries || {};
   const weeklySpecialtyDefault =
     data.weeklySpecialtyDefault || Object.keys(weeklySpecialtySeries)[0] || null;
+  const weeklySpecialtyOptionsRaw = Array.isArray(data.weeklySpecialtyOptions)
+    ? data.weeklySpecialtyOptions
+    : Object.keys(weeklySpecialtySeries);
+  const weeklySpecialtyOptions = Array.from(
+    new Set(["Todas", ...weeklySpecialtyOptionsRaw.filter(Boolean)])
+  );
+  const weeklySummary = data.weeklySummary || {};
+  const weeklyMonthsByYearRaw = data.weeklyMonthsByYear || {};
+  const weeklyMonthsByYear = Object.fromEntries(
+    Object.entries(weeklyMonthsByYearRaw).map(([yearKey, months]) => [
+      Number(yearKey),
+      Array.isArray(months)
+        ? months.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+        : [],
+    ])
+  );
+  const weeklyAvailableYears = Array.isArray(data.weeklyAvailableYears)
+    ? data.weeklyAvailableYears.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+    : Object.keys(weeklyMonthsByYear).map((value) => Number(value)).filter((value) => Number.isFinite(value)).sort((a, b) => b - a);
+  const weeklyAllMonths = Array.isArray(data.weeklyAllMonths)
+    ? data.weeklyAllMonths.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+    : [];
+  const weeklySelectedYear = Number.isFinite(data.weeklySelectedYear)
+    ? data.weeklySelectedYear
+    : Number.isFinite(Number(data.weeklySelectedYear))
+      ? Number(data.weeklySelectedYear)
+      : null;
+  const weeklySelectedMonth = Number.isFinite(data.weeklySelectedMonth)
+    ? data.weeklySelectedMonth
+    : Number.isFinite(Number(data.weeklySelectedMonth))
+      ? Number(data.weeklySelectedMonth)
+      : null;
+  const weeklyAvailableMonths =
+    (weeklySelectedYear && weeklyMonthsByYear[weeklySelectedYear]) || weeklyAllMonths;
 
   const labelColorsView = labelColorsList.map((item, index) => ({
     ...item,
@@ -749,6 +855,14 @@ function buildDashboardViewModel(data) {
     weeklySpecialtyLabels,
     weeklySpecialtySeries,
     weeklySpecialtyDefault,
+    weeklySpecialtyOptions,
+    weeklySummary,
+    weeklyAvailableYears,
+    weeklyMonthsByYear,
+    weeklyAvailableMonths,
+    weeklyAllMonths,
+    weeklySelectedYear,
+    weeklySelectedMonth,
     hasLabelColors: labelColorsView.length > 0,
     horasAgendadas: data.horasAgendadas,
     horasRealizadas: data.horasRealizadas,
@@ -774,11 +888,21 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
       boxSummary.tipoBoxMap,
       specialtyUsagePeriodConfig
     );
-    const weeklyFinalized = computeWeeklyFinalized(
+    const requestedWeeklySpecialty =
+      typeof req.query.especialidad === "string" ? req.query.especialidad : null;
+    const requestedWeeklyYear = Number.parseInt(req.query.weekly_year ?? "", 10);
+    const requestedWeeklyMonth = Number.parseInt(req.query.weekly_month ?? "", 10);
+
+    const weeklyFinalized = computeWeeklyFinalizedWithFilters(
       boxSummary.agendaItems,
       boxSummary.boxes,
       boxSummary.tipoBoxMap,
-      boxSummary.finalStateIds
+      boxSummary.finalStateIds,
+      {
+        specialty: requestedWeeklySpecialty,
+        year: Number.isFinite(requestedWeeklyYear) ? requestedWeeklyYear : null,
+        month: Number.isFinite(requestedWeeklyMonth) ? requestedWeeklyMonth : null,
+      }
     );
     const specialtyTrend = computeSpecialtyTrend(
       boxSummary.agendaItems,
@@ -789,9 +913,10 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
     );
     const baseData = buildStaticDashboardData(req.query);
 
-    const selectedWeeklySpecialty = req.query.especialidad && weeklyFinalized.series[req.query.especialidad]
-      ? req.query.especialidad
-      : weeklyFinalized.defaultSpecialty;
+    const selectedWeeklySpecialty =
+      requestedWeeklySpecialty && weeklyFinalized.series[requestedWeeklySpecialty]
+        ? requestedWeeklySpecialty
+        : weeklyFinalized.defaultSpecialty;
 
     const dashboardData = {
       ...baseData,
@@ -819,6 +944,13 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
       weeklySpecialtyLabels: weeklyFinalized.labels,
       weeklySpecialtySeries: weeklyFinalized.series,
       weeklySpecialtyDefault: selectedWeeklySpecialty || weeklyFinalized.defaultSpecialty,
+      weeklySpecialtyOptions: weeklyFinalized.options,
+      weeklySummary: weeklyFinalized.summaries,
+      weeklyAvailableYears: weeklyFinalized.availableYears,
+      weeklyMonthsByYear: weeklyFinalized.monthsByYear,
+      weeklyAllMonths: weeklyFinalized.allMonths,
+      weeklySelectedYear: weeklyFinalized.selectedYear,
+      weeklySelectedMonth: weeklyFinalized.selectedMonth,
       specialtyTrendLabels: specialtyTrend.labels,
       specialtyTrendSeries: specialtyTrend.series,
       specialtyTrendOptions: specialtyTrend.options,
@@ -837,6 +969,14 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
         weekly_labels: viewModel.weeklySpecialtyLabels,
         weekly_series: viewModel.weeklySpecialtySeries,
         weekly_default: viewModel.weeklySpecialtyDefault,
+        weekly_options: viewModel.weeklySpecialtyOptions,
+        weekly_summary: viewModel.weeklySummary,
+        weekly_years: viewModel.weeklyAvailableYears,
+        weekly_months: viewModel.weeklyAvailableMonths,
+        weekly_months_map: viewModel.weeklyMonthsByYear,
+        weekly_all_months: viewModel.weeklyAllMonths,
+        weekly_selected_year: viewModel.weeklySelectedYear,
+        weekly_selected_month: viewModel.weeklySelectedMonth,
       });
     }
 
