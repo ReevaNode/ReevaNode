@@ -8,7 +8,7 @@ provider:
   region: ${opt:region, env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, env:STAGE, 'dev'}
   # usando LABROLE para AWS Academy (ya tiene todos los permisos)
-  role: arn:aws:iam::905418353372:role/LabRole
+  role: ${env:LABROLE}
   environment:
     AGENDA_TABLE: agenda
     BOX_TABLE: box

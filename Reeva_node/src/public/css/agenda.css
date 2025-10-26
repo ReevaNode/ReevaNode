@@ -15,7 +15,6 @@ body { background-color:#f5f5f5; }
   transition: none !important;
 }
 
-
 #calendar .fc,
 #calendar .fc-scrollgrid,
 #calendar .fc-view-harness,
@@ -63,13 +62,13 @@ body.theme-dark #calendar .fc-daygrid-day-number {
 }
 
 body.theme-dark #calendar .fc-button {
-    background-color: #374151 !important;
+    background-color: #4b5563 !important;
     border-color: #4b5563 !important;
     color: #f3f4f6 !important;
 }
 
 body.theme-dark #calendar .fc-button:hover {
-    background-color: #4b5563 !important;
+    background-color: #6b7280 !important;
 }
 
 body.theme-dark #calendar .fc-button-active {
@@ -271,39 +270,48 @@ body.theme-dark .fc-timegrid-body:not(:has(.fc-event.custom-placeholder)) .fc-ti
 }
 
 body.theme-dark #instructionBanner {
-  background: linear-gradient(90deg, rgba(31, 41, 55, 0.95) 0%, rgba(55, 65, 81, 0.95) 100%) !important;
-  border-color: rgba(148, 163, 184, 0.35) !important;
+  background: linear-gradient(to right, rgba(243, 232, 255, 0.15), rgba(224, 231, 255, 0.15)) !important;
+  border-color: rgba(216, 180, 254, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(216, 180, 254, 0.1) !important;
 }
 
 body.theme-dark #instructionBanner h4,
 body.theme-dark #instructionBanner h5 {
   color: #f3f4f6 !important;
 }
+body.theme-dark #instructionBanner p {
+  color: #e5e7eb !important;
+}
 
-body.theme-dark #instructionBanner p,
 body.theme-dark #instructionBanner span {
-  color: #d1d5db !important;
+  color: #e5e7eb !important;
 }
 
 body.theme-dark #instructionBanner .text-primary {
-  color: #f5d0fe !important;
+  color: #d8b4fe !important;
 }
 
 body.theme-dark #instructionBanner .border-purple-200 {
-  border-color: rgba(148, 163, 184, 0.35) !important;
+  border-color: rgba(216, 180, 254, 0.2) !important;
 }
 
 body.theme-dark #instructionBanner .bg-primary\/10 {
-  background-color: rgba(155, 79, 136, 0.2) !important;
+  background-color: rgba(216, 180, 254, 0.15) !important;
 }
 
-body.theme-dark #instructionBanner .text-gray-400,
+body.theme-dark #instructionBanner .text-gray-400 {
+  color: #d1d5db !important;
+}
+
 body.theme-dark #instructionBanner button {
-  color: #94a3b8 !important;
+  color: #d1d5db !important;
 }
 
 body.theme-dark #instructionBanner button:hover {
   color: #f3f4f6 !important;
+}
+body.theme-dark #instructionBanner .text-gray-500 {
+  color: #d1d5db !important;
 }
 
 body.theme-dark #eventoModal > div,
@@ -382,9 +390,19 @@ body.theme-dark #mantModal button[type="button"]:hover {
 }
 
 body.theme-dark #timeRangeInfo {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  color: #93c5fd !important;
+  background: linear-gradient(135deg, rgba(243, 232, 255, 0.15), rgba(224, 231, 255, 0.15)) !important;
+  border-left: 4px solid #9c4d9e !important;
+  border-color: rgba(156, 77, 158, 0.4) !important;
+  color: #e9d5ff !important;
+  box-shadow: 0 2px 6px rgba(156, 77, 158, 0.15) !important;
+}
+
+body.theme-dark #timeRangeInfo i {
+  color: #d8b4fe !important;
+}
+
+body.theme-dark #timeRangeInfo span {
+  color: #e9d5ff !important;
 }
 
 body.theme-dark #addError,
@@ -442,12 +460,6 @@ body.theme-dark form select option {
   border-left: 4px solid #9c4d9e;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   animation: slideDown 0.3s ease;
-}
-
-body.theme-dark #timeRangeInfo {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%) !important;
-  border-color: #9b4f88 !important;
-  color: #f3f4f6 !important;
 }
 
 button {
