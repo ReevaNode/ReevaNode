@@ -51,7 +51,7 @@
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
-      <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= navStateClass('box-matriz') %>">
+      <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= navStateClass('matriz-box') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
@@ -135,7 +135,7 @@
         <span class="font-medium">Dashboard</span>
       </a>
       
-      <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('box-matriz') %>">
+      <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('matriz-box') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
@@ -508,47 +508,6 @@ const initPersonalizationPanel = () => {
       applyLanguageHighlight(event.detail.language);
     }
   });
-  
-  const closeMobileMenuIfOpen = () => {
-    if (!mobileMenu || !mobileMenuOverlay) {
-      return;
-    }
-    if (!mobileMenu.classList.contains('translate-x-full')) {
-      mobileMenu.classList.remove('translate-x-0');
-      mobileMenu.classList.add('translate-x-full');
-      setTimeout(() => {
-        mobileMenuOverlay.classList.add('hidden');
-      }, 300);
-    }
-  };
-  
-  const openPanel = () => {
-    if (perfilMenu) {
-      perfilMenu.classList.add('hidden');
-    }
-    closeMobileMenuIfOpen();
-    overlay.classList.remove('pointer-events-none');
-    panel.classList.remove('pointer-events-none');
-    requestAnimationFrame(() => {
-      overlay.classList.remove('opacity-0');
-      overlay.classList.add('opacity-100');
-      panel.classList.remove('translate-x-full');
-      panel.classList.add('translate-x-0');
-    });
-    document.body.style.overflow = 'hidden';
-    panel.setAttribute('aria-hidden', 'false');
-  };
-  
-  const closePanel = () => {
-    overlay.classList.add('pointer-events-none');
-    panel.classList.add('pointer-events-none');
-    overlay.classList.remove('opacity-100');
-    overlay.classList.add('opacity-0');
-    panel.classList.remove('translate-x-0');
-    panel.classList.add('translate-x-full');
-    document.body.style.overflow = '';
-    panel.setAttribute('aria-hidden', 'true');
-  };
   
   overlay.addEventListener('click', closePanel);
   if (closeBtn) {
