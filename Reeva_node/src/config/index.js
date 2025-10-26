@@ -58,6 +58,11 @@ export const config = {
     logLevel: process.env.LOG_LEVEL || 'debug',
   },
 
+  // Feature flags
+  features: {
+    autoProvisionUsers: process.env.AUTO_PROVISION_USERS === 'true',
+  },
+
   // SNS
   sns: {
     topicArn: process.env.SNS_TOPIC_ARN,

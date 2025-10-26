@@ -2,12 +2,12 @@
 import { Router } from "express";
 import { requirePermission } from "../middlewares/requirePermission.js";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
-import db from '../../db.js';
-import { retryWithBackoff, CircuitBreaker, SimpleCache } from '../utils/resilience.js';
-import Logger from '../utils/logger.js';
+import db from "../../db.js";
+import { retryWithBackoff, CircuitBreaker, SimpleCache } from "../utils/resilience.js";
+import Logger from "../utils/logger.js";
 
 const router = Router();
-const logger = new Logger('BIENVENIDA');
+const logger = new Logger("BIENVENIDA");
 
 // inicializar Circuit Breaker y Cache 
 const agendaCircuitBreaker = new CircuitBreaker({

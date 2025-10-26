@@ -1,3 +1,10 @@
+<%
+  const activeNavKey = typeof activePage === 'string' ? activePage : '';
+  const navStateClass = (page) => activeNavKey === page
+    ? 'text-primary font-semibold'
+    : 'text-gray-700 hover:text-primary';
+%>
+
 <script>
   (function() {
     try {
@@ -36,19 +43,19 @@
     
     <!-- Desktop Navigation -->
     <div class="hidden md:flex flex-1 justify-center gap-8">
-      <a href="/bienvenida" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+      <a href="/bienvenida" class="flex items-center gap-2 transition-colors <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
         <span class="font-medium">Inicio</span>
       </a>
-      <a href="/dashboard" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+      <a href="/dashboard" class="flex items-center gap-2 transition-colors <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
-      <a href="/box-matriz" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+      <a href="/box-matriz" class="flex items-center gap-2 transition-colors <%= navStateClass('box-matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
-      <a href="/agenda" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'agenda') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/agenda" class="flex items-center gap-2 transition-colors <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
@@ -109,22 +116,22 @@
     </div>
     
     <nav class="space-y-4">
-      <a href="/bienvenida" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+      <a href="/bienvenida" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
         <span class="font-medium">Inicio</span>
       </a>
       
-      <a href="/dashboard" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+      <a href="/dashboard" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
       
-      <a href="/box-matriz" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+      <a href="/box-matriz" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('box-matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
       
-      <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'agenda') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
