@@ -51,7 +51,7 @@
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
-      <a href="/box-matriz" class="flex items-center gap-2 transition-colors <%= navStateClass('box-matriz') %>">
+      <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= navStateClass('box-matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
@@ -59,6 +59,12 @@
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
+      <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
+      <a href="/admin-bdd" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'admin-bdd') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+        <i class="ri-database-2-line ri-lg"></i>
+        <span class="font-medium">Admin BD</span>
+      </a>
+      <% } %>
     </div>
     
     <!-- Desktop Profile -->
@@ -113,6 +119,9 @@
   <div class="p-6">
     <div class="flex items-center justify-between mb-8">
       <h2 class="text-xl font-semibold text-gray-800">Menú</h2>
+      <button id="close-mobile-menu" class="text-gray-500 hover:text-gray-700">
+        <i class="ri-close-line ri-xl"></i>
+      </button>
     </div>
     
     <nav class="space-y-4">
@@ -126,7 +135,7 @@
         <span class="font-medium">Dashboard</span>
       </a>
       
-      <a href="/box-matriz" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('box-matriz') %>">
+      <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('box-matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
@@ -136,9 +145,16 @@
         <span class="font-medium">Agenda</span>
       </a>
       
+      <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
+      <a href="/admin-bdd" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'admin-bdd') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+        <i class="ri-database-2-line ri-lg"></i>
+        <span class="font-medium">Admin BD</span>
+      </a>
+      <% } %>
+      
       <hr class="my-4 border-gray-200">
       
-      <a href="/bienvenida" class="flex items-center gap-3 text-primary font-semibold py-2">
+      <a href="/bienvenida" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
         <i class="ri-user-line ri-lg"></i>
         <span class="font-medium">Mi Espacio</span>
       </a>
@@ -251,23 +267,42 @@ document.addEventListener('DOMContentLoaded', function() {
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
   
+  function closeMobileMenu() {
+    mobileMenu.classList.remove('translate-x-0');
+    mobileMenu.classList.add('translate-x-full');
+    setTimeout(() => {
+      mobileMenuOverlay.classList.add('hidden');
+    }, 300);
+  }
+  
+  function openMobileMenu() {
+    mobileMenuOverlay.classList.remove('hidden');
+    mobileMenu.classList.remove('translate-x-full');
+    mobileMenu.classList.add('translate-x-0');
+  }
+  
   function toggleMobileMenu() {
     if (mobileMenu.classList.contains('translate-x-full')) {
-      mobileMenuOverlay.classList.remove('hidden');
-      mobileMenu.classList.remove('translate-x-full');
-      mobileMenu.classList.add('translate-x-0');
+      openMobileMenu();
     } else {
-      mobileMenu.classList.remove('translate-x-0');
-      mobileMenu.classList.add('translate-x-full');
-      setTimeout(() => {
-        mobileMenuOverlay.classList.add('hidden');
-      }, 300);
+      closeMobileMenu();
     }
   }
   
   if (mobileMenuBtn && mobileMenu && mobileMenuOverlay) {
+    const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
+    
     mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-    mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
+    mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', closeMobileMenu);
+    
+    // cerrar al clickear fuera de la sidebar
+    document.addEventListener('click', function(e) {
+      const isOpen = !mobileMenu.classList.contains('translate-x-full');
+      if (isOpen && !mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+        closeMobileMenu();
+      }
+    });
   }
 });
 

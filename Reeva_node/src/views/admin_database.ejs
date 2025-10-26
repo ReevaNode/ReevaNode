@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>admin bd - sistema reeva</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#9b4f88',secondary:'#6b7280'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <link rel="stylesheet" href="/css/admin_database.css">
+    <link rel="stylesheet" href="/css/Bienvenida-y-Opciones.css" />
+</head>
+<body>
+    <%- include('header') %>
+
+    <div class="container">
+        <div id="alertSuccess" class="alert alert-success" style="display: none;"></div>
+        <div id="alertError" class="alert alert-error" style="display: none;"></div>
+
+        <div class="models-grid">
+            <% tables.forEach(table => { %>
+                <div class="model-card" onclick="loadTable('<%= table.name %>')">
+                    <div class="model-name"><%= table.name %></div>
+                    <div class="model-count">click para ver datos</div>
+                </div>
+            <% }); %>
+        </div>
+
+        <div id="contentArea" style="display: none;">
+            <div class="content-header">
+                <h2 id="contentTitle">tabla</h2>
+                <div class="action-buttons">
+                    <button id="btnFilters" class="btn btn-secondary" onclick="toggleFilters()">
+                        <i class="ri-search-line"></i> búsqueda
+                    </button>
+                    <button id="btnCreate" class="btn btn-primary" onclick="showCreateModal()">
+                        <i class="ri-add-line"></i> crear
+                    </button>
+                    <button id="btnCreateMultiple" class="btn btn-primary" onclick="showCreateModal(true)">
+                        <i class="ri-file-add-line"></i> crear multiple
+                    </button>
+                    <button id="btnUpdateMultiple" class="btn btn-warning" onclick="showUpdateModal()">
+                        <i class="ri-edit-line"></i> actualizar multiple
+                    </button>
+                    <button id="btnDeleteMultiple" class="btn btn-danger" onclick="showDeleteModal()">
+                        <i class="ri-delete-bin-line"></i> eliminar multiple
+                    </button>
+                    <button id="btnRefresh" class="btn btn-secondary" onclick="refreshTable()">
+                        <i class="ri-refresh-line"></i> refrescar
+                    </button>
+                </div>
+            </div>
+
+            <div id="filtersSection" class="filters-section" style="display: none;">
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label>campo a buscar</label>
+                        <select id="filterField" class="w-full border rounded p-2">
+                            <option value="">seleccionar campo...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>valor a buscar</label>
+                        <input type="text" id="filterValue" class="w-full border rounded p-2" placeholder="ingrese valor...">
+                        <small class="text-gray-500">Para fechas: "2025-09-30", para horas: "11:40:00", o completo: "2025-09-30 11:40:00"</small>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-primary" onclick="applyFilters()">buscar</button>
+                    <button class="btn btn-secondary" onclick="clearFilters()">limpiar</button>
+                </div>
+            </div>
+
+            <div id="tableContainer" class="table-container"></div>
+
+            <div id="pagination" class="pagination" style="display: none;">
+                <div id="paginationInfo" class="pagination-info"></div>
+                <div id="paginationControls" class="pagination-controls"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="formModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">crear nuevo registro</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="recordForm" onsubmit="event.preventDefault(); saveRecord();">
+                    <div id="multipleCheckbox" style="display: none;">
+                        <label class="flex items-center gap-2 mb-4">
+                            <input type="checkbox" id="enableMultiple" onchange="toggleMultipleMode()">
+                            <span>habilitar modo multiple</span>
+                        </label>
+                    </div>
+                    <div id="singleMode">
+                        <div id="formFields"></div>
+                    </div>
+                    <div id="multipleMode" style="display: none;">
+                        <div class="form-group">
+                            <label>cantidad de registros</label>
+                            <input type="number" id="recordCount" min="1" max="100" value="1" class="w-full border rounded p-2">
+                        </div>
+                        <div id="multipleFormFields"></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">guardar</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>actualizar multiples registros</h3>
+                <span class="close" onclick="closeUpdateModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-lg font-semibold mb-3">filtros (especifica que registros actualizar)</h4>
+                <div id="updateFilters" class="form-grid mb-6"></div>
+                <h4 class="text-lg font-semibold mb-3">nuevos valores</h4>
+                <div id="updateFields" class="form-grid mb-6"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="executeUpdate()">actualizar</button>
+                    <button class="btn btn-secondary" onclick="closeUpdateModal()">cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>eliminar multiples registros</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-4">
+                    ⚠️ <strong>advertencia:</strong> esta accion eliminara todos los registros que coincidan con los filtros especificados. esta accion no se puede deshacer.
+                </div>
+                <h4 class="text-lg font-semibold mb-3">filtros (especifica que registros eliminar)</h4>
+                <div id="deleteFilters" class="form-grid mb-6"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-danger" onclick="executeDelete()">eliminar</button>
+                    <button class="btn btn-secondary" onclick="closeDeleteModal()">cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('footer') %>
+    <script src="/js/admin_database.js"></script>
+</body>
+</html>

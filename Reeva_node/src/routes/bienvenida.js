@@ -120,7 +120,8 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res
       fromCache,
       warningMessage: systemDegraded 
         ? "El sistema está experimentando problemas temporales. Algunos datos pueden no estar actualizados." 
-        : null
+        : null,
+      activePage: 'bienvenida'
     });
 
   } catch (error) {
@@ -134,7 +135,8 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res
       tipo_consulta: null,
       systemDegraded: true,
       fromCache: false,
-      warningMessage: "El sistema está temporalmente fuera de servicio. Por favor, intente más tarde."
+      warningMessage: "El sistema está temporalmente fuera de servicio. Por favor, intente más tarde.",
+      activePage: 'bienvenida'
     });
   }
 });
