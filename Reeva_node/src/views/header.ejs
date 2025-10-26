@@ -1,3 +1,10 @@
+<%
+  const activeNavKey = typeof activePage === 'string' ? activePage : '';
+  const navStateClass = (page) => activeNavKey === page
+    ? 'text-primary font-semibold'
+    : 'text-gray-700 hover:text-primary';
+%>
+
 <script>
   (function() {
     try {
@@ -36,19 +43,19 @@
     
     <!-- Desktop Navigation -->
     <div class="hidden md:flex flex-1 justify-center gap-8">
-      <a href="/bienvenida" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'bienvenida') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/bienvenida" class="flex items-center gap-2 transition-colors <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
         <span class="font-medium">Inicio</span>
       </a>
-      <a href="/dashboard" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'dashboard') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/dashboard" class="flex items-center gap-2 transition-colors <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
-      <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'matriz-box') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= navStateClass('box-matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
-      <a href="/agenda" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'agenda') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/agenda" class="flex items-center gap-2 transition-colors <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
@@ -118,22 +125,22 @@
     </div>
     
     <nav class="space-y-4">
-      <a href="/bienvenida" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'bienvenida') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/bienvenida" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
         <span class="font-medium">Inicio</span>
       </a>
       
-      <a href="/dashboard" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'dashboard') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/dashboard" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
       
-      <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'matriz-box') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('box-matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
       
-      <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'agenda') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
@@ -300,18 +307,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Selector de idioma
-document.addEventListener('DOMContentLoaded', function() {
+const initLanguageSelector = () => {
   const wrapper = document.getElementById('language-wrapper');
   const toggle = document.getElementById('language-toggle');
   const menu = document.getElementById('language-menu');
   const options = document.querySelectorAll('[data-language-option]');
   const label = toggle ? toggle.querySelector('span') : null;
   const STORAGE_KEY = 'reeva-language';
-  
+
   if (!wrapper || !toggle || !menu || !label) {
     return;
   }
-  
+
+  if (toggle.dataset.bound === 'true') {
+    return;
+  }
+  toggle.dataset.bound = 'true';
+
   const setLanguage = (lang) => {
     const value = (lang || 'es').toLowerCase();
     label.textContent = value.toUpperCase();
@@ -321,34 +333,37 @@ document.addEventListener('DOMContentLoaded', function() {
     menu.classList.add('hidden');
     document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
   };
-  
+
   window.reevaSetLanguage = setLanguage;
   window.reevaGetLanguage = () => localStorage.getItem(STORAGE_KEY) || 'es';
-  
+
   const saved = localStorage.getItem(STORAGE_KEY);
   setLanguage(saved || 'es');
-  
+
   toggle.addEventListener('click', (event) => {
     event.preventDefault();
     menu.classList.toggle('hidden');
   });
-  
+
   options.forEach((option) => {
     option.addEventListener('click', () => {
       const { languageOption } = option.dataset;
       setLanguage(languageOption);
     });
   });
-  
+
   document.addEventListener('click', (event) => {
     if (!wrapper.contains(event.target)) {
       menu.classList.add('hidden');
     }
   });
-});
+};
+
+document.addEventListener('DOMContentLoaded', initLanguageSelector);
+window.reevaInitLanguage = initLanguageSelector;
 
 // Panel de personalización
-document.addEventListener('DOMContentLoaded', function() {
+const initPersonalizationPanel = () => {
   const overlay = document.getElementById('personalization-overlay');
   const panel = document.getElementById('personalization-panel');
   const closeBtn = document.getElementById('personalization-close');
@@ -364,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!overlay || !panel) {
     return;
   }
-  
+
   const updateActiveState = (elements, value, key) => {
     elements.forEach((element) => {
       const isActive = element.dataset[key] === value;
@@ -372,21 +387,66 @@ document.addEventListener('DOMContentLoaded', function() {
       element.setAttribute('aria-pressed', String(isActive));
     });
   };
-  
+
   const applyLanguageHighlight = (language) => {
     if (!languageButtons.length) {
       return;
     }
     updateActiveState(languageButtons, language, 'languageOption');
   };
-  
+
   const applyThemeHighlight = (theme) => {
     if (!themeButtons.length) {
       return;
     }
     updateActiveState(themeButtons, theme, 'themeOption');
   };
-  
+
+  const closeMobileMenuIfOpen = () => {
+    if (!mobileMenu || !mobileMenuOverlay) {
+      return;
+    }
+    if (!mobileMenu.classList.contains('translate-x-full')) {
+      mobileMenu.classList.remove('translate-x-0');
+      mobileMenu.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileMenuOverlay.classList.add('hidden');
+      }, 300);
+    }
+  };
+
+  const openPanel = () => {
+    perfilMenu?.classList.add('hidden');
+    closeMobileMenuIfOpen();
+    overlay.classList.remove('pointer-events-none');
+    panel.classList.remove('pointer-events-none');
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      panel.classList.remove('translate-x-full');
+      panel.classList.add('translate-x-0');
+    });
+    document.body.style.overflow = 'hidden';
+    panel.setAttribute('aria-hidden', 'false');
+  };
+
+  const closePanel = () => {
+    overlay.classList.add('pointer-events-none');
+    panel.classList.add('pointer-events-none');
+    overlay.classList.remove('opacity-100');
+    overlay.classList.add('opacity-0');
+    panel.classList.remove('translate-x-0');
+    panel.classList.add('translate-x-full');
+    document.body.style.overflow = '';
+    panel.setAttribute('aria-hidden', 'true');
+  };
+
+  window.reevaOpenPersonalizationPanel = () => {
+    initPersonalizationPanel();
+    panel.dataset.bound = 'true';
+    openPanel();
+  };
+
   const applySystemTheme = () => {
     if (!window.matchMedia) {
       return;
@@ -507,7 +567,44 @@ document.addEventListener('DOMContentLoaded', function() {
       openPanel();
     });
   });
-});
+};
+
+document.addEventListener('DOMContentLoaded', initPersonalizationPanel);
+window.reevaInitPersonalization = initPersonalizationPanel;
+window.reevaOpenPersonalizationPanel = () => {
+  initPersonalizationPanel();
+  const overlay = document.getElementById('personalization-overlay');
+  const panel = document.getElementById('personalization-panel');
+  const perfilMenu = document.getElementById('perfil-menu');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+  const closeMobileMenuIfOpen = () => {
+    if (!mobileMenu || !mobileMenuOverlay) {
+      return;
+    }
+    if (!mobileMenu.classList.contains('translate-x-full')) {
+      mobileMenu.classList.remove('translate-x-0');
+      mobileMenu.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileMenuOverlay.classList.add('hidden');
+      }, 300);
+    }
+  };
+  if (overlay && panel) {
+    perfilMenu?.classList.add('hidden');
+    closeMobileMenuIfOpen();
+    overlay.classList.remove('pointer-events-none');
+    panel.classList.remove('pointer-events-none');
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      panel.classList.remove('translate-x-full');
+      panel.classList.add('translate-x-0');
+    });
+    document.body.style.overflow = 'hidden';
+    panel.setAttribute('aria-hidden', 'false');
+  }
+};
 
 // Menú de perfil desktop
 document.addEventListener('DOMContentLoaded', function() {

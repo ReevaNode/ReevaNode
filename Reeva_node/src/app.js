@@ -17,6 +17,7 @@ import Logger from "./utils/logger.js";
 // rutas
 import authRouter from "./routes/auth.js";
 import bienvenidaRouter from "./routes/bienvenida.js";
+import dashboardRouter from "./routes/dashboard.js";
 import adminBDDRouter from "./routes/adminBDD.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
 
@@ -64,6 +65,7 @@ app.set("view engine", "ejs");
 // rutas
 app.use("/", authRouter);
 app.use("/", requireAuth, bienvenidaRouter);
+app.use("/", requireAuth, dashboardRouter);
 app.use("/", requireAuth, adminBDDRouter);
 app.use("/", requireAuth, matrizBoxRouter);
 

@@ -9,7 +9,9 @@ export default async function requireAuth(req, res, next) {
   
   if (!req.session?.user || !req.session.user.idToken) {
     logger.warn('Acceso denegado - sin token', { ruta: req.path });
-    req.flash("error", "Debes iniciar sesion para acceder");
+    if (req.session) {
+      req.flash("error", "Debes iniciar sesion para acceder");
+    }
     return res.redirect("/login");
   }
 
@@ -33,8 +35,12 @@ export default async function requireAuth(req, res, next) {
     });
     
     // destruir sesion si el token no es valido
-    req.session.destroy();
-    req.flash("error", "Sesion invalida o expirada");
+    if (req.session) {
+      req.flash("error", "Sesion invalida o expirada");
+      return req.session.destroy(() => {
+        res.redirect("/login");
+      });
+    }
     return res.redirect("/login");
   }
 }

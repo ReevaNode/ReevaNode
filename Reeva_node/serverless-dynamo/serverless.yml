@@ -131,6 +131,19 @@ functions:
           method: POST
           path: /seed/agenda
 
+  seedAgenda2025:
+    handler: src/agenda/seed2025.handler
+    environment:
+      TABLE_NAME: ${self:provider.environment.AGENDA_TABLE}
+      BOX_TABLE: ${self:provider.environment.BOX_TABLE}
+      USUARIO_TABLE: ${self:provider.environment.USUARIO_TABLE}
+      TIPO_CONSULTA_TABLE: ${self:provider.environment.TIPO_CONSULTA_TABLE}
+      TIPO_ESTADO_TABLE: ${self:provider.environment.TIPO_ESTADO_TABLE}
+    events:
+      - httpApi:
+          method: POST
+          path: /seed/agenda-2025
+
   seedBox:
     handler: src/box/seed.seed
     environment:
