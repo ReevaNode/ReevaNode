@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', initLanguageSelector);
 window.reevaInitLanguage = initLanguageSelector;
 
 // Panel de personalizacion
-document.addEventListener('DOMContentLoaded', function() {
+const initPersonalizationPanel = () => {
   const overlay = document.getElementById('personalization-overlay');
   const panel = document.getElementById('personalization-panel');
   const closeBtn = document.getElementById('personalization-close');
@@ -642,12 +642,6 @@ const initPerfilMenu = () => {
       perfilMenu.style.display = 'none';
     }
   });
-});
-
-// Menu de perfil desktop
-document.addEventListener('DOMContentLoaded', function() {
-  const perfilBtn = document.getElementById('perfil-btn');
-  const perfilMenu = document.getElementById('perfil-menu');
   
   console.log('Menú de perfil inicializado correctamente');
 };
