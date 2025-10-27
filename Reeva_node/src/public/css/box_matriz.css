@@ -23,7 +23,7 @@ body {
 :root {
     /* En Atencion (verde oscuro) */
     --box-atencion: #15803d; 
-    --box-atencion-bg: #d1fadf; 
+    --box-atencion-bg: #75fba1eb; 
     --box-atencion-border: #0f5e2d;
 
     /* Reservado (azul) */

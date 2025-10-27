@@ -34,7 +34,7 @@ const CLAVES_PRIMARIAS = {
   personalizacion: 'idPers',
   tipobox: 'idTipoBox',
   tipoconsulta: 'idTipoConsulta',
-  tipoestado: 'idEstado',
+  tipoestado: 'idTipoEstado',
   tipoitem: 'idTipoItem',
   tipoprofesional: 'idTipoProfesional',
   tipousuario: 'idTipoUsuario',
@@ -163,6 +163,67 @@ router.get('/admin-bdd/api/:tabla/list', requireAdmin, async (req, res) => {
   }
 });
 
+// api: consultar agendas por rango de fechas usando HoraInicioIndex
+// IMPORTANTE: esta ruta debe ir ANTES de las rutas con :tabla para evitar conflictos
+router.get('/admin-bdd/api/agenda/by-date', requireAdmin, async (req, res) => {
+  const { dateStart, dateEnd } = req.query;
+  
+  if (!dateStart) {
+    return res.json({ success: false, error: 'se requiere al menos dateStart' });
+  }
+  
+  try {
+    const startDate = dateStart; // "2025-10-27"
+    const endDate = dateEnd || dateStart; // si no hay dateEnd, usar dateStart
+    
+    // generar todas las fechas en el rango
+    const dates = [];
+    const currentDate = new Date(startDate);
+    const finalDate = new Date(endDate);
+    
+    while (currentDate <= finalDate) {
+      dates.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    logger.info(`consultando agendas para fechas: ${dates.join(', ')}`);
+    
+    // consultar cada fecha por separado usando el indice
+    // nota: el indice usa horainicio como HASH, pero horainicio tiene formato completo
+    // "2025-10-27 15:00:00", asi que necesitamos hacer un scan con filtro
+    
+    const allResults = [];
+    
+    for (const date of dates) {
+      // hacer scan con filtro de fecha
+      const result = await db.send(new ScanCommand({
+        TableName: 'agenda',
+        FilterExpression: 'begins_with(horainicio, :date)',
+        ExpressionAttributeValues: {
+          ':date': date
+        }
+      }));
+      
+      if (result.Items && result.Items.length > 0) {
+        allResults.push(...result.Items);
+      }
+    }
+    
+    logger.info(`total de agendas encontradas: ${allResults.length}`);
+    
+    res.json({
+      success: true,
+      data: allResults,
+      total: allResults.length,
+      dateRange: { start: startDate, end: endDate }
+    });
+    
+  } catch (error) {
+    logger.error('error al consultar agendas por fecha', { error: error.message });
+    res.json({ success: false, error: error.message });
+  }
+});
+
 // api: obtener opciones para campos FK
 router.get('/admin-bdd/api/:tabla/field_options', requireAdmin, async (req, res) => {
   const { tabla } = req.params;
@@ -205,7 +266,15 @@ router.get('/admin-bdd/api/:tabla/field_options', requireAdmin, async (req, res)
         const tipoField = Object.keys(item).find(k => k.toLowerCase().startsWith('tipo') && k.toLowerCase() !== 'tipoid');
         label = item[tipoField] || value;
       } else if (tablaRelacionada === 'usuario') {
-        label = `${item.nombreusuario || item.nombre || value}`;
+        // para usuarios, usar nombreProfesional o nombreusuario
+        const nombreProf = item.nombreProfesional || item.nombreprofesional;
+        const nombreUsuario = item.nombreusuario || item.nombre;
+        label = nombreProf || nombreUsuario || value;
+        
+        // log para debugging
+        if (!nombreProf && !nombreUsuario) {
+          logger.warn(`usuario ${value} no tiene nombreProfesional ni nombreusuario`, { item });
+        }
       } else if (tablaRelacionada === 'box') {
         label = `Box ${item.nrobox || value}`;
       } else {
@@ -214,7 +283,17 @@ router.get('/admin-bdd/api/:tabla/field_options', requireAdmin, async (req, res)
         label = item[labelField] || value;
       }
       
-      options.push({ value, label });
+      options.push({ 
+        value, 
+        label,
+        // para usuarios, incluir también el raw data para poder mostrar ID si se necesita
+        ...(tablaRelacionada === 'usuario' && { 
+          rawData: {
+            nombreProfesional: item.nombreProfesional || item.nombreprofesional,
+            idUsuario: value
+          }
+        })
+      });
     });
     
     // ordenar opciones alfabeticamente/numericamente

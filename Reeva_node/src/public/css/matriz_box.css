@@ -199,29 +199,31 @@
 }
 
 .box-card.libre { 
-    border-color: var(--box-libre-border); 
-    background: var(--box-libre-bg); 
+    border-color: var(--box-libre-border) !important; 
+    background: var(--box-libre-bg) !important; 
 }
 
-.box-card.en-atencion { 
-    border-color: var(--box-atencion-border); 
-    background: var(--box-atencion-bg); 
+.box-card.en-atencion,
+.box-card.en-atención { 
+    border-color: var(--box-atencion-border) !important; 
+    background: var(--box-atencion-bg) !important; 
+    color: var(--box-atencion);
 }
 
 .box-card.paciente-esperando, 
 .box-card.paciente-ausente { 
-    border-color: var(--box-reservado-border); 
-    background: var(--box-reservado-bg); 
+    border-color: var(--box-reservado-border) !important; 
+    background: var(--box-reservado-bg) !important; 
 }
 
 .box-card.finalizado { 
-    border-color: var(--box-finalizado-border); 
-    background: var(--box-finalizado-bg); 
+    border-color: var(--box-finalizado-border) !important; 
+    background: var(--box-finalizado-bg) !important; 
 }
 
 .box-card.inhabilitado { 
-    border-color: var(--box-inhabilitado-border); 
-    background: var(--box-inhabilitado-bg); 
+    border-color: var(--box-inhabilitado-border) !important; 
+    background: var(--box-inhabilitado-bg) !important; 
 }
 
 /* Header de la tarjeta */
@@ -256,7 +258,8 @@
     background: var(--box-libre);
 }
 
-.status-icon.en-atencion {
+.status-icon.en-atencion,
+.status-icon.en-atención {
     background: var(--box-atencion);
 }
 
@@ -321,7 +324,8 @@
     border-color: rgba(185,28,28,0.45); 
 }
 
-.box-status-label.en-atencion { 
+.box-status-label.en-atencion,
+.box-status-label.en-atención { 
     background: rgba(21,128,61,0.15); 
     color: var(--box-atencion); 
     border-color: rgba(21,128,61,0.45); 
@@ -384,7 +388,8 @@
     border-radius: 0.5rem;
 }
 
-.box-card.en-atencion .patient-section {
+.box-card.en-atencion .patient-section,
+.box-card.en-atención .patient-section {
     display: none;
 }
 
@@ -616,9 +621,20 @@ body.theme-dark .box-card {
     border: 2px solid #334155;
 }
 
+body.theme-dark .box-card.en-atencion,
+body.theme-dark .box-card.en-atención {
+    background: rgba(34, 197, 94, 0.2) !important;
+    border-color: #16a34a !important;
+}
+
 body.theme-dark .box-card:hover {
     background: #1e293b;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .box-card.en-atencion:hover,
+body.theme-dark .box-card.en-atención:hover {
+    background: rgba(34, 197, 94, 0.25) !important;
 }
 
 /* textos */

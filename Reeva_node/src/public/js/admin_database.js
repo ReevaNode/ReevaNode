@@ -1,6 +1,16 @@
 // admin database javascript
 console.log('admin db js loaded');
 
+// definicion de relaciones entre campos y tablas FK
+const CAMPOS_RELACION = {
+    idBox: { tabla: 'box', clavePrimaria: 'idBox' },
+    idEstado: { tabla: 'tipoestado', clavePrimaria: 'idTipoEstado' },
+    idTipoItem: { tabla: 'tipoitem', clavePrimaria: 'idTipoItem' },
+    idTipoConsulta: { tabla: 'tipoconsulta', clavePrimaria: 'idTipoConsulta' },
+    idUsuario: { tabla: 'usuario', clavePrimaria: 'idUsuario' },
+    idEstadoBox: { tabla: 'estadobox', clavePrimaria: 'idEstadoBox' }
+};
+
 let currentTable = '';
 let currentData = [];
 let lastEvaluatedKey = null;
@@ -28,8 +38,25 @@ async function loadTable(tableName, reset = true) {
     document.getElementById('contentArea').style.display = 'block';
     document.getElementById('contentTitle').textContent = `tabla: ${tableName}`;
     
-    // mostrar/ocultar botones segun tabla
+    // determinar si es tabla agenda
     const isAgenda = tableName === 'agenda';
+    
+    // mostrar/ocultar filtro de fecha para agenda
+    const agendaDateFilter = document.getElementById('agendaDateFilter');
+    if (agendaDateFilter) {
+        agendaDateFilter.style.display = isAgenda ? 'block' : 'none';
+        
+        // establecer fecha de hoy por defecto si es agenda
+        if (isAgenda && reset) {
+            const today = new Date().toISOString().split('T')[0];
+            const dateStart = document.getElementById('agendaDateStart');
+            if (dateStart && !dateStart.value) {
+                dateStart.value = today;
+            }
+        }
+    }
+    
+    // mostrar/ocultar botones segun tabla
     ['btnFilters', 'btnCreate', 'btnRefresh'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.style.display = 'inline-block';
@@ -83,10 +110,10 @@ async function loadTable(tableName, reset = true) {
                     const primaryKeys = {
                         'box': 'idBox',
                         'estadobox': 'idEstado',
-                        'personalizacion': 'idPers',
+                        'personalizacion': 'idPersonalizacion',
                         'tipobox': 'idTipoBox',
                         'tipoconsulta': 'idTipoConsulta',
-                        'tipoestado': 'idEstado',
+                        'tipoestado': 'idTipoEstado',
                         'tipoitem': 'idTipoItem',
                         'tipoprofesional': 'idTipoProfesional',
                         'tipousuario': 'idTipoUsuario'
@@ -252,6 +279,20 @@ function populateFilterOptions() {
             filterFieldSelect.innerHTML += `<option value="${field}">${field}</option>`;
         });
         filterFieldSelect.value = currentFilters.filter_field;
+        
+        // agregar evento para cambiar el tipo de input segun el campo seleccionado
+        filterFieldSelect.addEventListener('change', async function() {
+            await updateFilterValueInput(this.value);
+        });
+    }
+    
+    // poblar selector de ordenamiento con los mismos campos
+    const sortFieldSelect = document.getElementById('sortField');
+    if (sortFieldSelect) {
+        sortFieldSelect.innerHTML = '<option value="">sin ordenamiento...</option>';
+        tableFields.forEach(field => {
+            sortFieldSelect.innerHTML += `<option value="${field}">${field}</option>`;
+        });
     }
     
     const filterValue = document.getElementById('filterValue');
@@ -259,6 +300,91 @@ function populateFilterOptions() {
         filterValue.value = currentFilters.filter_value;
     }
 }
+
+// funcion para actualizar el input de filtro segun el tipo de campo
+async function updateFilterValueInput(fieldName) {
+    const filterValueContainer = document.getElementById('filterValue');
+    if (!filterValueContainer) return;
+    
+    const parentDiv = filterValueContainer.parentElement;
+    
+    // si el campo esta en CAMPOS_RELACION, crear un select
+    const relacionConfig = CAMPOS_RELACION[fieldName];
+    
+    if (relacionConfig) {
+        const { tabla } = relacionConfig;
+        
+        try {
+            const response = await fetch(`/admin-bdd/api/${currentTable}/field-options?field=${fieldName}`);
+            const data = await response.json();
+            
+            if (data.success && data.options) {
+                const isUserField = fieldName.toLowerCase().includes('usuario') || tabla === 'usuario';
+                
+                let newHTML = '';
+                
+                // agregar checkbox para campos de usuario
+                if (isUserField) {
+                    newHTML += `
+                        <div class="mb-2">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" id="toggle-filter-${fieldName}" 
+                                    onchange="toggleFilterUserDisplay('${fieldName}')" class="mr-2">
+                                <span class="text-sm">mostrar como IDs</span>
+                            </label>
+                        </div>
+                    `;
+                }
+                
+                newHTML += `
+                    <select id="filterValue" class="w-full border rounded p-2">
+                        <option value="">seleccionar ${fieldName}...</option>
+                `;
+                
+                data.options.forEach(option => {
+                    const label = option.label || option.value;
+                    const dataLabel = option.rawData && option.rawData.nombreProfesional ? option.rawData.nombreProfesional : label;
+                    newHTML += `<option value="${option.value}" data-label="${dataLabel}">${label}</option>`;
+                });
+                
+                newHTML += '</select>';
+                
+                parentDiv.innerHTML = newHTML;
+            }
+        } catch (error) {
+            console.error('error obteniendo opciones:', error);
+        }
+    } else {
+        // volver a input de texto normal
+        parentDiv.innerHTML = `
+            <input type="text" id="filterValue" class="w-full border rounded p-2" placeholder="ingrese valor...">
+        `;
+    }
+}
+
+// toggle para campos de usuario en filtros
+function toggleFilterUserDisplay(fieldName) {
+    const checkbox = document.getElementById(`toggle-filter-${fieldName}`);
+    const select = document.getElementById('filterValue');
+    
+    if (!checkbox || !select) return;
+    
+    const showAsId = checkbox.checked;
+    
+    Array.from(select.options).forEach(option => {
+        if (option.value) {
+            const label = option.getAttribute('data-label');
+            const id = option.value;
+            
+            if (showAsId) {
+                option.textContent = id;
+            } else {
+                option.textContent = label || id;
+            }
+        }
+    });
+}
+
 
 function applyFilters() {
     const filterField = document.getElementById('filterField');
@@ -278,25 +404,70 @@ function applyFilters() {
     let filteredData = [...currentData];
     
     filteredData = filteredData.filter(record => {
-        const valorCampo = String(record[campo] || '');
+        const valorCampo = record[campo];
         
-        // busqueda especifica - el valor debe coincidir
-        // para fechas/horas, buscar coincidencias parciales
+        // si el campo no existe, no coincide
+        if (valorCampo === undefined || valorCampo === null) {
+            return false;
+        }
+        
+        const valorCampoStr = String(valorCampo);
+        const valorBuscado = valor.toLowerCase();
+        
+        // busqueda especifica por tipo de campo
         if (campo.toLowerCase().includes('hora') || campo.toLowerCase().includes('fecha')) {
-            // si el valor buscado es solo hora "11:40:00", buscar en el datetime
-            // si es solo fecha "2025-09-30", buscar en el datetime
-            // si es datetime completo, buscar exacto
-            return valorCampo.includes(valor);
+            // para fechas/horas, buscar coincidencias parciales
+            // ejemplos:
+            // - valorCampo: "2025-10-27 15:00:00"
+            // - búsquedas válidas: "2025-10-27", "15:00", "2025-10-27 15:00", etc.
+            return valorCampoStr.toLowerCase().includes(valorBuscado);
+        } else if (campo.toLowerCase().includes('id')) {
+            // para IDs (que pueden ser strings como "1", "65", etc)
+            // comparar primero como strings exactos o parciales
+            const valorCampoLower = valorCampoStr.toLowerCase();
+            
+            // 1. comparacion exacta de strings (ej: "65" === "65")
+            if (valorCampoLower === valorBuscado) {
+                return true;
+            }
+            
+            // 2. comparacion parcial (ej: "6" incluido en "65")
+            if (valorCampoLower.includes(valorBuscado)) {
+                return true;
+            }
+            
+            // 3. comparacion numerica solo si ambos pueden convertirse a numero
+            // (util para comparar "65" con 65)
+            const numCampo = Number(valorCampoStr);
+            const numBuscado = Number(valor);
+            if (!isNaN(numCampo) && !isNaN(numBuscado)) {
+                return numCampo === numBuscado;
+            }
+            
+            return false;
         } else {
-            // para otros campos, busqueda exacta (case insensitive)
-            return valorCampo.toLowerCase() === valor.toLowerCase();
+            // para otros campos, busqueda flexible (contiene)
+            return valorCampoStr.toLowerCase().includes(valorBuscado);
         }
     });
+    
+    // aplicar ordenamiento si se especificó
+    const sortField = document.getElementById('sortField');
+    const sortOrder = document.getElementById('sortOrder');
+    
+    if (sortField && sortField.value) {
+        const field = sortField.value;
+        const order = sortOrder ? sortOrder.value : 'asc';
+        filteredData = sortData(filteredData, field, order);
+    }
     
     if (filteredData.length === 0) {
         showAlert('info', `no se encontraron registros que coincidan con "${valor}" en ${campo}`);
     } else {
-        showAlert('success', `se encontraron ${filteredData.length} registros`);
+        const sortMsg = sortField && sortField.value 
+            ? ` (ordenados por ${sortField.value} ${sortOrder.value === 'asc' ? 'ascendente' : 'descendente'})` 
+            : '';
+        showAlert('success', `se encontraron ${filteredData.length} registros${sortMsg}`);
     }
     
     // renderizar solo los datos filtrados
@@ -309,7 +480,126 @@ function clearFilters() {
         filter_value: ''
     };
     
+    // limpiar también los selectores de ordenamiento
+    const sortField = document.getElementById('sortField');
+    const sortOrder = document.getElementById('sortOrder');
+    if (sortField) sortField.value = '';
+    if (sortOrder) sortOrder.value = 'asc';
+    
     // recargar tabla sin filtros
+    loadTable(currentTable, true);
+}
+
+// funcion auxiliar para ordenar datos
+function sortData(data, field, order = 'asc') {
+    if (!field) return data;
+    
+    return [...data].sort((a, b) => {
+        let valueA = a[field];
+        let valueB = b[field];
+        
+        // manejar valores null/undefined
+        if (valueA === null || valueA === undefined) valueA = '';
+        if (valueB === null || valueB === undefined) valueB = '';
+        
+        // detectar tipo de dato para comparación apropiada
+        const numA = Number(valueA);
+        const numB = Number(valueB);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+            // comparación numérica
+            return order === 'asc' ? numA - numB : numB - numA;
+        } else if (field.toLowerCase().includes('fecha') || field.toLowerCase().includes('hora')) {
+            // comparación de fechas
+            const dateA = new Date(valueA);
+            const dateB = new Date(valueB);
+            return order === 'asc' ? dateA - dateB : dateB - dateA;
+        } else {
+            // comparación de strings
+            const strA = String(valueA).toLowerCase();
+            const strB = String(valueB).toLowerCase();
+            if (order === 'asc') {
+                return strA.localeCompare(strB);
+            } else {
+                return strB.localeCompare(strA);
+            }
+        }
+    });
+}
+
+// funciones especificas para filtro de fecha de agenda
+async function applyAgendaDateFilter() {
+    if (currentTable !== 'agenda') {
+        showAlert('error', 'este filtro solo funciona para la tabla agenda');
+        return;
+    }
+    
+    const dateStart = document.getElementById('agendaDateStart');
+    const dateEnd = document.getElementById('agendaDateEnd');
+    
+    if (!dateStart || !dateStart.value) {
+        showAlert('error', 'debes seleccionar al menos una fecha de inicio');
+        return;
+    }
+    
+    const startDate = dateStart.value; // formato: "2025-10-27"
+    const endDate = dateEnd && dateEnd.value ? dateEnd.value : startDate;
+    
+    // mostrar loading
+    document.getElementById('tableContainer').innerHTML = '<div class="loading">buscando agendas...</div>';
+    
+    try {
+        // construir parametros para consulta por indice
+        const params = new URLSearchParams({
+            dateStart: startDate,
+            dateEnd: endDate,
+            limit: 1000 // obtener muchos registros para el rango de fecha
+        });
+        
+        const response = await fetch(`/admin-bdd/api/agenda/by-date?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            currentData = data.data || [];
+            
+            // aplicar ordenamiento por horainicio DESC por defecto
+            currentData.sort((a, b) => {
+                const dateA = new Date(a.horainicio || 0);
+                const dateB = new Date(b.horainicio || 0);
+                return dateB - dateA;
+            });
+            
+            // aplicar ordenamiento adicional si se especificó
+            const sortField = document.getElementById('sortField');
+            const sortOrder = document.getElementById('sortOrder');
+            if (sortField && sortField.value) {
+                currentData = sortData(currentData, sortField.value, sortOrder ? sortOrder.value : 'asc');
+            }
+            
+            const sortMsg = sortField && sortField.value 
+                ? ` (ordenados por ${sortField.value} ${sortOrder.value === 'asc' ? 'ascendente' : 'descendente'})` 
+                : '';
+            showAlert('success', `se encontraron ${currentData.length} agendas entre ${startDate} y ${endDate}${sortMsg}`);
+            renderTable(currentData, tableFields);
+        } else {
+            showAlert('error', data.error || 'error al buscar agendas');
+            currentData = [];
+            renderTable([], tableFields);
+        }
+    } catch (error) {
+        console.error('error aplicando filtro de fecha:', error);
+        showAlert('error', 'error de conexión: ' + error.message);
+    }
+}
+
+function clearAgendaDateFilter() {
+    const dateStart = document.getElementById('agendaDateStart');
+    const dateEnd = document.getElementById('agendaDateEnd');
+    
+    if (dateStart) dateStart.value = '';
+    if (dateEnd) dateEnd.value = '';
+    
+    // recargar tabla sin filtro de fecha
     loadTable(currentTable, true);
 }
 
@@ -435,7 +725,7 @@ function deleteRecord(index) {
         'personalizacion': 'idPers',
         'tipobox': 'idTipoBox',
         'tipoconsulta': 'idTipoConsulta',
-        'tipoestado': 'idEstado',
+        'tipoestado': 'idTipoEstado',
         'tipoitem': 'idTipoItem',
         'tipoprofesional': 'idTipoProfesional',
         'tipousuario': 'idTipoUsuario',
@@ -508,7 +798,7 @@ async function renderFormFields(data) {
         'personalizacion': 'idPers',
         'tipobox': 'idTipoBox',
         'tipoconsulta': 'idTipoConsulta',
-        'tipoestado': 'idEstado',
+        'tipoestado': 'idTipoEstado',
         'tipoitem': 'idTipoItem',
         'tipoprofesional': 'idTipoProfesional',
         'tipousuario': 'idTipoUsuario',
@@ -542,15 +832,25 @@ async function renderFormFields(data) {
         } else if (fieldData.is_relation) {
             // campo fk con select
             const options = await getFieldOptions(field);
+            
+            // determinar si es un campo de usuario para agregar el toggle
+            const isUserField = (field === 'idUsuario' || field.toLowerCase().includes('usuario'));
+            
             html += `
                 <div class="form-group">
                     <label class="block text-sm text-gray-600 mb-2">${field}</label>
-                    <select name="${field}" class="w-full border rounded p-2 focus:border-primary focus:ring-primary bg-white">
+                    ${isUserField ? `
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="checkbox" id="toggle-${field}" onchange="toggleUserDisplay('${field}')" />
+                            <label for="toggle-${field}" class="text-xs text-gray-500">Mostrar como IDs</label>
+                        </div>
+                    ` : ''}
+                    <select name="${field}" id="select-${field}" class="w-full border rounded p-2 focus:border-primary focus:ring-primary bg-white">
                         <option value="">— seleccionar ${field} —</option>`;
             
             options.forEach(option => {
                 const selected = value == option.value ? 'selected' : '';
-                html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+                html += `<option value="${option.value}" ${selected} data-label="${option.label}">${option.label}</option>`;
             });
             
             html += `</select></div>`;
@@ -660,6 +960,11 @@ async function getFieldOptions(fieldName, tableName = null) {
         const tabla = tableName || currentTable;
         const response = await fetch(`/admin-bdd/api/${tabla}/field_options?field=${fieldName}`);
         const data = await response.json();
+        
+        if (data.success && data.options) {
+            console.log(`getFieldOptions(${fieldName}):`, data.options.slice(0, 3)); // mostrar primeras 3 opciones
+        }
+        
         return data.success ? data.options : [];
     } catch (error) {
         console.error('error getting field options:', error);
@@ -1195,3 +1500,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Toggle entre mostrar IDs o nombres de usuario
+function toggleUserDisplay(fieldName) {
+    const checkbox = document.getElementById(`toggle-${fieldName}`);
+    const select = document.getElementById(`select-${fieldName}`);
+    
+    if (!checkbox || !select) {
+        console.log('toggleUserDisplay: no se encontró checkbox o select para', fieldName);
+        return;
+    }
+    
+    const showAsId = checkbox.checked;
+    
+    console.log(`toggleUserDisplay(${fieldName}): checkbox.checked = ${showAsId}`);
+    
+    // recorrer todas las opciones y alternar entre ID y nombre
+    Array.from(select.options).forEach(option => {
+        if (option.value) {
+            const label = option.getAttribute('data-label');
+            const id = option.value;
+            
+            if (showAsId) {
+                // checkbox MARCADO = mostrar ID
+                option.textContent = id;
+            } else {
+                // checkbox DESMARCADO = mostrar nombre (default)
+                option.textContent = label || id;
+            }
+        }
+    });
+}

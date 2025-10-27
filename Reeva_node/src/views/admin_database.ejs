@@ -54,6 +54,38 @@
                 </div>
             </div>
 
+            <!-- Filtro específico para tabla agenda -->
+            <div id="agendaDateFilter" class="agenda-date-filter" style="display: none;">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h3 class="text-sm font-semibold text-blue-800 mb-3">
+                        <i class="ri-calendar-line"></i> Filtrar por Fecha (Agenda)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-xs text-gray-600">Fecha Inicio</label>
+                            <input type="date" id="agendaDateStart" class="w-full border rounded p-2">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-xs text-gray-600">Fecha Fin (opcional)</label>
+                            <input type="date" id="agendaDateEnd" class="w-full border rounded p-2">
+                        </div>
+                        <div class="form-group flex items-end gap-2">
+                            <button onclick="applyAgendaDateFilter()" class="btn btn-primary flex-1">
+                                <i class="ri-search-line"></i> Buscar
+                            </button>
+                            <button onclick="clearAgendaDateFilter()" class="btn btn-secondary flex-1">
+                                <i class="ri-close-line"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="ri-information-line"></i> 
+                        Usa el índice horaInicioIndex para obtener registros de fechas específicas. 
+                        Si solo seleccionas "Fecha Inicio", obtendrás todos los registros de ese día.
+                    </p>
+                </div>
+            </div>
+
             <div id="filtersSection" class="filters-section" style="display: none;">
                 <div class="filters-grid">
                     <div class="form-group">
@@ -68,6 +100,24 @@
                         <small class="text-gray-500">Para fechas: "2025-09-30", para horas: "11:40:00", o completo: "2025-09-30 11:40:00"</small>
                     </div>
                 </div>
+                
+                <!-- Sección de ordenamiento -->
+                <div class="filters-grid mt-4">
+                    <div class="form-group">
+                        <label>ordenar por</label>
+                        <select id="sortField" class="w-full border rounded p-2">
+                            <option value="">sin ordenamiento...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>orden</label>
+                        <select id="sortOrder" class="w-full border rounded p-2">
+                            <option value="asc">Ascendente (A-Z, 0-9, más antiguos primero)</option>
+                            <option value="desc">Descendente (Z-A, 9-0, más recientes primero)</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="filter-actions">
                     <button class="btn btn-primary" onclick="applyFilters()">buscar</button>
                     <button class="btn btn-secondary" onclick="clearFilters()">limpiar</button>
