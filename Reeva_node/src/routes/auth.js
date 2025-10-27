@@ -12,7 +12,9 @@ import {
 import {
   DynamoDBDocumentClient,
   GetCommand,
-  PutCommand
+  PutCommand,
+  ScanCommand,
+  DeleteCommand
 } from "@aws-sdk/lib-dynamodb";
 
 import { sendAuthNotification, sendErrorNotification } from "../services/notificationService.js";
@@ -43,6 +45,26 @@ async function obtenerUsuario(userId) {
   }
 }
 
+// obtener usuario por email (para reconciliar cuentas)
+async function obtenerUsuarioPorEmail(email) {
+  if (!email) return null;
+  try {
+    const command = new ScanCommand({
+      TableName: config.dynamodb.tablas.users,
+      FilterExpression: "email = :email",
+      ExpressionAttributeValues: {
+        ":email": email,
+      },
+      Limit: 1,
+    });
+    const result = await docClient.send(command);
+    return result.Items?.[0] || null;
+  } catch (err) {
+    console.error("Error obtenerUsuarioPorEmail:", err);
+    return null;
+  }
+}
+
 // guardar usuario
 async function guardarUsuario(user) {
   try {
@@ -57,6 +79,22 @@ async function guardarUsuario(user) {
     return true;
   } catch (err) {
     console.error("Error guardarUsuario:", err);
+    return false;
+  }
+}
+
+// eliminar usuario por sub
+async function eliminarUsuario(userId) {
+  if (!userId) return false;
+  try {
+    const command = new DeleteCommand({
+      TableName: config.dynamodb.tablas.users,
+      Key: { userId },
+    });
+    await docClient.send(command);
+    return true;
+  } catch (err) {
+    console.error("Error eliminarUsuario:", err);
     return false;
   }
 }
@@ -123,11 +161,54 @@ router.post("/auth/login", async (req, res) => {
     // buscar usuario en dynamo
     let user = await obtenerUsuario(claims.sub);
 
-    // no crear usuario automaticamente, debe existir
+    // reconciliar/crear usuario automaticamente si la bandera está activa
+    if (!user && config.features?.autoProvisionUsers) {
+      const userEmail = claims.email || username;
+      const existingByEmail = await obtenerUsuarioPorEmail(userEmail);
+
+      const baseUser = existingByEmail
+        ? {
+            ...existingByEmail,
+            userId: claims.sub,
+            email: existingByEmail.email || userEmail,
+            username: existingByEmail.username || userEmail,
+          }
+        : {
+            userId: claims.sub,
+            email: userEmail,
+            username: claims["cognito:username"] || userEmail,
+            roles: [],
+            permissions: [],
+            createdAt: new Date().toISOString(),
+          };
+
+      const created = await guardarUsuario({
+        ...baseUser,
+        lastLogin: new Date().toISOString(),
+      });
+
+      if (created) {
+        user = {
+          ...baseUser,
+          lastLogin: new Date().toISOString(),
+        };
+        if (
+          existingByEmail &&
+          existingByEmail.userId &&
+          existingByEmail.userId !== claims.sub
+        ) {
+          await eliminarUsuario(existingByEmail.userId);
+        }
+      } else {
+        console.error("Auto-provisioning failed for user:", claims.sub);
+      }
+    }
+
+    // no crear usuario automaticamente, debe existir si bandera desactivada
     if (!user) {
       return res.status(403).json({
         ok: false,
-        error: "Usuario no registrado en el sistema. Contacta con un administrador."
+        error: "Usuario no registrado en el sistema. Contacta con un administrador.",
       });
     }
 

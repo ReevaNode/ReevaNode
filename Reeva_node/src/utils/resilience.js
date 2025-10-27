@@ -92,7 +92,6 @@ function sleep(ms) {
 
 /**
  * Circuit Breaker
- * protege el sistema de cascadas de fallos
  */
 export class CircuitBreaker {
   constructor(options = {}) {
@@ -213,7 +212,7 @@ export class CircuitBreaker {
  */
 export class SimpleCache {
   constructor(options = {}) {
-    this.ttl = options.ttl || 60000; // 1 minuto por defecto
+    this.ttl = options.ttl || 120000; // 1 minuto por defecto
     this.maxSize = options.maxSize || 100;
     this.cache = new Map();
     

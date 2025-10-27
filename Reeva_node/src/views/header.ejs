@@ -1,3 +1,10 @@
+<%
+  const activeNavKey = typeof activePage === 'string' ? activePage : '';
+  const navStateClass = (page) => activeNavKey === page
+    ? 'text-primary font-semibold'
+    : 'text-gray-700 hover:text-primary';
+%>
+
 <script>
   (function() {
     try {
@@ -52,19 +59,19 @@
     
     <!-- Desktop Navigation -->
     <div class="hidden md:flex flex-1 justify-center gap-8">
-      <a href="/bienvenida" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+      <a href="/bienvenida" class="flex items-center gap-2 transition-colors <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
         <span class="font-medium">Inicio</span>
       </a>
-      <a href="/dashboard" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+      <a href="/dashboard" class="flex items-center gap-2 transition-colors <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
-      <a href="/box-matriz" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
+      <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= navStateClass('matriz-box') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
-      <a href="/agenda" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'agenda') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/agenda" class="flex items-center gap-2 transition-colors <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
@@ -77,7 +84,7 @@
     </div>
     
     <!-- Desktop Profile -->
-    <div class="hidden md:flex items-center gap-6 flex-none relative">
+    <div class="hidden md:flex items-center gap-6 flex-none">
       <div id="language-wrapper" class="relative">
         <button id="language-toggle" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-primary transition-colors">
           <span class="uppercase">ES</span>
@@ -88,25 +95,27 @@
           <button data-language-option="en" class="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-primary/10 hover:text-primary">EN</button>
         </div>
       </div>
-      <a href="" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
-        <i class="ri-user-line ri-lg"></i>
-        <span class="font-medium">Perfil</span>
-      </a>
-      <!-- Menú desplegable, aparece al hacer click en Perfil -->
-      <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 z-50 hidden">
-        <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
+      <div id="perfil-wrapper" class="relative">
+        <a href="#" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
           <i class="ri-user-line ri-lg"></i>
-          <span class="font-medium">Mi Espacio</span>
+          <span class="font-medium">Perfil</span>
         </a>
-        <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
-          <i class="ri-settings-3-line ri-lg"></i>
-          <span class="font-medium">Personalización</span>
-        </a>
-        <div class="border-t my-2"></div>
-        <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
-          <i class="ri-logout-box-r-line ri-lg"></i>
-          <span class="font-medium">Cerrar Sesión</span>
-        </a>
+        <!-- Menú desplegable, aparece al hacer click en Perfil -->
+        <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 hidden" style="z-index: 9999;">
+          <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
+            <i class="ri-user-line ri-lg"></i>
+            <span class="font-medium">Mi Espacio</span>
+          </a>
+          <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+            <i class="ri-settings-3-line ri-lg"></i>
+            <span class="font-medium">Personalización</span>
+          </a>
+          <div class="border-t my-2"></div>
+          <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+            <i class="ri-logout-box-r-line ri-lg"></i>
+            <span class="font-medium">Cerrar Sesión</span>
+          </a>
+        </div>
       </div>
     </div>
     <!-- Hamburger button para mobile -->
@@ -128,25 +137,28 @@
   <div class="p-6">
     <div class="flex items-center justify-between mb-8">
       <h2 class="text-xl font-semibold text-gray-800">Menú</h2>
+      <button id="close-mobile-menu" class="text-gray-500 hover:text-gray-700">
+        <i class="ri-close-line ri-xl"></i>
+      </button>
     </div>
     
     <nav class="space-y-4">
-      <a href="/bienvenida" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+      <a href="/bienvenida" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
         <span class="font-medium">Inicio</span>
       </a>
       
-      <a href="/dashboard" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+      <a href="/dashboard" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
         <span class="font-medium">Dashboard</span>
       </a>
       
-      <a href="/box-matriz" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+      <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('matriz-box') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">Matriz Box</span>
       </a>
       
-      <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'agenda') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
+      <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
         <span class="font-medium">Agenda</span>
       </a>
@@ -160,7 +172,7 @@
       
       <hr class="my-4 border-gray-200">
       
-      <a href="/bienvenida" class="flex items-center gap-3 text-primary font-semibold py-2">
+      <a href="/bienvenida" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
         <i class="ri-user-line ri-lg"></i>
         <span class="font-medium">Mi Espacio</span>
       </a>
@@ -271,40 +283,64 @@ document.addEventListener('DOMContentLoaded', function() {
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
   
+  function closeMobileMenu() {
+    mobileMenu.classList.remove('translate-x-0');
+    mobileMenu.classList.add('translate-x-full');
+    setTimeout(() => {
+      mobileMenuOverlay.classList.add('hidden');
+    }, 300);
+  }
+  
+  function openMobileMenu() {
+    mobileMenuOverlay.classList.remove('hidden');
+    mobileMenu.classList.remove('translate-x-full');
+    mobileMenu.classList.add('translate-x-0');
+  }
+  
   function toggleMobileMenu() {
     if (mobileMenu.classList.contains('translate-x-full')) {
-      mobileMenuOverlay.classList.remove('hidden');
-      mobileMenu.classList.remove('translate-x-full');
-      mobileMenu.classList.add('translate-x-0');
+      openMobileMenu();
     } else {
-      mobileMenu.classList.remove('translate-x-0');
-      mobileMenu.classList.add('translate-x-full');
-      setTimeout(() => {
-        mobileMenuOverlay.classList.add('hidden');
-      }, 300);
+      closeMobileMenu();
     }
   }
   
   if (mobileMenuBtn && mobileMenu && mobileMenuOverlay) {
+    const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
+    
     mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-    mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
+    mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', closeMobileMenu);
+    
+    // cerrar al clickear fuera de la sidebar
+    document.addEventListener('click', function(e) {
+      const isOpen = !mobileMenu.classList.contains('translate-x-full');
+      if (isOpen && !mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+        closeMobileMenu();
+      }
+    });
   }
 });
 
 // Selector de idioma
-document.addEventListener('DOMContentLoaded', function() {
+const initLanguageSelector = () => {
   const wrapper = document.getElementById('language-wrapper');
   const toggle = document.getElementById('language-toggle');
   const menu = document.getElementById('language-menu');
   const options = document.querySelectorAll('#language-menu [data-language-option]');
   const label = toggle ? toggle.querySelector('span') : null;
   const STORAGE_KEY = 'reeva-language';
-  
+
   if (!wrapper || !toggle || !menu || !label) {
     return;
   }
-  
-  // Recibe parametro para saber si es cambio manual
+
+  if (toggle.dataset.bound === 'true') {
+    return;
+  }
+  toggle.dataset.bound = 'true';
+
+   // Recibe parametro para saber si es cambio manual
   const setLanguage = (lang, isUserAction = false) => {
     const value = (lang || 'es').toLowerCase();
     label.textContent = value.toUpperCase();
@@ -319,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
     }
   };
-  
+
   window.reevaSetLanguage = setLanguage;
   window.reevaGetLanguage = () => localStorage.getItem(STORAGE_KEY) || 'es';
   
@@ -339,13 +375,16 @@ document.addEventListener('DOMContentLoaded', function() {
       setLanguage(languageOption, true); 
     });
   });
-  
+
   document.addEventListener('click', (event) => {
     if (!wrapper.contains(event.target)) {
       menu.classList.add('hidden');
     }
   });
-});
+};
+
+document.addEventListener('DOMContentLoaded', initLanguageSelector);
+window.reevaInitLanguage = initLanguageSelector;
 
 // Panel de personalizacion
 document.addEventListener('DOMContentLoaded', function() {
@@ -364,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!overlay || !panel) {
     return;
   }
-  
+
   const updateActiveState = (elements, value, key) => {
     elements.forEach((element) => {
       const isActive = element.dataset[key] === value;
@@ -372,21 +411,66 @@ document.addEventListener('DOMContentLoaded', function() {
       element.setAttribute('aria-pressed', String(isActive));
     });
   };
-  
+
   const applyLanguageHighlight = (language) => {
     if (!languageButtons.length) {
       return;
     }
     updateActiveState(languageButtons, language, 'languageOption');
   };
-  
+
   const applyThemeHighlight = (theme) => {
     if (!themeButtons.length) {
       return;
     }
     updateActiveState(themeButtons, theme, 'themeOption');
   };
-  
+
+  const closeMobileMenuIfOpen = () => {
+    if (!mobileMenu || !mobileMenuOverlay) {
+      return;
+    }
+    if (!mobileMenu.classList.contains('translate-x-full')) {
+      mobileMenu.classList.remove('translate-x-0');
+      mobileMenu.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileMenuOverlay.classList.add('hidden');
+      }, 300);
+    }
+  };
+
+  const openPanel = () => {
+    perfilMenu?.classList.add('hidden');
+    closeMobileMenuIfOpen();
+    overlay.classList.remove('pointer-events-none');
+    panel.classList.remove('pointer-events-none');
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      panel.classList.remove('translate-x-full');
+      panel.classList.add('translate-x-0');
+    });
+    document.body.style.overflow = 'hidden';
+    panel.setAttribute('aria-hidden', 'false');
+  };
+
+  const closePanel = () => {
+    overlay.classList.add('pointer-events-none');
+    panel.classList.add('pointer-events-none');
+    overlay.classList.remove('opacity-100');
+    overlay.classList.add('opacity-0');
+    panel.classList.remove('translate-x-0');
+    panel.classList.add('translate-x-full');
+    document.body.style.overflow = '';
+    panel.setAttribute('aria-hidden', 'true');
+  };
+
+  window.reevaOpenPersonalizationPanel = () => {
+    initPersonalizationPanel();
+    panel.dataset.bound = 'true';
+    openPanel();
+  };
+
   const applySystemTheme = () => {
     if (!window.matchMedia) {
       return;
@@ -459,47 +543,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  const closeMobileMenuIfOpen = () => {
-    if (!mobileMenu || !mobileMenuOverlay) {
-      return;
-    }
-    if (!mobileMenu.classList.contains('translate-x-full')) {
-      mobileMenu.classList.remove('translate-x-0');
-      mobileMenu.classList.add('translate-x-full');
-      setTimeout(() => {
-        mobileMenuOverlay.classList.add('hidden');
-      }, 300);
-    }
-  };
-  
-  const openPanel = () => {
-    if (perfilMenu) {
-      perfilMenu.classList.add('hidden');
-    }
-    closeMobileMenuIfOpen();
-    overlay.classList.remove('pointer-events-none');
-    panel.classList.remove('pointer-events-none');
-    requestAnimationFrame(() => {
-      overlay.classList.remove('opacity-0');
-      overlay.classList.add('opacity-100');
-      panel.classList.remove('translate-x-full');
-      panel.classList.add('translate-x-0');
-    });
-    document.body.style.overflow = 'hidden';
-    panel.setAttribute('aria-hidden', 'false');
-  };
-  
-  const closePanel = () => {
-    overlay.classList.add('pointer-events-none');
-    panel.classList.add('pointer-events-none');
-    overlay.classList.remove('opacity-100');
-    overlay.classList.add('opacity-0');
-    panel.classList.remove('translate-x-0');
-    panel.classList.add('translate-x-full');
-    document.body.style.overflow = '';
-    panel.setAttribute('aria-hidden', 'true');
-  };
-  
   overlay.addEventListener('click', closePanel);
   if (closeBtn) {
     closeBtn.addEventListener('click', closePanel);
@@ -517,6 +560,88 @@ document.addEventListener('DOMContentLoaded', function() {
       openPanel();
     });
   });
+};
+
+document.addEventListener('DOMContentLoaded', initPersonalizationPanel);
+window.reevaInitPersonalization = initPersonalizationPanel;
+window.reevaOpenPersonalizationPanel = () => {
+  initPersonalizationPanel();
+  const overlay = document.getElementById('personalization-overlay');
+  const panel = document.getElementById('personalization-panel');
+  const perfilMenu = document.getElementById('perfil-menu');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+  const closeMobileMenuIfOpen = () => {
+    if (!mobileMenu || !mobileMenuOverlay) {
+      return;
+    }
+    if (!mobileMenu.classList.contains('translate-x-full')) {
+      mobileMenu.classList.remove('translate-x-0');
+      mobileMenu.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileMenuOverlay.classList.add('hidden');
+      }, 300);
+    }
+  };
+  if (overlay && panel) {
+    perfilMenu?.classList.add('hidden');
+    closeMobileMenuIfOpen();
+    overlay.classList.remove('pointer-events-none');
+    panel.classList.remove('pointer-events-none');
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      panel.classList.remove('translate-x-full');
+      panel.classList.add('translate-x-0');
+    });
+    document.body.style.overflow = 'hidden';
+    panel.setAttribute('aria-hidden', 'false');
+  }
+};
+
+// Menú de perfil desktop
+const initPerfilMenu = () => {
+  const perfilBtn = document.getElementById('perfil-btn');
+  const perfilMenu = document.getElementById('perfil-menu');
+  
+  console.log('Inicializando menú de perfil...', { perfilBtn, perfilMenu });
+  
+  if (!perfilBtn || !perfilMenu) {
+    console.warn('No se encontraron elementos del menú de perfil');
+    return;
+  }
+  
+  // Prevenir múltiples inicializaciones
+  if (perfilBtn.dataset.menuInitialized === 'true') {
+    console.log('Menú de perfil ya inicializado');
+    return;
+  }
+  perfilBtn.dataset.menuInitialized = 'true';
+  
+  perfilBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Click en botón de perfil, estado actual:', perfilMenu.classList.contains('hidden'));
+    
+    const isHidden = perfilMenu.classList.contains('hidden');
+    
+    if (isHidden) {
+      perfilMenu.classList.remove('hidden');
+      perfilMenu.style.display = 'block';
+      console.log('Menú desplegado');
+    } else {
+      perfilMenu.classList.add('hidden');
+      perfilMenu.style.display = 'none';
+      console.log('Menú ocultado');
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (!perfilBtn.contains(e.target) && !perfilMenu.contains(e.target)) {
+      perfilMenu.classList.add('hidden');
+      perfilMenu.style.display = 'none';
+    }
+  });
 });
 
 // Menu de perfil desktop
@@ -524,19 +649,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const perfilBtn = document.getElementById('perfil-btn');
   const perfilMenu = document.getElementById('perfil-menu');
   
-  if (perfilBtn && perfilMenu) {
-    perfilBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      perfilMenu.classList.toggle('hidden');
-    });
-    
-    document.addEventListener('click', function(e) {
-      if (!perfilBtn.contains(e.target) && !perfilMenu.contains(e.target)) {
-        perfilMenu.classList.add('hidden');
-      }
-    });
-  }
-});
+  console.log('Menú de perfil inicializado correctamente');
+};
+
+document.addEventListener('DOMContentLoaded', initPerfilMenu);
+
+// Por si acaso el DOMContentLoaded ya pasó
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPerfilMenu);
+} else {
+  initPerfilMenu();
+}
 </script>
 <script>
 (function() {

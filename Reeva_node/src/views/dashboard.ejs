@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= pageTitle || 'Dashboard Hospital' %></title>
+
+  <!-- Tailwind + configuración de color primario -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#B4447C'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Iconos y librerías de gráficos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/header.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body class="font-sans min-h-screen flex flex-col">
+  <%- include('header', { activePage: 'dashboard' }) %>
+
+  <main class="container mx-auto px-4 py-6 md:py-10 space-y-6 md:space-y-10 max-w-7xl w-full">
+    <input type="hidden" id="box-period-value" value="<%= selectedBoxPeriodValue %>">
+    <input type="hidden" id="specialty-period-value" value="<%= selectedSpecialtyPeriodValue %>">
+    <!-- KPIs principales -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+      <article class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-sm">
+        <div class="flex justify-between items-center gap-4 md:gap-6">
+          <div>
+            <p class="text-xs md:text-sm text-gray-500">Total Boxes Ocupados</p>
+            <p class="text-4xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-none mt-1 md:mt-2 occupied-count"><%= occupiedValue %></p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+            <i class="ri-hospital-line ri-2x md:ri-3x"></i>
+          </div>
+        </div>
+      </article>
+
+      <article class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-sm">
+        <div class="flex justify-between items-center gap-4 md:gap-6">
+          <div>
+            <p class="text-xs md:text-sm text-gray-500">Boxes Disponibles</p>
+            <p class="text-4xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-none mt-1 md:mt-2 available-count"><%= availableValue %></p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-green-100 text-green-600">
+            <i class="ri-checkbox-circle-line ri-2x md:ri-3x"></i>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Donuts de estado -->
+    <section class="bg-white rounded-2xl md:rounded-3xl shadow-sm p-6 md:p-10">
+      <h2 class="text-2xl md:text-4xl font-semibold mb-6 md:mb-8">Estado de Boxes</h2>
+      <div class="flex flex-wrap justify-center gap-6 md:gap-10">
+        <% if (!hasLabelColors) { %>
+          <p class="text-gray-500">Sin datos para mostrar.</p>
+        <% } else { %>
+          <% for (const item of labelColorsView) { %>
+            <div class="text-center">
+              <div id="donut-<%= item.chartId %>" class="w-32 h-32 md:w-44 md:h-44 lg:w-56 lg:h-56 mx-auto"></div>
+              <p class="mt-3 md:mt-4 text-sm md:text-base lg:text-lg font-medium text-gray-700"><%= item.key %></p>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- Modal de reporte -->
+    <div id="reportModal" class="fixed inset-0 bg-gray-500 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg w-full max-w-xl mx-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-gray-800">Configurar Reporte</h3>
+            <button id="closeReportModal" class="text-gray-500 hover:text-gray-700">
+              <i class="ri-close-line text-xl"></i>
+            </button>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Formato</label>
+              <div class="grid grid-cols-3 gap-3">
+                <button class="border border-gray-300 rounded-button p-3 flex flex-col items-center hover:border-primary hover:text-primary format-btn" data-format="pdf">
+                  <i class="ri-file-pdf-line text-2xl mb-1"></i>
+                  <span class="text-sm">PDF</span>
+                </button>
+                <button class="border border-gray-300 rounded-button p-3 flex flex-col items-center hover:border-primary hover:text-primary format-btn" data-format="excel">
+                  <i class="ri-file-excel-line text-2xl mb-1"></i>
+                  <span class="text-sm">Excel</span>
+                </button>
+                <button class="border border-gray-300 rounded-button p-3 flex flex-col items-center hover:border-primary hover:text-primary format-btn" data-format="csv">
+                  <i class="ri-file-text-line text-2xl mb-1"></i>
+                  <span class="text-sm">CSV</span>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Desde</label>
+                <input type="date" class="w-full border border-gray-300 rounded-button px-3 py-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Hasta</label>
+                <input type="date" class="w-full border border-gray-300 rounded-button px-3 py-2 text-sm">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Especialidades</label>
+              <div class="border border-gray-300 rounded-button p-3 max-h-32 overflow-y-auto space-y-2">
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
+                  <span class="ml-2 text-sm">Todas las especialidades</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300">
+                  <span class="ml-2 text-sm">Oftalmología</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300">
+                  <span class="ml-2 text-sm">Neurología</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300">
+                  <span class="ml-2 text-sm">Cardiología</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Contenido del reporte</label>
+              <div class="space-y-2">
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
+                  <span class="ml-2 text-sm">Estadísticas generales</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
+                  <span class="ml-2 text-sm">Gráficos de ocupación</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
+                  <span class="ml-2 text-sm">Detalle de boxes</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button id="cancelReportBtn" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 whitespace-nowrap">Cancelar</button>
+            <button id="confirmReportBtn" class="bg-primary text-white px-6 py-2 rounded-button hover:bg-primary/90 whitespace-nowrap flex items-center">
+              <i class="ri-download-line mr-2"></i>
+              Descargar Reporte
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs secundarios -->
+    <% 
+      const bestSpecialtyHasData = hasBestSpecialtyUsage;
+      const bestSpecialtyNameText = bestSpecialtyHasData ? (bestSpecialtyUsageData.nombre ?? bestSpecialtyUsageData.label ?? 'Especialidad') : 'Sin datos en este período';
+      const bestSpecialtyMetaText = bestSpecialtyHasData
+        ? `${bestSpecialtyUsageData.conteo ?? 0} agendas • ${bestSpecialtyUsageData.porcentaje ?? 0}% del período`
+        : 'No hay agendamientos registrados.';
+      const bestSpecialtyPeriodText = selectedSpecialtyPeriodDescription || 'Sin período seleccionado';
+
+      const bestBoxHasData = hasBestBoxUsage;
+      const bestBoxNameText = bestBoxHasData ? `Box #${bestBoxUsageData.numero ?? '—'}` : 'Sin datos en este período';
+      const bestBoxMetaText = bestBoxHasData
+        ? `${bestBoxUsageData.porcentaje ?? 0}% del tiempo ocupado`
+        : 'No hay agendamientos registrados.';
+      const bestBoxPeriodText = selectedBoxPeriodDescription || 'Sin período seleccionado';
+    %>
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <article class="bg-white border rounded-lg p-5 shadow-sm flex flex-col gap-4">
+        <div class="flex justify-between items-start gap-4">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs md:text-sm text-gray-500 mb-1">Especialidad más ocupada</p>
+            <p class="text-lg md:text-2xl font-semibold leading-tight <%= bestSpecialtyHasData ? 'text-gray-900' : 'text-gray-400' %>" id="best-specialty-name"><%= bestSpecialtyNameText %></p>
+            <div class="mt-1 text-xs <%= bestSpecialtyHasData ? 'text-gray-500' : 'text-gray-400' %>" id="best-specialty-meta">
+              <%= bestSpecialtyMetaText %>
+            </div>
+          </div>
+          <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 flex-shrink-0">
+            <i class="ri-eye-line ri-lg"></i>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <% specialtyUsageOptions.forEach((option) => { %>
+            <button type="button"
+              class="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors <%= option.active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-primary hover:text-primary' %>"
+              data-specialty-period="<%= option.value %>"
+              aria-pressed="<%= option.active %>">
+              <%= option.label %>
+            </button>
+          <% }) %>
+        </div>
+
+        <div class="text-xs text-gray-400" id="best-specialty-period">
+          Período: <%= bestSpecialtyPeriodText %>
+        </div>
+      </article>
+
+      <article class="bg-white border rounded-lg p-5 shadow-sm flex flex-col gap-4">
+        <div class="flex justify-between items-start gap-4">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs md:text-sm text-gray-500 mb-1">Box más utilizado</p>
+            <p class="text-lg md:text-2xl font-semibold leading-tight <%= bestBoxHasData ? 'text-gray-900' : 'text-gray-400' %>" id="best-box-name"><%= bestBoxNameText %></p>
+            <div class="mt-1 text-xs <%= bestBoxHasData ? 'text-gray-500' : 'text-gray-400' %>" id="best-box-meta"><%= bestBoxMetaText %></div>
+          </div>
+          <div class="w-10 h-10 flex items-center justify-center rounded-full bg-amber-100 text-amber-500 flex-shrink-0">
+            <i class="ri-star-line ri-lg"></i>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <% boxUsageOptions.forEach((option) => { %>
+            <button type="button"
+              class="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors <%= option.active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-primary hover:text-primary' %>"
+              data-box-period="<%= option.value %>"
+              aria-pressed="<%= option.active %>">
+              <%= option.label %>
+            </button>
+          <% }) %>
+        </div>
+
+        <div class="text-xs text-gray-400" id="best-box-period">
+          Período: <%= bestBoxPeriodText %>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <article class="bg-white rounded shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4">Número de Box por especialidad</h2>
+        <div id="horizontal-bar-chart" style="height: 240px;"></div>
+        <script id="etiquetas-especialidad" type="application/json"><%- JSON.stringify(etiquetasEspecialidadList) %></script>
+        <script id="valores-especialidad" type="application/json"><%- JSON.stringify(valoresEspecialidadList) %></script>
+      </article>
+
+      <article class="bg-white rounded shadow-sm p-6">
+        <form id="form-horas" method="get" action="/dashboard" class="space-y-6">
+          <div>
+            <label for="prof_code" class="block text-sm font-medium mb-1">Profesional</label>
+            <select id="prof_code" name="prof_code" class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white">
+              <option value="">-- Todos los doctores --</option>
+              <% doctoresList.forEach((doc) => { const value = doc.idusuario ?? doc.idUsuario ?? ''; %>
+                <option value="<%= value %>" <%= value && value.toString() === profSeleccionado ? 'selected' : '' %>>
+                  <%= doc.nombreprofesional || doc.nombre || 'Profesional' %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="box_number" class="block text-sm font-medium mb-1">Box</label>
+            <select id="box_number" name="box_number" class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white">
+              <option value="">-- Seleccione un box --</option>
+              <% boxesList.forEach((b) => { const numero = b.numero ?? b.idBox ?? ''; %>
+                <option value="<%= numero %>" <%= numero && numero.toString() === boxSeleccionado ? 'selected' : '' %>>
+                  Box <%= numero %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="fecha" class="block text-sm font-medium mb-1">Fecha</label>
+            <input id="fecha" name="fecha" type="date" value="<%= fechaSeleccionada %>" class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white" />
+          </div>
+          <div class="pt-2 flex justify-end">
+            <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90 transition">Buscar</button>
+          </div>
+        </form>
+
+        <div class="mt-8">
+          <canvas id="bar-chart" height="120"></canvas>
+          <div class="mt-4 space-y-1 text-sm text-gray-700">
+            <p><strong>Horas agendadas:</strong> <span id="txt-horas-agendadas"><%= horasAgendadasText %></span></p>
+            <p><strong>Horas realizadas:</strong> <span id="txt-horas-realizadas"><%= horasRealizadasText %></span></p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="bg-white rounded shadow-sm p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-xl font-semibold">Tendencia mensual por especialidad</h2>
+          <p class="text-sm text-gray-500">Cantidad de agendas cerradas por mes</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <label for="specialty-trend-select" class="text-sm font-medium text-gray-600">Especialidad</label>
+          <select id="specialty-trend-select" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+            <% specialtyTrendOptions.forEach((label) => { %>
+              <option value="<%= label %>" <%= label === specialtyTrendDefault ? 'selected' : '' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <div class="w-full overflow-x-auto">
+        <div id="specialty-trend-chart" class="min-w-[320px] h-[18rem] md:h-[20rem]"></div>
+      </div>
+      <script id="specialty-trend-labels" type="application/json"><%- JSON.stringify(specialtyTrendLabels) %></script>
+      <script id="specialty-trend-series" type="application/json"><%- JSON.stringify(specialtyTrendSeries) %></script>
+      <script id="specialty-trend-default" type="application/json"><%- JSON.stringify(specialtyTrendDefault) %></script>
+    </section>
+
+    <section class="bg-white rounded shadow-sm p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-xl font-semibold">Agendas finalizadas por día de la semana</h2>
+          <p class="text-sm text-gray-500">Últimos 7 días, solo agendas finalizadas</p>
+        </div>
+        <form id="form-dias" method="get" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+          <div class="flex flex-col">
+            <label for="especialidad" class="text-sm font-medium text-gray-600 mb-1">Especialidad</label>
+            <select name="especialidad" id="especialidad" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+              <% const weeklyOptionsList = Array.isArray(weeklySpecialtyOptions) && weeklySpecialtyOptions.length ? weeklySpecialtyOptions : Object.keys(weeklySpecialtySeries || {}); %>
+              <% weeklyOptionsList.forEach((esp) => { %>
+                <option value="<%= esp %>" <%= esp === (especSeleccionada || weeklySpecialtyDefault || 'Todas') ? 'selected' : '' %>><%= esp %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label for="weekly-year" class="text-sm font-medium text-gray-600 mb-1">Año</label>
+            <select name="weekly_year" id="weekly-year" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+              <option value="" <%= !weeklySelectedYear ? 'selected' : '' %>>Todos</option>
+              <% (weeklyAvailableYears || []).forEach((year) => { %>
+                <option value="<%= year %>" <%= weeklySelectedYear === year ? 'selected' : '' %>><%= year %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label for="weekly-month" class="text-sm font-medium text-gray-600 mb-1">Mes</label>
+            <select name="weekly_month" id="weekly-month" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
+              <option value="" <%= !weeklySelectedMonth ? 'selected' : '' %>>Todos</option>
+              <% const spanishMonths = [null, 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']; %>
+              <% (weeklyAvailableMonths || []).forEach((monthNumber) => { %>
+                <option value="<%= monthNumber %>" <%= weeklySelectedMonth === monthNumber ? 'selected' : '' %>><%= spanishMonths[monthNumber] %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label for="weekly-period" class="text-sm font-medium text-gray-600 mb-1">Período</label>
+            <div class="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50">Distribución semanal</div>
+          </div>
+          <div class="flex flex-col md:items-end justify-end">
+            <input type="hidden" name="fecha" value="<%= fechaSeleccionada %>">
+            <input type="hidden" name="prof_code" value="<%= profSeleccionado %>">
+            <input type="hidden" name="box_number" value="<%= boxSeleccionado %>">
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition text-sm font-medium w-full md:w-auto">Filtrar</button>
+          </div>
+        </form>
+      </div>
+      <div class="w-full overflow-x-auto">
+        <div id="weekly-trend-chart" class="min-w-[320px] h-[18rem] md:h-[20rem]"></div>
+      </div>
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Día más activo</p>
+          <p id="weekly-top-day" class="text-lg font-semibold text-gray-800 mt-1">—</p>
+          <p id="weekly-top-day-detail" class="text-xs text-gray-500 mt-1">Sin datos para el período seleccionado.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Concentración</p>
+          <p id="weekly-top-percentage" class="text-lg font-semibold text-gray-800 mt-1">0%</p>
+          <p class="text-xs text-gray-500 mt-1">Porcentaje de agendas en el día más activo.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Total período</p>
+          <p id="weekly-total-count" class="text-lg font-semibold text-gray-800 mt-1">0</p>
+          <p class="text-xs text-gray-500 mt-1">Agendas finalizadas en el período filtrado.</p>
+        </div>
+      </div>
+      <script id="weekly-labels" type="application/json"><%- JSON.stringify(weeklySpecialtyLabels) %></script>
+      <script id="weekly-series" type="application/json"><%- JSON.stringify(weeklySpecialtySeries) %></script>
+      <script id="weekly-default" type="application/json"><%- JSON.stringify(weeklySpecialtyDefault || especSeleccionada || null) %></script>
+      <script id="weekly-options" type="application/json"><%- JSON.stringify(weeklySpecialtyOptions) %></script>
+      <script id="weekly-summary" type="application/json"><%- JSON.stringify(weeklySummary) %></script>
+      <script id="weekly-years" type="application/json"><%- JSON.stringify(weeklyAvailableYears) %></script>
+      <script id="weekly-months" type="application/json"><%- JSON.stringify(weeklyAvailableMonths) %></script>
+      <script id="weekly-months-map" type="application/json"><%- JSON.stringify(weeklyMonthsByYear) %></script>
+      <script id="weekly-all-months" type="application/json"><%- JSON.stringify(weeklyAllMonths) %></script>
+      <script id="weekly-selected-year" type="application/json"><%- JSON.stringify(weeklySelectedYear) %></script>
+      <script id="weekly-selected-month" type="application/json"><%- JSON.stringify(weeklySelectedMonth) %></script>
+    </section>
+
+    <div class="pt-4 flex justify-center">
+      <a href="/reporte" class="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90 transition inline-flex items-center">
+        <i class="ri-file-excel-2-line mr-2"></i>
+        Descargar Reporte Excel
+      </a>
+    </div>
+  </main>
+
+  <%- include('footer') %>
+
+  <script id="total-boxes-count" type="application/json"><%- JSON.stringify(totalBoxesData) %></script>
+  <script id="estado-percentages" type="application/json"><%- JSON.stringify(estadoPercentagesData) %></script>
+  <script id="estado-counts" type="application/json"><%- JSON.stringify(estadoCountsData) %></script>
+
+  <script>
+    const estado = JSON.parse(document.getElementById('estado-percentages').textContent || '{}');
+    const estadoCounts = JSON.parse(document.getElementById('estado-counts').textContent || '{}');
+    const totalBoxes = Number(JSON.parse(document.getElementById('total-boxes-count').textContent || '0')) || 0;
+    <% for (const item of labelColorsView) { %>
+      (function() {
+        const keyName = <%- JSON.stringify(item.key) %>;
+        const colorHex = <%- JSON.stringify(item.color) %>;
+        const chartEl = document.getElementById('donut-<%= item.chartId %>');
+        if (!chartEl) return;
+        const chart = echarts.init(chartEl);
+        chart.setOption({
+          tooltip: {
+            trigger: 'item',
+            formatter: function(params) {
+              const coloredCount = estadoCounts[keyName] || 0;
+              const grayCount = Math.max(totalBoxes - coloredCount, 0);
+              const isColored = params.dataIndex === 0;
+              const label = isColored ? keyName : `No ${keyName.toLowerCase()}`;
+              const value = isColored ? coloredCount : grayCount;
+              return label + ': ' + value + ' boxes';
+            }
+          },
+          series: [{
+            type: 'pie',
+            radius: ['65%', '85%'],
+            avoidLabelOverlap: false,
+            label: {
+              show: true,
+              position: 'center',
+              formatter: (estado[keyName] || 0) + '%',
+              fontSize: 22,
+              fontWeight: '800',
+              color: '#111827'
+            },
+            data: [
+              { value: estado[keyName] || 0, itemStyle: { color: colorHex } },
+              { value: 100 - (estado[keyName] || 0), itemStyle: { color: '#f3f4f6' } }
+            ]
+          }]
+        });
+        window.addEventListener('resize', () => chart.resize());
+      })();
+    <% } %>
+
+    const ag = parseFloat('<%= horasAgendadasFloatValue %>') || 0;
+    const re = parseFloat('<%= horasRealizadasFloatValue %>') || 0;
+    const barCtx = document.getElementById('bar-chart').getContext('2d');
+    const barChart = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Agendadas', 'Realizadas'],
+        datasets: [{
+          data: [ag, re],
+          backgroundColor: ['#38b2ac', '#4299e1'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        animation: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            suggestedMax: Math.max(ag, re) * 1.1 || 1,
+            ticks: {
+              callback: (value) => value + 'h'
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => (Number(context.parsed.y).toFixed(2)) + ' horas'
+            }
+          }
+        }
+      }
+    });
+
+    const etiquetasEsp = JSON.parse(document.getElementById('etiquetas-especialidad').textContent || '[]');
+    const valoresEsp = JSON.parse(document.getElementById('valores-especialidad').textContent || '[]');
+    const horizontalBar = echarts.init(document.getElementById('horizontal-bar-chart'));
+    horizontalBar.setOption({
+      animation: false,
+      grid: { left: '25%', right: '4%', bottom: '6%', top: '6%' },
+      xAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { show: false },
+        splitLine: { show: false }
+      },
+      yAxis: {
+        type: 'category',
+        data: etiquetasEsp,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: '#6b7280' }
+      },
+      series: [{
+        name: 'Boxes',
+        type: 'bar',
+        data: valoresEsp,
+        barWidth: '60%',
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: '#20B2AA' },
+            { offset: 1, color: '#5fd0cb' }
+          ]),
+          borderRadius: [0, 4, 4, 0]
+        }
+      }],
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderColor: '#e5e7eb',
+        textStyle: { color: '#1f2937' }
+      }
+    });
+    window.addEventListener('resize', () => horizontalBar.resize());
+
+    const ACTIVE_PERIOD_CLASSES = ['bg-primary', 'text-white', 'border-primary', 'shadow-sm'];
+    const INACTIVE_PERIOD_CLASSES = ['bg-white', 'border-gray-200', 'text-gray-600'];
+    const bestSpecialtyNameEl = document.getElementById('best-specialty-name');
+    const bestSpecialtyMetaEl = document.getElementById('best-specialty-meta');
+    const bestSpecialtyPeriodEl = document.getElementById('best-specialty-period');
+    const bestBoxNameEl = document.getElementById('best-box-name');
+    const bestBoxMetaEl = document.getElementById('best-box-meta');
+    const bestBoxPeriodEl = document.getElementById('best-box-period');
+    const boxPeriodValueEl = document.getElementById('box-period-value');
+    const specialtyPeriodValueEl = document.getElementById('specialty-period-value');
+    let boxPeriodButtonsList = [];
+    let specialtyPeriodButtonsList = [];
+    let fetchAndUpdateRef = null;
+
+    const applyPeriodButtonState = (button, isActive) => {
+      if (!button) return;
+      ACTIVE_PERIOD_CLASSES.forEach((cls) => button.classList.toggle(cls, isActive));
+      INACTIVE_PERIOD_CLASSES.forEach((cls) => button.classList.toggle(cls, !isActive));
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    };
+
+    const setPeriodButtonsState = (buttons, activeValue, datasetKey) => {
+      if (!Array.isArray(buttons) || !buttons.length) return;
+      const normalized = activeValue != null ? String(activeValue) : null;
+      buttons.forEach((button) => {
+        const value = button?.dataset?.[datasetKey] != null ? String(button.dataset[datasetKey]) : null;
+        applyPeriodButtonState(button, normalized != null ? value === normalized : false);
+      });
+    };
+
+    const updateBestSpecialtyCard = (info = null, periodDescription = '') => {
+      const hasData = info && typeof info === 'object';
+      const nameText = hasData ? (info.nombre ?? info.label ?? 'Especialidad') : 'Sin datos en este período';
+      const count = Number(info?.conteo ?? info?.total ?? 0);
+      const percentage = Number(info?.porcentaje ?? 0);
+      const metaText = hasData
+        ? `${count} agendas • ${percentage}% del período`
+        : 'No hay agendamientos registrados.';
+
+      if (bestSpecialtyNameEl) {
+        bestSpecialtyNameEl.textContent = nameText;
+        bestSpecialtyNameEl.classList.toggle('text-gray-400', !hasData);
+        bestSpecialtyNameEl.classList.toggle('text-gray-900', hasData);
+      }
+      if (bestSpecialtyMetaEl) {
+        bestSpecialtyMetaEl.textContent = metaText;
+        bestSpecialtyMetaEl.classList.toggle('text-gray-400', !hasData);
+        bestSpecialtyMetaEl.classList.toggle('text-gray-500', hasData);
+      }
+      if (bestSpecialtyPeriodEl) {
+        const description = periodDescription || 'Sin período seleccionado';
+        bestSpecialtyPeriodEl.textContent = `Período: ${description}`;
+      }
+    };
+
+    const updateBestBoxCard = (info = null, periodDescription = '') => {
+      const hasData = info && typeof info === 'object';
+      const numero = info?.numero ?? info?.boxId ?? null;
+      const percentage = Number(info?.porcentaje ?? 0);
+      const nameText = hasData && numero != null ? `Box #${numero}` : 'Sin datos en este período';
+      const metaText = hasData ? `${percentage}% del tiempo ocupado` : 'No hay agendamientos registrados.';
+
+      if (bestBoxNameEl) {
+        bestBoxNameEl.textContent = nameText;
+        bestBoxNameEl.classList.toggle('text-gray-400', !hasData);
+        bestBoxNameEl.classList.toggle('text-gray-900', hasData);
+      }
+      if (bestBoxMetaEl) {
+        bestBoxMetaEl.textContent = metaText;
+        bestBoxMetaEl.classList.toggle('text-gray-400', !hasData);
+        bestBoxMetaEl.classList.toggle('text-gray-500', hasData);
+      }
+      if (bestBoxPeriodEl) {
+        const description = periodDescription || 'Sin período seleccionado';
+        bestBoxPeriodEl.textContent = `Período: ${description}`;
+      }
+    };
+
+    /* Weekly data managed via ECharts */
+    let applyWeeklyData;
+    let weeklyTrendLabels = [];
+    let weeklyTrendSeries = {};
+    let weeklySummary = {};
+    let weeklyMonthsByYear = {};
+    let weeklyAllMonths = [];
+    let weeklyTrendSelectEl = null;
+    let weeklyYearSelectEl = null;
+    let weeklyMonthSelectEl = null;
+    let weeklyChartInstance = null;
+    const WEEK_MONTH_NAMES = [
+      null,
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+
+    const populateYearOptions = (selectEl, years, selectedYear) => {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Todos';
+      if (!selectedYear) defaultOption.selected = true;
+      selectEl.appendChild(defaultOption);
+      (Array.isArray(years) ? years : []).forEach((year) => {
+        const option = document.createElement('option');
+        option.value = String(year);
+        option.textContent = String(year);
+        if (selectedYear && Number(selectedYear) === Number(year)) {
+      option.selected = true;
+    }
+    selectEl.appendChild(option);
+  });
+};
+
+    const resolveWeeklySpecialtyLabel = (label) => {
+      if (label && weeklyTrendSeries[label]) return label;
+      if (weeklyTrendSeries['Todas']) return 'Todas';
+      const keys = Object.keys(weeklyTrendSeries);
+      return keys.length ? keys[0] : null;
+    };
+
+    const populateMonthOptions = (selectEl, months, selectedMonth) => {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Todos';
+      if (!selectedMonth) defaultOption.selected = true;
+      selectEl.appendChild(defaultOption);
+      (Array.isArray(months) ? months : []).forEach((monthNumber) => {
+        const option = document.createElement('option');
+        option.value = String(monthNumber);
+        option.textContent = WEEK_MONTH_NAMES[monthNumber] || `Mes ${monthNumber}`;
+        if (selectedMonth && Number(selectedMonth) === Number(monthNumber)) {
+          option.selected = true;
+        }
+        selectEl.appendChild(option);
+      });
+    };
+
+    (function() {
+      const formHoras = document.getElementById('form-horas');
+      const formDias = document.getElementById('form-dias');
+      const txtAg = document.getElementById('txt-horas-agendadas');
+      const txtRe = document.getElementById('txt-horas-realizadas');
+      const weeklyTopDayEl = document.getElementById('weekly-top-day');
+      const weeklyTopDayDetailEl = document.getElementById('weekly-top-day-detail');
+      const weeklyTopPercentageEl = document.getElementById('weekly-top-percentage');
+      const weeklyTotalCountEl = document.getElementById('weekly-total-count');
+
+      const ensureWeeklyChart = () => {
+        if (!weeklyChartInstance) {
+          const container = document.getElementById('weekly-trend-chart');
+          if (container) {
+            weeklyChartInstance = echarts.init(container);
+          }
+        }
+        return weeklyChartInstance;
+      };
+
+      const renderWeeklyChart = (label) => {
+        const chart = ensureWeeklyChart();
+        if (!chart) return null;
+        const selected = resolveWeeklySpecialtyLabel(label);
+        const data = Array.isArray(weeklyTrendSeries[selected])
+          ? weeklyTrendSeries[selected]
+          : [];
+        const maxValue = data.reduce((acc, value) => Math.max(acc, value), 0);
+        chart.setOption({
+          color: ['#B4447C'],
+          grid: { left: '3%', right: '4%', bottom: '5%', containLabel: true },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+            borderWidth: 0,
+            padding: 12,
+            textStyle: { color: '#f8fafc' },
+            formatter: (params = []) => {
+              const item = params[0];
+              if (!item) return '';
+              const value = Number(item.value || 0);
+              return `${item.axisValueLabel}<br/>${value} agendas`;
+            },
+          },
+          xAxis: {
+            type: 'category',
+            data: weeklyTrendLabels,
+            axisTick: { alignWithLabel: true },
+            axisLabel: { color: '#64748b' },
+            axisLine: { lineStyle: { color: '#e2e8f0' } },
+          },
+          yAxis: {
+            type: 'value',
+            min: 0,
+            max: maxValue === 0 ? 1 : undefined,
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { color: '#64748b', precision: 0 },
+            splitLine: { lineStyle: { color: '#e2e8f0' } },
+          },
+          series: [
+            {
+              type: 'bar',
+              data,
+              barWidth: '55%',
+              itemStyle: {
+                borderRadius: [8, 8, 4, 4],
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: 'rgba(180, 68, 124, 0.85)' },
+                  { offset: 1, color: 'rgba(180, 68, 124, 0.25)' },
+                ]),
+              },
+              emphasis: {
+                itemStyle: {
+                  color: '#B4447C',
+                },
+              },
+            },
+          ],
+        });
+        window.addEventListener('resize', () => chart.resize());
+        return selected;
+      };
+
+      const updateWeeklySummary = (label) => {
+        const info = weeklySummary[label] || {};
+        if (weeklyTopDayEl) {
+          weeklyTopDayEl.textContent = info.topDayLabel || 'Sin datos';
+        }
+        if (weeklyTopDayDetailEl) {
+          if (info.topDayLabel) {
+            const agendasText = info.topDayCount === 1 ? 'agenda' : 'agendas';
+            weeklyTopDayDetailEl.textContent = `${info.topDayCount || 0} ${agendasText} registradas en ${info.topDayLabel}.`;
+          } else {
+            weeklyTopDayDetailEl.textContent = 'Sin datos para el período seleccionado.';
+          }
+        }
+        if (weeklyTopPercentageEl) {
+          weeklyTopPercentageEl.textContent = `${info.topDayPercentage || 0}%`;
+        }
+        if (weeklyTotalCountEl) {
+          weeklyTotalCountEl.textContent = info.total || 0;
+        }
+      };
+
+      applyWeeklyData = function(label) {
+        const selected = renderWeeklyChart(label);
+        updateWeeklySummary(selected || label);
+        if (weeklyTrendSelectEl && selected) {
+          weeklyTrendSelectEl.value = selected;
+        }
+      };
+
+      function buildParams() {
+        const prof = document.getElementById('prof_code')?.value || '';
+        const box = document.getElementById('box_number')?.value || '';
+        const fecha = document.getElementById('fecha')?.value || '';
+        const espec = document.getElementById('especialidad')?.value || 'Todas';
+        const boxPeriod = document.getElementById('box-period-value')?.value || '';
+        const specialtyPeriod = document.getElementById('specialty-period-value')?.value || '';
+        const weeklyYear = document.getElementById('weekly-year')?.value || '';
+        const weeklyMonth = document.getElementById('weekly-month')?.value || '';
+        const params = new URLSearchParams();
+        if (prof) params.set('prof_code', prof);
+        if (box) params.set('box_number', box);
+        if (fecha) params.set('fecha', fecha);
+        if (espec) params.set('especialidad', espec);
+        if (boxPeriod) params.set('box_period', boxPeriod);
+        if (specialtyPeriod) params.set('specialty_period', specialtyPeriod);
+        if (weeklyYear) params.set('weekly_year', weeklyYear);
+        if (weeklyMonth) params.set('weekly_month', weeklyMonth);
+        return params.toString();
+      }
+
+      function updateFromData(data) {
+        weeklyTrendSelectEl = weeklyTrendSelectEl || document.getElementById('especialidad');
+        weeklyYearSelectEl = weeklyYearSelectEl || document.getElementById('weekly-year');
+        weeklyMonthSelectEl = weeklyMonthSelectEl || document.getElementById('weekly-month');
+        if (txtAg) txtAg.textContent = data.horas_agendadas ?? '0';
+        if (txtRe) txtRe.textContent = data.horas_realizadas ?? '0';
+        const a = parseFloat(data.horas_agendadas_float || 0);
+        const r = parseFloat(data.horas_realizadas_float || 0);
+        barChart.data.datasets[0].data = [a, r];
+        barChart.options.scales.y.suggestedMax = Math.max(a, r) * 1.1 || 1;
+        barChart.update('none');
+
+        if (data.weekly_labels && data.weekly_series) {
+          weeklyTrendLabels = data.weekly_labels || [];
+          weeklyTrendSeries = data.weekly_series || {};
+          weeklySummary = data.weekly_summary || weeklySummary;
+          weeklyMonthsByYear = data.weekly_months_map || weeklyMonthsByYear;
+          weeklyAllMonths = data.weekly_all_months || weeklyAllMonths;
+
+          const availableOptions = Array.isArray(data.weekly_options)
+            ? data.weekly_options
+            : Object.keys(weeklyTrendSeries);
+          if (weeklyTrendSelectEl) {
+            weeklyTrendSelectEl.innerHTML = '';
+            availableOptions.forEach((label) => {
+              const option = document.createElement('option');
+              option.value = label;
+              option.textContent = label;
+              weeklyTrendSelectEl.appendChild(option);
+            });
+            weeklyTrendSelectEl.onchange = (event) => {
+              applyWeeklyData(event.target.value);
+            };
+          }
+
+          populateYearOptions(
+            weeklyYearSelectEl,
+            data.weekly_years || [],
+            data.weekly_selected_year ?? ''
+          );
+
+          const monthsForYear =
+            (data.weekly_selected_year && data.weekly_months_map?.[data.weekly_selected_year]) ||
+            data.weekly_months ||
+            weeklyAllMonths;
+
+          populateMonthOptions(
+            weeklyMonthSelectEl,
+            monthsForYear,
+            data.weekly_selected_month ?? ''
+          );
+
+          const defaultLabel =
+            data.weekly_default ||
+            weeklyTrendSelectEl?.value ||
+            resolveWeeklySpecialtyLabel('Todas');
+
+          applyWeeklyData(defaultLabel);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(data, 'best_specialty_usage') || Object.prototype.hasOwnProperty.call(data, 'best_specialty_period_description')) {
+          const specialtyValue = Object.prototype.hasOwnProperty.call(data, 'best_specialty_period_value')
+            ? (data.best_specialty_period_value ?? '')
+            : specialtyPeriodValueEl?.value ?? '';
+          if (specialtyPeriodValueEl) {
+            specialtyPeriodValueEl.value = specialtyValue;
+          }
+          if (!specialtyPeriodButtonsList.length) {
+            specialtyPeriodButtonsList = Array.from(document.querySelectorAll('[data-specialty-period]'));
+          }
+          setPeriodButtonsState(specialtyPeriodButtonsList, specialtyValue, 'specialtyPeriod');
+          updateBestSpecialtyCard(
+            data.best_specialty_usage,
+            data.best_specialty_period_description
+          );
+        }
+
+        if (Object.prototype.hasOwnProperty.call(data, 'best_box_usage') || Object.prototype.hasOwnProperty.call(data, 'best_box_period_description')) {
+          const boxValue = Object.prototype.hasOwnProperty.call(data, 'best_box_period_value')
+            ? (data.best_box_period_value ?? '')
+            : boxPeriodValueEl?.value ?? '';
+          if (boxPeriodValueEl) {
+            boxPeriodValueEl.value = boxValue;
+          }
+          if (!boxPeriodButtonsList.length) {
+            boxPeriodButtonsList = Array.from(document.querySelectorAll('[data-box-period]'));
+          }
+          setPeriodButtonsState(boxPeriodButtonsList, boxValue, 'boxPeriod');
+          updateBestBoxCard(
+            data.best_box_usage,
+            data.best_box_period_description
+          );
+        }
+
+        if (Array.isArray(data.specialty_usage_options)) {
+          if (!specialtyPeriodButtonsList.length) {
+            specialtyPeriodButtonsList = Array.from(document.querySelectorAll('[data-specialty-period]'));
+          }
+          specialtyPeriodButtonsList.forEach((button) => {
+            const value = button?.dataset?.specialtyPeriod;
+            const option = data.specialty_usage_options.find((item) => String(item.value) === String(value));
+            if (option && option.label) {
+              button.textContent = option.label;
+            }
+          });
+        }
+
+        if (Array.isArray(data.box_usage_options)) {
+          if (!boxPeriodButtonsList.length) {
+            boxPeriodButtonsList = Array.from(document.querySelectorAll('[data-box-period]'));
+          }
+          boxPeriodButtonsList.forEach((button) => {
+            const value = button?.dataset?.boxPeriod;
+            const option = data.box_usage_options.find((item) => String(item.value) === String(value));
+            if (option && option.label) {
+              button.textContent = option.label;
+            }
+          });
+        }
+      }
+
+      async function fetchAndUpdate(event) {
+        if (event) event.preventDefault();
+        const query = buildParams();
+        const url = `${window.location.pathname}${query ? '?' + query : ''}`;
+        window.history.replaceState(null, '', url);
+        try {
+          const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+          if (!response.ok) throw new Error('Error al obtener datos');
+          const data = await response.json();
+          requestAnimationFrame(() => updateFromData(data));
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      fetchAndUpdateRef = fetchAndUpdate;
+
+      formHoras?.addEventListener('submit', fetchAndUpdate);
+      formDias?.addEventListener('submit', fetchAndUpdate);
+
+      weeklyYearSelectEl = document.getElementById('weekly-year');
+      weeklyMonthSelectEl = document.getElementById('weekly-month');
+      weeklyYearSelectEl?.addEventListener('change', (event) => {
+        const selected = event.target.value;
+        const months =
+          selected && weeklyMonthsByYear[selected]
+            ? weeklyMonthsByYear[selected]
+            : weeklyAllMonths;
+        populateMonthOptions(weeklyMonthSelectEl, months, '');
+      });
+    })();
+
+    document.addEventListener('DOMContentLoaded', function () {
+      boxPeriodButtonsList = Array.from(document.querySelectorAll('[data-box-period]'));
+      specialtyPeriodButtonsList = Array.from(document.querySelectorAll('[data-specialty-period]'));
+
+      if (boxPeriodButtonsList.length) {
+        boxPeriodButtonsList.forEach((button) => {
+          button.addEventListener('click', () => {
+            const value = button.dataset.boxPeriod ?? '';
+            if (boxPeriodValueEl) {
+              boxPeriodValueEl.value = value;
+            }
+            setPeriodButtonsState(boxPeriodButtonsList, value, 'boxPeriod');
+            fetchAndUpdateRef?.();
+          });
+        });
+        setPeriodButtonsState(boxPeriodButtonsList, boxPeriodValueEl?.value ?? null, 'boxPeriod');
+      }
+
+      if (specialtyPeriodButtonsList.length) {
+        specialtyPeriodButtonsList.forEach((button) => {
+          button.addEventListener('click', () => {
+            const value = button.dataset.specialtyPeriod ?? '';
+            if (specialtyPeriodValueEl) {
+              specialtyPeriodValueEl.value = value;
+            }
+            setPeriodButtonsState(specialtyPeriodButtonsList, value, 'specialtyPeriod');
+            fetchAndUpdateRef?.();
+          });
+        });
+        setPeriodButtonsState(specialtyPeriodButtonsList, specialtyPeriodValueEl?.value ?? null, 'specialtyPeriod');
+      }
+
+      weeklyTrendSelectEl = document.getElementById('especialidad');
+      const weeklyLabelsEl = document.getElementById('weekly-labels');
+      const weeklySeriesEl = document.getElementById('weekly-series');
+      const weeklyDefaultEl = document.getElementById('weekly-default');
+      const weeklyOptionsEl = document.getElementById('weekly-options');
+      const weeklySummaryEl = document.getElementById('weekly-summary');
+      const weeklyYearsEl = document.getElementById('weekly-years');
+      const weeklyMonthsEl = document.getElementById('weekly-months');
+      const weeklyMonthsMapEl = document.getElementById('weekly-months-map');
+      const weeklyAllMonthsEl = document.getElementById('weekly-all-months');
+      const weeklySelectedYearEl = document.getElementById('weekly-selected-year');
+      const weeklySelectedMonthEl = document.getElementById('weekly-selected-month');
+
+      weeklyTrendLabels = JSON.parse(weeklyLabelsEl?.textContent || '[]');
+      weeklyTrendSeries = JSON.parse(weeklySeriesEl?.textContent || '{}');
+      weeklySummary = JSON.parse(weeklySummaryEl?.textContent || '{}');
+      weeklyMonthsByYear = JSON.parse(weeklyMonthsMapEl?.textContent || '{}');
+      weeklyAllMonths = JSON.parse(weeklyAllMonthsEl?.textContent || '[]');
+
+      const weeklyOptions = JSON.parse(weeklyOptionsEl?.textContent || '[]');
+      if (weeklyTrendSelectEl && weeklyOptions.length) {
+        weeklyTrendSelectEl.innerHTML = '';
+        weeklyOptions.forEach((label) => {
+          const option = document.createElement('option');
+          option.value = label;
+          option.textContent = label;
+          weeklyTrendSelectEl.appendChild(option);
+        });
+        weeklyTrendSelectEl.onchange = (event) => {
+          applyWeeklyData(event.target.value);
+        };
+      }
+
+      weeklyYearSelectEl = document.getElementById('weekly-year');
+      weeklyMonthSelectEl = document.getElementById('weekly-month');
+      const initialYear = JSON.parse(weeklySelectedYearEl?.textContent || 'null');
+      const initialMonth = JSON.parse(weeklySelectedMonthEl?.textContent || 'null');
+      const initialYears = JSON.parse(weeklyYearsEl?.textContent || '[]');
+      const initialMonths = JSON.parse(weeklyMonthsEl?.textContent || '[]');
+
+      populateYearOptions(weeklyYearSelectEl, initialYears, initialYear);
+      populateMonthOptions(
+        weeklyMonthSelectEl,
+        initialYear && weeklyMonthsByYear[initialYear] ? weeklyMonthsByYear[initialYear] : initialMonths,
+        initialMonth
+      );
+
+      const initialWeekly = JSON.parse(weeklyDefaultEl?.textContent || 'null')
+        || weeklyTrendSelectEl?.value
+        || resolveWeeklySpecialtyLabel('Todas');
+
+      if (initialWeekly) {
+        applyWeeklyData(initialWeekly);
+      }
+
+      const specialtyTrendLabelsEl = document.getElementById('specialty-trend-labels');
+      const specialtyTrendSeriesEl = document.getElementById('specialty-trend-series');
+      const specialtyTrendDefaultEl = document.getElementById('specialty-trend-default');
+      const specialtyTrendSelect = document.getElementById('specialty-trend-select');
+      const specialtyTrendContainer = document.getElementById('specialty-trend-chart');
+      if (specialtyTrendLabelsEl && specialtyTrendSeriesEl && specialtyTrendContainer) {
+        const trendLabels = JSON.parse(specialtyTrendLabelsEl.textContent || '[]');
+        const trendSeries = JSON.parse(specialtyTrendSeriesEl.textContent || '{}');
+        const seriesKeys = Object.keys(trendSeries);
+        const resolveLabel = (label) => {
+          if (label && trendSeries[label]) return label;
+          if (trendSeries['Todas']) return 'Todas';
+          return seriesKeys[0] || null;
+        };
+        const toNumericSeries = (values = []) =>
+          trendLabels.map((_, index) => {
+            const value = Array.isArray(values) ? values[index] : 0;
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+          });
+
+        let currentSpecialty = resolveLabel(
+          JSON.parse(specialtyTrendDefaultEl?.textContent || 'null')
+            || specialtyTrendSelect?.value
+            || seriesKeys[0]
+            || null
+        );
+
+        if (specialtyTrendSelect && currentSpecialty) {
+          specialtyTrendSelect.value = currentSpecialty;
+        }
+
+        const specialtyTrendChart = echarts.init(specialtyTrendContainer);
+        const renderSpecialtyTrend = (label) => {
+          const selected = resolveLabel(label);
+          const data = toNumericSeries(trendSeries[selected]);
+          const maxValue = data.reduce((acc, value) => Math.max(acc, value), 0);
+          specialtyTrendChart.setOption({
+            color: ['#B4447C'],
+            grid: { left: '3%', right: '4%', bottom: '5%', containLabel: true },
+            tooltip: {
+              trigger: 'axis',
+              backgroundColor: 'rgba(15, 23, 42, 0.92)',
+              borderWidth: 0,
+              padding: 12,
+              textStyle: { color: '#f8fafc' },
+              formatter: (params = []) => {
+                const item = params[0];
+                if (!item) return '';
+                const value = Number(item.value || 0);
+                return `${item.axisValue}<br/>${value} agendas`;
+              },
+            },
+            xAxis: {
+              type: 'category',
+              data: trendLabels,
+              boundaryGap: false,
+              axisLine: { lineStyle: { color: '#e2e8f0' } },
+              axisLabel: { color: '#64748b' },
+              axisTick: { alignWithLabel: true },
+            },
+            yAxis: {
+              type: 'value',
+              min: 0,
+              max: maxValue === 0 ? 1 : undefined,
+              axisLine: { show: false },
+              axisTick: { show: false },
+              axisLabel: { color: '#64748b', precision: 0 },
+              splitLine: { lineStyle: { color: '#e2e8f0' } },
+            },
+            series: [
+              {
+                name: selected || 'Especialidad',
+                type: 'line',
+                smooth: true,
+                showSymbol: true,
+                symbolSize: 7,
+                lineStyle: { width: 3, color: '#B4447C' },
+                areaStyle: {
+                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(180, 68, 124, 0.35)' },
+                    { offset: 1, color: 'rgba(180, 68, 124, 0.05)' },
+                  ]),
+                },
+                data,
+              },
+            ],
+          });
+          currentSpecialty = selected;
+          if (specialtyTrendSelect && selected) {
+            specialtyTrendSelect.value = selected;
+          }
+        };
+
+        renderSpecialtyTrend(currentSpecialty);
+        specialtyTrendSelect?.addEventListener('change', (event) => {
+          renderSpecialtyTrend(event.target.value);
+        });
+        window.addEventListener('resize', () => specialtyTrendChart.resize());
+      }
+
+      const reportModal = document.getElementById('reportModal');
+      const closeReportModal = document.getElementById('closeReportModal');
+      const cancelReportBtn = document.getElementById('cancelReportBtn');
+      const confirmReportBtn = document.getElementById('confirmReportBtn');
+      const formatBtns = document.querySelectorAll('.format-btn');
+      let selectedFormat = null;
+
+      function showModal() {
+        reportModal?.classList.remove('hidden');
+        reportModal?.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function hideModal() {
+        reportModal?.classList.add('hidden');
+        reportModal?.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      document.getElementById('generateReportBtn')?.addEventListener('click', showModal);
+      closeReportModal?.addEventListener('click', hideModal);
+      cancelReportBtn?.addEventListener('click', hideModal);
+
+      formatBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          formatBtns.forEach((b) => {
+            b.classList.remove('border-primary', 'text-primary');
+            b.classList.add('border-gray-300');
+          });
+          btn.classList.remove('border-gray-300');
+          btn.classList.add('border-primary', 'text-primary');
+          selectedFormat = btn.dataset.format;
+        });
+      });
+
+      confirmReportBtn?.addEventListener('click', () => {
+        if (!selectedFormat) {
+          alert('Selecciona un formato antes de descargar.');
+          return;
+        }
+        hideModal();
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-50 text-green-800 px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2';
+        notification.innerHTML = '<i class="ri-checkbox-circle-line text-xl"></i><span>El reporte se está generando...</span>';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      });
+
+      reportModal?.addEventListener('click', (event) => {
+        if (event.target === reportModal) hideModal();
+      });
+
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+      const closeBtn = document.querySelector('#mobileMenu button');
+      const overlay = document.getElementById('mobileMenuOverlay');
+
+      function toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        const overlayEl = document.getElementById('mobileMenuOverlay');
+        if (menu && overlayEl) {
+          menu.classList.toggle('translate-x-full');
+          overlayEl.classList.toggle('hidden');
+        }
+      }
+
+      mobileBtn?.addEventListener('click', toggleMobileMenu);
+      closeBtn?.addEventListener('click', toggleMobileMenu);
+      overlay?.addEventListener('click', toggleMobileMenu);
+
+      const perfilBtn = document.getElementById('perfil-btn');
+      const perfilMenu = document.getElementById('perfil-menu');
+      perfilBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        perfilMenu?.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', (event) => {
+        if (perfilBtn && perfilMenu && !perfilBtn.contains(event.target) && !perfilMenu.contains(event.target)) {
+          perfilMenu.classList.add('hidden');
+        }
+      });
+
+      if (typeof window.reevaSetLanguage === 'function') {
+        const currentLanguage = (window.reevaGetLanguage && window.reevaGetLanguage()) || 'es';
+        window.reevaSetLanguage(currentLanguage);
+      }
+
+      window.reevaInitPersonalization?.();
+      window.reevaInitLanguage?.();
+
+      document.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-personalizacion-trigger]');
+        if (trigger) {
+          event.preventDefault();
+          window.reevaInitPersonalization?.();
+          window.reevaOpenPersonalizationPanel?.();
+        }
+      });
+    });
+  </script>
+
+  <script>
+    const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${wsProto}://${window.location.host}/ws/box/`);
+
+    socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      const newStateText = data.new_state_text;
+      if (!newStateText) return;
+      if (newStateText === 'Finalizado' || newStateText === 'Paciente Ausente') {
+        const ocupadosEl = document.querySelector('.occupied-count');
+        const disponiblesEl = document.querySelector('.available-count');
+        if (ocupadosEl && disponiblesEl) {
+          const ocupados = parseInt(ocupadosEl.textContent, 10) || 0;
+          const disponibles = parseInt(disponiblesEl.textContent, 10) || 0;
+          if (newStateText === 'Finalizado') {
+            ocupadosEl.textContent = Math.max(ocupados - 1, 0);
+            disponiblesEl.textContent = disponibles + 1;
+          }
+          if (newStateText === 'Paciente Ausente') {
+            ocupadosEl.textContent = ocupados + 1;
+            disponiblesEl.textContent = Math.max(disponibles - 1, 0);
+          }
+        }
+      }
+    };
+
+    socket.onclose = function() {
+      console.warn('WebSocket cerrado inesperadamente');
+    };
+  </script>
+</body>
+</html>

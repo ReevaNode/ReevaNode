@@ -1,0 +1,780 @@
+/* matriz_box.css */
+
+/* Variables de colores para estados */
+:root {
+    /* En Atencion (verde oscuro) */
+    --box-atencion: #15803d; 
+    --box-atencion-bg: #d1fadf; 
+    --box-atencion-border: #0f5e2d;
+
+    /* Reservado (azul) */
+    --box-reservado: #1d4ed8;
+    --box-reservado-bg: #dbe7ff;
+    --box-reservado-border: #153a9f;
+
+    /* Libre (rojo) */
+    --box-libre: #b91c1c;
+    --box-libre-bg: #fde2e2;
+    --box-libre-border: #861616;
+
+    /* Finalizado (morado) */
+    --box-finalizado: #6d28d9;
+    --box-finalizado-bg: #ece1ff;
+    --box-finalizado-border: #5320a8;
+
+    /* Inhabilitado (gris) */
+    --box-inhabilitado: #475569;
+    --box-inhabilitado-bg: #f1f5f9;
+    --box-inhabilitado-border: #334155;
+}
+
+/* botones de vista */
+.view-toggle-btn {
+    background: transparent;
+    color: #64748b;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.view-toggle-btn:hover {
+    color: #334155;
+}
+
+.view-toggle-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Summary Badges */
+.status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.status-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+    background: white;
+}
+
+.status-filter-total {
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+.status-filter-libre {
+    background: rgba(185, 28, 28, 0.18);
+    color: var(--box-libre);
+    border-color: rgba(185, 28, 28, 0.5);
+}
+
+.status-filter-atencion {
+    background: rgba(21, 128, 61, 0.18);
+    color: var(--box-atencion);
+    border-color: rgba(21, 128, 61, 0.5);
+}
+
+.status-filter-reservado {
+    background: rgba(29, 78, 216, 0.18);
+    color: var(--box-reservado);
+    border-color: rgba(29, 78, 216, 0.5);
+}
+
+.status-filter-finalizado {
+    background: rgba(109, 40, 217, 0.20);
+    color: var(--box-finalizado);
+    border-color: rgba(109, 40, 217, 0.55);
+}
+
+.status-filter-inhabilitado {
+    background: rgba(71, 85, 105, 0.18);
+    color: var(--box-inhabilitado);
+    border-color: rgba(71, 85, 105, 0.5);
+}
+
+.status-filter-btn:hover {
+    opacity: 0.8;
+}
+
+.status-filter-btn.status-active {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+}
+
+/* Sección de especialidad */
+.especialidad-section {
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.especialidad-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    transition: background 0.2s;
+}
+
+.especialidad-header:hover {
+    background: #f1f5f9;
+}
+
+.especialidad-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.collapse-icon {
+    font-size: 1.25rem;
+    color: #64748b;
+    transition: transform 0.3s ease;
+}
+
+.collapse-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.boxes-container {
+    padding: 1.25rem;
+    display: block;
+}
+
+.boxes-container.collapsed {
+    display: none;
+}
+
+/* grid de boxes */
+.boxes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* responsivo */
+@media (max-width: 768px) {
+    .boxes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .especialidad-title {
+        font-size: 1.125rem;
+    }
+}
+
+/* tarjeta de box */
+.box-card {
+    background: white;
+    border: 2px solid;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: all 0.2s;
+    animation: fadeIn 0.3s ease-in;
+    cursor: pointer;
+    position: relative;
+}
+
+.box-card:hover {
+    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.box-card.libre { 
+    border-color: var(--box-libre-border); 
+    background: var(--box-libre-bg); 
+}
+
+.box-card.en-atencion { 
+    border-color: var(--box-atencion-border); 
+    background: var(--box-atencion-bg); 
+}
+
+.box-card.paciente-esperando, 
+.box-card.paciente-ausente { 
+    border-color: var(--box-reservado-border); 
+    background: var(--box-reservado-bg); 
+}
+
+.box-card.finalizado { 
+    border-color: var(--box-finalizado-border); 
+    background: var(--box-finalizado-bg); 
+}
+
+.box-card.inhabilitado { 
+    border-color: var(--box-inhabilitado-border); 
+    background: var(--box-inhabilitado-bg); 
+}
+
+/* Header de la tarjeta */
+.box-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.box-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Ícono de estado circular */
+.status-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.status-icon.libre {
+    background: var(--box-libre);
+}
+
+.status-icon.en-atencion {
+    background: var(--box-atencion);
+}
+
+.status-icon.paciente-esperando,
+.status-icon.paciente-ausente {
+    background: var(--box-reservado);
+}
+
+.status-icon.finalizado {
+    background: var(--box-finalizado);
+}
+
+.status-icon.inhabilitado {
+    background: var(--box-inhabilitado);
+}
+
+/* Título y subtítulo del box */
+.box-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+}
+
+.box-subtitle {
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Porcentaje de ocupación */
+.ocupacion-info {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.ocupacion-percentage {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1f2937;
+    margin-bottom: 0.125rem;
+}
+
+.ocupacion-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Estado general badge */
+.box-status-label {
+    padding: 0.25rem 0.75rem;
+    border: 1px solid currentColor;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.box-status-label.libre { 
+    background: rgba(185,28,28,0.15); 
+    color: var(--box-libre); 
+    border-color: rgba(185,28,28,0.45); 
+}
+
+.box-status-label.en-atencion { 
+    background: rgba(21,128,61,0.15); 
+    color: var(--box-atencion); 
+    border-color: rgba(21,128,61,0.45); 
+}
+
+.box-status-label.reservado { 
+    background: rgba(29,78,216,0.15); 
+    color: var(--box-reservado); 
+    border-color: rgba(29,78,216,0.45); 
+}
+
+.box-status-label.finalizado { 
+    background: rgba(109,40,217,0.18); 
+    color: var(--box-finalizado); 
+    border-color: rgba(109,40,217,0.50); 
+}
+
+.box-status-label.inhabilitado { 
+    background: rgba(71,85,105,0.15); 
+    color: var(--box-inhabilitado); 
+    border-color: rgba(71,85,105,0.45); 
+}
+
+/* Información del médico */
+.medico-section {
+    margin: 1rem 0;
+}
+
+.medico-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.medico-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #6b7280;
+}
+
+.medico-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.medico-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Estado del paciente */
+.patient-section {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+}
+
+.box-card.en-atencion .patient-section {
+    display: none;
+}
+
+.patient-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.patient-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #6b7280;
+}
+
+.patient-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.patient-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Barra de progreso */
+.progress-section {
+    margin-top: 1rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.progress-percentage {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 0.5rem;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 0.25rem;
+}
+
+.progress-fill.libre {
+    background: var(--box-libre);
+}
+
+.progress-fill.en-atencion {
+    background: var(--box-atencion);
+}
+
+.progress-fill.reservado,
+.progress-fill.paciente-esperando,
+.progress-fill.paciente-ausente {
+    background: var(--box-reservado);
+}
+
+.progress-fill.finalizado {
+    background: var(--box-finalizado);
+}
+
+.progress-fill.inhabilitado {
+    background: var(--box-inhabilitado);
+}
+
+/* Mensaje sin resultados */
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .boxes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .box-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .status-summary {
+        flex-direction: column;
+    }
+}
+
+/* ========== VISTA COMPACTA ========== */
+.vista-compacta .boxes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.vista-compacta .box-card {
+    padding: 0.75rem;
+    min-height: auto;
+}
+
+.vista-compacta .box-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+}
+
+.vista-compacta .box-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vista-compacta .status-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.vista-compacta .box-title {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.vista-compacta .box-status-label {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.vista-compacta .ocupacion-info {
+    width: 100%;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 0.375rem;
+}
+
+.vista-compacta .ocupacion-percentage {
+    font-size: 1.25rem;
+}
+
+.vista-compacta .ocupacion-label {
+    font-size: 0.65rem;
+}
+
+/* ocultar detalles en vista compacta */
+.vista-compacta .medico-section,
+.vista-compacta .patient-section,
+.vista-compacta .progress-section {
+    display: none;
+}
+
+/* responsive vista compacta */
+@media (max-width: 768px) {
+    .vista-compacta .boxes-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .vista-compacta .boxes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (min-width: 1025px) {
+    .vista-compacta .boxes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+}
+
+/* tema oscuro */
+body.theme-dark {
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+/* containers y cards */
+body.theme-dark .bg-white {
+    background: #1e293b !important;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+body.theme-dark .especialidad-section {
+    background: #1e293b;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+body.theme-dark .especialidad-header {
+    background: #334155;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+body.theme-dark .box-card {
+    background: #0f172a;
+    border: 2px solid #334155;
+}
+
+body.theme-dark .box-card:hover {
+    background: #1e293b;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* textos */
+body.theme-dark .text-gray-800,
+body.theme-dark .text-gray-700,
+body.theme-dark h1,
+body.theme-dark h2,
+body.theme-dark h3,
+body.theme-dark .model-name {
+    color: #f1f5f9 !important;
+}
+
+body.theme-dark .text-gray-600,
+body.theme-dark .text-gray-500 {
+    color: #94a3b8 !important;
+}
+
+body.theme-dark .text-gray-400 {
+    color: #64748b !important;
+}
+
+/* inputs y filtros - contraste sutil */
+body.theme-dark input,
+body.theme-dark select {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #e5e7eb;
+}
+
+body.theme-dark input::placeholder {
+    color: #94a3b8; /* placeholder mas claro */
+}
+
+body.theme-dark input:focus,
+body.theme-dark select:focus {
+    background: #0f172a;
+    border-color: #9b4f88;
+    outline: none;
+}
+
+/* contenedor de botones de vista - fondo oscuro */
+body.theme-dark .bg-gray-100,
+body.theme-dark .rounded-lg.p-1 {
+    background: #1e293b !important;
+    border: 1px solid #475569;
+}
+
+/* botones de vista */
+body.theme-dark .view-toggle-btn {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #475569;
+}
+
+body.theme-dark .view-toggle-btn:hover {
+    background: #334155;
+    color: #cbd5e1;
+}
+
+body.theme-dark .view-toggle-btn.active {
+    background: #9b4f88;
+    color: white;
+    border-color: #9b4f88;
+}
+
+/* boton de filtro "total" */
+body.theme-dark .status-filter-total {
+    background: #334155;
+    color: #cbd5e1;
+    border-color: #475569;
+}
+
+body.theme-dark .status-filter-total:hover {
+    background: #475569;
+}
+
+/* badges de estado */
+body.theme-dark .status-badge {
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* texto de especialidades mas claro */
+body.theme-dark .especialidad-header h3,
+body.theme-dark .especialidad-header .text-gray-600 {
+    color: #cbd5e1 !important;
+}
+
+/* ocupacion con fondo sutil */
+body.theme-dark .ocupacion-section,
+body.theme-dark .ocupacion-info {
+    background: #334155 !important; /* contraste sutil con la tarjeta */
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+body.theme-dark .bg-gray-50 {
+    background: #334155 !important;
+}
+
+body.theme-dark .ocupacion-label {
+    color: #cbd5e1;
+}
+
+body.theme-dark .ocupacion-percentage {
+    color: #f1f5f9;
+}
+
+/* sombras */
+body.theme-dark .shadow-sm,
+body.theme-dark .shadow-md {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* bordes */
+body.theme-dark .border-gray-200,
+body.theme-dark .border-gray-300 {
+    border-color: #334155 !important;
+}
+
+/* colores de estado en tema oscuro - ajustados para mejor visibilidad */
+body.theme-dark {
+    --box-atencion: #22c55e; 
+    --box-atencion-bg: rgba(34, 197, 94, 0.2); 
+    --box-atencion-border: #16a34a;
+
+    --box-reservado: #3b82f6;
+    --box-reservado-bg: rgba(59, 130, 246, 0.2);
+    --box-reservado-border: #2563eb;
+
+    --box-libre: #ef4444;
+    --box-libre-bg: rgba(239, 68, 68, 0.2);
+    --box-libre-border: #dc2626;
+
+    --box-finalizado: #a855f7;
+    --box-finalizado-bg: rgba(168, 85, 247, 0.2);
+    --box-finalizado-border: #9333ea;
+
+    --box-inhabilitado: #64748b;
+    --box-inhabilitado-bg: rgba(100, 116, 139, 0.2);
+    --box-inhabilitado-border: #475569;
+}
+
+/* progress bars en tema oscuro */
+body.theme-dark .progress-bar-bg {
+    background: #334155;
+}
+
+body.theme-dark .progress-bar-fill {
+    opacity: 0.9;
+}
+
+/* hover states */
+body.theme-dark .bg-gray-50:hover {
+    background: #334155 !important;
+}
+
+body.theme-dark .hover\:bg-gray-50:hover {
+    background: #334155 !important;
+}

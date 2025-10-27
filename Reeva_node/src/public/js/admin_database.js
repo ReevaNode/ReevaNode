@@ -10,8 +10,6 @@ let tableFields = [];
 let fieldInfo = {};
 let editingId = null;
 let currentFilters = {
-    order_by: '',
-    order_dir: 'asc',
     filter_field: '',
     filter_value: ''
 };
@@ -66,6 +64,54 @@ async function loadTable(tableName, reset = true) {
                 currentData = data.data;
             } else {
                 currentData = currentData.concat(data.data);
+            }
+            
+            // ordenamiento especifico por tabla
+            if (currentData.length > 0) {
+                // agenda: mas recientes primero (por horainicio DESC)
+                if (tableName === 'agenda') {
+                    currentData.sort((a, b) => {
+                        const dateA = new Date(a.horainicio || 0);
+                        const dateB = new Date(b.horainicio || 0);
+                        return dateB - dateA; // DESC
+                    });
+                }
+                // tablas de catalogo: ordenar por ID ASC
+                else if (['box', 'estadobox', 'personalizacion', 'tipobox', 'tipoconsulta', 
+                          'tipoestado', 'tipoitem', 'tipoprofesional', 'tipousuario'].includes(tableName)) {
+                    // mapeo de claves primarias
+                    const primaryKeys = {
+                        'box': 'idBox',
+                        'estadobox': 'idEstado',
+                        'personalizacion': 'idPers',
+                        'tipobox': 'idTipoBox',
+                        'tipoconsulta': 'idTipoConsulta',
+                        'tipoestado': 'idEstado',
+                        'tipoitem': 'idTipoItem',
+                        'tipoprofesional': 'idTipoProfesional',
+                        'tipousuario': 'idTipoUsuario'
+                    };
+                    
+                    const pkField = primaryKeys[tableName];
+                    if (pkField) {
+                        currentData.sort((a, b) => {
+                            const valA = a[pkField];
+                            const valB = b[pkField];
+                            
+                            // intentar conversion numerica para IDs
+                            const numA = parseInt(valA);
+                            const numB = parseInt(valB);
+                            
+                            if (!isNaN(numA) && !isNaN(numB)) {
+                                return numA - numB; // orden numerico ASC
+                            }
+                            
+                            // fallback a string
+                            return String(valA).localeCompare(String(valB)); // ASC
+                        });
+                    }
+                }
+                // items y usuario: sin ordenamiento especifico (dejar como viene de DB)
             }
             
             tableFields = data.fields;
@@ -198,28 +244,14 @@ function toggleFilters() {
 }
 
 function populateFilterOptions() {
-    const orderBySelect = document.getElementById('orderByField');
     const filterFieldSelect = document.getElementById('filterField');
     
-    if (orderBySelect) {
-        orderBySelect.innerHTML = '<option value="">sin ordenar</option>';
-        tableFields.forEach(field => {
-            orderBySelect.innerHTML += `<option value="${field}">${field}</option>`;
-        });
-        orderBySelect.value = currentFilters.order_by;
-    }
-    
     if (filterFieldSelect) {
-        filterFieldSelect.innerHTML = '<option value="">todos los campos</option>';
+        filterFieldSelect.innerHTML = '<option value="">seleccionar campo...</option>';
         tableFields.forEach(field => {
             filterFieldSelect.innerHTML += `<option value="${field}">${field}</option>`;
         });
         filterFieldSelect.value = currentFilters.filter_field;
-    }
-    
-    const orderDir = document.getElementById('orderDir');
-    if (orderDir) {
-        orderDir.value = currentFilters.order_dir;
     }
     
     const filterValue = document.getElementById('filterValue');
@@ -229,46 +261,55 @@ function populateFilterOptions() {
 }
 
 function applyFilters() {
-    const orderByField = document.getElementById('orderByField');
-    const orderDir = document.getElementById('orderDir');
     const filterField = document.getElementById('filterField');
     const filterValue = document.getElementById('filterValue');
     
-    if (orderByField) currentFilters.order_by = orderByField.value;
-    if (orderDir) currentFilters.order_dir = orderDir.value;
-    if (filterField) currentFilters.filter_field = filterField.value;
-    if (filterValue) currentFilters.filter_value = filterValue.value;
+    if (!filterField || !filterValue) return;
     
-    loadTable(currentTable, true);
+    const campo = filterField.value;
+    const valor = filterValue.value.trim();
+    
+    if (!campo || !valor) {
+        showAlert('error', 'debes seleccionar un campo y especificar un valor');
+        return;
+    }
+    
+    // filtrar datos en memoria
+    let filteredData = [...currentData];
+    
+    filteredData = filteredData.filter(record => {
+        const valorCampo = String(record[campo] || '');
+        
+        // busqueda especifica - el valor debe coincidir
+        // para fechas/horas, buscar coincidencias parciales
+        if (campo.toLowerCase().includes('hora') || campo.toLowerCase().includes('fecha')) {
+            // si el valor buscado es solo hora "11:40:00", buscar en el datetime
+            // si es solo fecha "2025-09-30", buscar en el datetime
+            // si es datetime completo, buscar exacto
+            return valorCampo.includes(valor);
+        } else {
+            // para otros campos, busqueda exacta (case insensitive)
+            return valorCampo.toLowerCase() === valor.toLowerCase();
+        }
+    });
+    
+    if (filteredData.length === 0) {
+        showAlert('info', `no se encontraron registros que coincidan con "${valor}" en ${campo}`);
+    } else {
+        showAlert('success', `se encontraron ${filteredData.length} registros`);
+    }
+    
+    // renderizar solo los datos filtrados
+    renderTable(filteredData, tableFields);
 }
 
 function clearFilters() {
     currentFilters = {
-        order_by: '',
-        order_dir: 'asc',
         filter_field: '',
         filter_value: ''
     };
     
-    populateFilterOptions();
-    loadTable(currentTable, true);
-}
-
-// ordenar por columna
-function sortBy(field) {
-    if (currentFilters.order_by === field) {
-        currentFilters.order_dir = currentFilters.order_dir === 'asc' ? 'desc' : 'asc';
-    } else {
-        currentFilters.order_by = field;
-        currentFilters.order_dir = 'asc';
-    }
-    
-    // actualizar ui
-    const orderByField = document.getElementById('orderByField');
-    const orderDir = document.getElementById('orderDir');
-    if (orderByField) orderByField.value = field;
-    if (orderDir) orderDir.value = currentFilters.order_dir;
-    
+    // recargar tabla sin filtros
     loadTable(currentTable, true);
 }
 
@@ -888,19 +929,11 @@ async function renderAgendaMultipleForm() {
     if (!formFields) return;
     
     // obtener opciones de selects (especificar tabla correcta)
-    const boxes = await getFieldOptions('idBox', 'agenda');
     const usuarios = await getFieldOptions('idUsuario', 'agenda');
     const tipoConsulta = await getFieldOptions('idTipoConsulta', 'agenda');
     const estados = await getFieldOptions('idEstado', 'agenda');
     
     const html = `
-        <div class="form-group">
-            <label>box</label>
-            <select name="idBox" class="w-full border rounded p-2" required>
-                <option value="">— seleccionar box —</option>
-                ${boxes.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
-            </select>
-        </div>
         <div class="form-group">
             <label>fecha inicio</label>
             <input type="date" name="fecha_inicio" class="w-full border rounded p-2" required />
@@ -930,6 +963,10 @@ async function renderAgendaMultipleForm() {
                 ${estados.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
+        <div class="alert alert-info mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <i class="ri-information-line"></i> Se generarán agendas para <strong>todos los boxes</strong> en el rango de fechas especificado, 
+            con horarios de 08:00 a 18:00, duraciones random (10, 15, 30 o 60 minutos) y 85% de probabilidad de ocupación.
+        </div>
     `;
     
     formFields.innerHTML = html;
@@ -946,8 +983,18 @@ async function renderAgendaUpdateForm() {
             <input type="date" name="filter_fecha_inicio" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
+            <label>hora inicio (opcional)</label>
+            <input type="time" name="filter_hora_inicio" class="w-full border rounded p-2" />
+            <small class="text-gray-500">si no se especifica, se usa 00:00:00</small>
+        </div>
+        <div class="form-group">
             <label>fecha fin</label>
             <input type="date" name="filter_fecha_fin" class="w-full border rounded p-2" required />
+        </div>
+        <div class="form-group">
+            <label>hora fin (opcional)</label>
+            <input type="time" name="filter_hora_fin" class="w-full border rounded p-2" />
+            <small class="text-gray-500">si no se especifica, se usa 23:59:59</small>
         </div>
         <div class="form-group">
             <label>box (opcional)</label>
@@ -1007,17 +1054,25 @@ async function renderAgendaDeleteForm() {
 }
 
 async function createMultipleAgendas(formData) {
-    const idBox = formData.get('idBox');
     const fechaInicio = formData.get('fecha_inicio');
     const fechaFin = formData.get('fecha_fin');
     let idTipoConsulta = formData.get('idTipoConsulta');
     let idUsuario = formData.get('idUsuario');
     const idEstado = formData.get('idEstado') || '2';
     
-    if (!idBox || !fechaInicio || !fechaFin) {
+    if (!fechaInicio || !fechaFin) {
         showAlert('error', 'debes completar todos los campos requeridos');
         return;
     }
+    
+    // obtener todos los boxes disponibles
+    const boxes = await getFieldOptions('idBox', 'agenda');
+    if (boxes.length === 0) {
+        showAlert('error', 'no hay boxes disponibles');
+        return;
+    }
+    
+    showAlert('info', `Generando agendas para ${boxes.length} boxes...`);
     
     // generar horarios siguiendo la logica de poblar_datos.py
     const agendas = [];
@@ -1028,60 +1083,63 @@ async function createMultipleAgendas(formData) {
     const dateInicio = new Date(fechaInicio + 'T00:00:00');
     const dateFin = new Date(fechaFin + 'T00:00:00');
     
-    // iterar por cada dia en el rango
-    for (let d = new Date(dateInicio); d <= dateFin; d.setDate(d.getDate() + 1)) {
-        const fechaActual = d.toISOString().split('T')[0];
-        let horaActual = new Date(`${fechaActual}T${String(horaInicioDia).padStart(2,'0')}:00:00`);
-        const horaLimite = new Date(`${fechaActual}T${String(horaFinDia).padStart(2,'0')}:00:00`);
-        
-        // generar slots para este dia
-        while (horaActual < horaLimite) {
-            // 85% de probabilidad de crear slot (como en python)
-            if (Math.random() < 0.85) {
-                const duracion = duracionesPosibles[Math.floor(Math.random() * duracionesPosibles.length)];
-                const horaTermino = new Date(horaActual.getTime() + duracion * 60000);
-                
-                if (horaTermino <= horaLimite) {
-                    // seleccionar valores random si es necesario
-                    let tipoConsultaFinal = idTipoConsulta;
-                    let usuarioFinal = idUsuario;
+    // iterar por cada box
+    for (const box of boxes) {
+        // iterar por cada dia en el rango
+        for (let d = new Date(dateInicio); d <= dateFin; d.setDate(d.getDate() + 1)) {
+            const fechaActual = d.toISOString().split('T')[0];
+            let horaActual = new Date(`${fechaActual}T${String(horaInicioDia).padStart(2,'0')}:00:00`);
+            const horaLimite = new Date(`${fechaActual}T${String(horaFinDia).padStart(2,'0')}:00:00`);
+            
+            // generar slots para este dia y este box
+            while (horaActual < horaLimite) {
+                // 85% de probabilidad de crear slot (como en python)
+                if (Math.random() < 0.85) {
+                    const duracion = duracionesPosibles[Math.floor(Math.random() * duracionesPosibles.length)];
+                    const horaTermino = new Date(horaActual.getTime() + duracion * 60000);
                     
-                    if (idTipoConsulta === 'random') {
-                        // tipos: 1=ingreso, 2=control, 3=alta, 4=gestion
-                        tipoConsultaFinal = String(Math.floor(Math.random() * 4) + 1);
+                    if (horaTermino <= horaLimite) {
+                        // seleccionar valores random si es necesario
+                        let tipoConsultaFinal = idTipoConsulta;
+                        let usuarioFinal = idUsuario;
+                        
+                        if (idTipoConsulta === 'random') {
+                            // tipos: 1=ingreso, 2=control, 3=alta, 4=gestion
+                            tipoConsultaFinal = String(Math.floor(Math.random() * 4) + 1);
+                        }
+                        
+                        if (idUsuario === 'random') {
+                            // obtener usuarios y seleccionar uno random (lo haremos en backend)
+                            usuarioFinal = 'random';
+                        }
+                        
+                        // formatear fechas como "YYYY-MM-DD HH:mm:ss" (no ISO)
+                        const formatoFecha = (date) => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            const seconds = String(date.getSeconds()).padStart(2, '0');
+                            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                        };
+                        
+                        agendas.push({
+                            idAgenda: crypto.randomUUID(),
+                            idBox: box.value, // usar el box actual del loop
+                            horainicio: formatoFecha(horaActual),
+                            horaTermino: formatoFecha(horaTermino),
+                            idUsuario: usuarioFinal,
+                            idTipoConsulta: tipoConsultaFinal,
+                            idEstado: idEstado
+                        });
                     }
                     
-                    if (idUsuario === 'random') {
-                        // obtener usuarios y seleccionar uno random (lo haremos en backend)
-                        usuarioFinal = 'random';
-                    }
-                    
-                    // formatear fechas como "YYYY-MM-DD HH:mm:ss" (no ISO)
-                    const formatoFecha = (date) => {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const hours = String(date.getHours()).padStart(2, '0');
-                        const minutes = String(date.getMinutes()).padStart(2, '0');
-                        const seconds = String(date.getSeconds()).padStart(2, '0');
-                        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-                    };
-                    
-                    agendas.push({
-                        idAgenda: crypto.randomUUID(),
-                        idBox: idBox,
-                        horainicio: formatoFecha(horaActual),
-                        horaTermino: formatoFecha(horaTermino),
-                        idUsuario: usuarioFinal,
-                        idTipoConsulta: tipoConsultaFinal,
-                        idEstado: idEstado
-                    });
+                    horaActual = horaTermino;
+                } else {
+                    // saltar 30 minutos si no se crea slot
+                    horaActual = new Date(horaActual.getTime() + 30 * 60000);
                 }
-                
-                horaActual = horaTermino;
-            } else {
-                // saltar 30 minutos si no se crea slot
-                horaActual = new Date(horaActual.getTime() + 30 * 60000);
             }
         }
     }

@@ -4,7 +4,9 @@ export function requirePermission(permiso) {
     const user = req.session?.user;
 
     if (!user) {
-      req.flash("error", "Debes iniciar sesion para acceder a esta pagina");
+      if (req.session) {
+        req.flash("error", "Debes iniciar sesion para acceder a esta pagina");
+      }
       return res.redirect("/login");
     }
 
@@ -15,6 +17,9 @@ export function requirePermission(permiso) {
         next_appointment_date: null,
         next_appointment_time: null,
         tipo_consulta: null,
+        warningMessage: null,
+        systemDegraded: false,
+        fromCache: false
       });
     }
 
