@@ -1,512 +1,269 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<%= userLang %>">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reeva - Inicio</title>
-    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-    <script>tailwind.config={theme:{extend:{colors:{primary:'#9b4f88',secondary:'#6b7280'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
-    <link rel="stylesheet" href="/css/Bienvenida-y-Opciones.css" /> 
-</head>
-<body>
-    <%- include('header') %>
-
-
-<!-- Mobile Menu Overlay -->
-<div id="mobileMenuOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"></div>
-
-<!-- Mobile Menu Sidebar -->
-<div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50 md:hidden">
-  <div class="p-4">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-lg font-semibold text-gray-800">Menú</h2>
-      <button id="close-mobile-menu" class="text-gray-500 hover:text-gray-700">
-        <i class="ri-close-line ri-xl"></i>
-      </button>
-    </div>
-    
-    <nav class="space-y-4">
-      <a href="/bienvenida" class="flex items-center gap-3 text-primary font-medium py-2">
-        <i class="ri-home-4-line"></i>
-        <span>Inicio</span>
-      </a>
-      
-      <a href="/dashboard" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-line-chart-line"></i>
-        <span>Dashboard</span>
-      </a>
-      
-      <a href="/matriz-box" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-grid-line"></i>
-        <span>Matriz Box</span>
-      </a>
-      
-      <a href="/agenda" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-calendar-2-line"></i>
-        <span>Agenda</span>
-      </a>
-      
-      <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
-      <a href="/admin-bdd" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
-        <i class="ri-database-2-line"></i>
-        <span>Admin BDD</span>
-      </a>
-      <% } %>
-    </nav>
-    
-    <div class="absolute bottom-4 left-4 right-4">
-      <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2 mb-2">
-        <i class="ri-settings-3-line"></i>
-        <span>Personalización</span>
-      </a>
-      <a href="/logout" class="flex items-center gap-3 text-red-600 hover:text-red-700 transition-colors py-2">
-        <i class="ri-logout-box-r-line"></i>
-        <span>Cerrar Sesión</span>
-      </a>
-    </div>
-  </div>
-</div>
-
-
-<!-- Panel de Personalización -->
-<div id="personalization-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
-<aside id="personalization-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="personalization-title" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out z-50 flex flex-col pointer-events-none">
-  <div class="flex items-start gap-3 px-6 py-5 border-b border-gray-200">
-    <div class="personalization-icon text-xl">
-      <i class="ri-magic-line"></i>
-    </div>
-    <div class="flex-1">
-      <h2 id="personalization-title" class="text-xl font-semibold text-gray-800">Personalización</h2>
-      <p class="text-sm text-gray-500">Configura la apariencia e idioma de la plataforma</p>
-    </div>
-    <button id="personalization-close" class="text-gray-400 hover:text-primary transition-colors text-xl" aria-label="Cerrar panel">
-      <i class="ri-close-line"></i>
-    </button>
-  </div>
-  <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-    <section class="personalization-card">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="personalization-icon text-lg">
-          <i class="ri-brush-line"></i>
-        </div>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-800">Apariencia</h3>
-          <p class="text-sm text-gray-500">Elige el modo que mejor se adapte a ti</p>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button type="button" data-theme-option="claro" class="personalization-option" aria-pressed="false">
-          <span class="personalization-option-icon">
-            <i class="ri-sun-line"></i>
-          </span>
-          <span>Claro</span>
-        </button>
-        <button type="button" data-theme-option="oscuro" class="personalization-option" aria-pressed="false">
-          <span class="personalization-option-icon">
-            <i class="ri-moon-clear-line"></i>
-          </span>
-          <span>Oscuro</span>
-        </button>
-        <button type="button" data-theme-option="sistema" class="personalization-option" aria-pressed="false">
-          <span class="personalization-option-icon">
-            <i class="ri-macbook-line"></i>
-          </span>
-          <span>Sistema</span>
-        </button>
-      </div>
-    </section>
-
-    <section class="personalization-card">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="personalization-icon text-lg">
-          <i class="ri-translate-2"></i>
-        </div>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-800">Idioma</h3>
-          <p class="text-sm text-gray-500">Selecciona el idioma preferido de la interfaz</p>
-        </div>
-      </div>
-      <div class="space-y-3">
-        <button type="button" data-language-option="es" class="personalization-language" aria-pressed="false">
-          <span class="flex items-center gap-3">
-            <span class="personalization-option-icon">
-              <i class="ri-flag-2-line"></i>
-            </span>
-            <span>Español</span>
-          </span>
-          <i class="ri-check-line personalization-language-check" aria-hidden="true"></i>
-        </button>
-        <button type="button" data-language-option="en" class="personalization-language" aria-pressed="false">
-          <span class="flex items-center gap-3">
-            <span class="personalization-option-icon">
-              <i class="ri-earth-line"></i>
-            </span>
-            <span>Inglés</span>
-          </span>
-          <i class="ri-check-line personalization-language-check" aria-hidden="true"></i>
-        </button>
-      </div>
-    </section>
-  </div>
-  <div class="px-6 py-5 border-t border-gray-200">
-    <p class="text-xs text-gray-400">BoxCare v1.0.0 · Hospital Padre Hurtado</p>
-  </div>
-</aside>
-
-
-    <!-- Hero Section -->
-    <section class="relative overflow-hidden">
-        <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10 hero-gradient"></div>
-        <div class="container mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row items-center relative z-20">
-            <div class="w-full md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
-                <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">Bienvenido a BoxCare</h1>
-                <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0">
-                    Tu sistema de gestión de boxes de atención médica.
-                </p>
-            </div>
-        </div>
-        <img src="/images/hospital.jpeg"  alt="Hospital Padre Hurtado" class="absolute top-0 right-0 h-full w-full md:w-1/2 object-cover opacity-30 md:opacity-100">
-    </section>
-
-    <!-- Welcome Message -->
-    <section class="bg-white py-6 md:py-8">
-  <div class="container mx-auto px-4">
-    <div class="flex flex-col items-center text-center mb-6 md:mb-8">
-      <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Bienvenido/a</h2>
-      <p class="text-gray-600 text-base md:text-lg mb-4 md:mb-6">¿Qué desea hacer hoy?</p>
-    </div>
-    <!-- Primeros Pasos -->
-    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-left">Primeros Pasos</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-      <!-- Tarjeta Dashboard -->
-      <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
-        <div class="flex items-center mb-3 md:mb-4">
-          <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
-            <i class="ri-dashboard-line ri-lg"></i>
-          </div>
-          <h3 class="text-base md:text-lg font-semibold text-primary ml-2">Dashboard</h3>
-        </div>
-        <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-          <p class="text-gray-600 text-sm md:text-base mb-2">Accede a estadísticas clave del hospital, métricas de rendimiento, indicadores de calidad y reportes en tiempo real.</p>
-          <ul class="space-y-1 text-primary text-sm md:text-base">
-            <li>• Estadísticas de ocupación</li>
-            <li>• Métricas de atención</li>
-            <li>• Reportes mensuales</li>
-          </ul>
-        </div>
-        <a href="/dashboard" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
-          Ir a Dashboard
-        </a>
-      </div>
-
-
-      <!-- Tarjeta Matriz Box -->
-      <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
-        <div class="flex items-center mb-3 md:mb-4">
-          <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
-            <i class="ri-grid-line ri-lg"></i>
-          </div>
-          <h3 class="text-base md:text-lg font-semibold text-primary ml-2">Matriz Box</h3>
-        </div>
-        <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-          <p class="text-gray-600 text-sm md:text-base mb-2">Visualiza el estado de cada box médico, porcentaje de ocupación y disponibilidad en tiempo real.</p>
-          <ul class="space-y-1 text-primary text-sm md:text-base">
-            <li>• Estado de cada box</li>
-            <li>• % de ocupación</li>
-            <li>• Disponibilidad inmediata</li>
-          </ul>
-        </div>
-        <a href="/matriz-box" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
-          Ver Matriz Box
-        </a>
-      </div>
-      <!-- Tarjeta Agenda -->
-      <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
-        <div class="flex items-center mb-3 md:mb-4">
-          <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
-            <i class="ri-calendar-2-line ri-lg"></i>
-          </div>
-          <h3 class="text-base md:text-lg font-semibold text-primary ml-2">Agenda</h3>
-        </div>
-        <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-          <p class="text-gray-600 text-sm md:text-base mb-2">Consulta el calendario de cada box por día, semana o mes. Programa y gestiona citas médicas.</p>
-          <ul class="space-y-1 text-primary text-sm md:text-base">
-            <li>• Calendario por box</li>
-            <li>• Vista día/semana/mes</li>
-            <li>• Gestión de citas</li>
-          </ul>
-        </div>
-        <a href="/agenda" class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
-          Ver Agenda
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-    <!-- system degradatino -->
-    <% if (warningMessage) { %>
-    <section class="bg-yellow-50 border-l-4 border-yellow-400 py-4">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center gap-3">
-                <i class="ri-error-warning-line text-2xl text-yellow-600"></i>
-                <div>
-                    <p class="text-yellow-800 font-medium"><%= warningMessage %></p>
-                    <% if (fromCache) { %>
-                    <p class="text-yellow-700 text-sm mt-1">Mostrando datos desde caché</p>
-                    <% } %>
-                </div>
-            </div>
-        </div>
-    </section>
-    <% } %>
-
-    <!-- info relevante -->
-    <section class="bg-gray-50 py-8 md:py-12">
-        <div class="container mx-auto px-4">
-            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8">Información Relevante</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-2">
-                <!-- proxima cita -->
-                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-                    <div class="flex items-center mb-3 md:mb-4">
-                        <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
-                            <i class="ri-calendar-event-line ri-lg"></i>
-                        </div>
-                        <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2">Próxima Cita</h3>
-                    </div>
-                    <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-                        <% if (next_appointment_date) { %>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-gray-600 text-sm md:text-base">Fecha:</span>
-                            <span class="font-medium text-sm md:text-base"><%= next_appointment_date %></span>
-                        </div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-gray-600 text-sm md:text-base">Hora:</span>
-                            <span class="font-medium text-sm md:text-base"><%= next_appointment_time %></span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 text-sm md:text-base">Tipo Consulta:</span>
-                            <span class="font-medium text-sm md:text-base"><%= tipo_consulta %></span>
-                        </div>
-                        <% } else { %>
-                        <div class="text-center py-4">
-                            <i class="ri-calendar-close-line text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-600 text-sm md:text-base">No hay citas programadas</p>
-                            <% if (systemDegraded) { %>
-                            <p class="text-gray-500 text-xs mt-2">El sistema está temporalmente degradado</p>
-                            <% } %>
-                        </div>
-                        <% } %>
-                    </div>
-                </div>
-
-                <!-- notificaciones -->
-                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-                    <div class="flex items-center mb-3 md:mb-4">
-                        <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
-                            <i class="ri-notification-3-line ri-lg"></i>
-                        </div>
-                        <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2">Notificaciones</h3>
-                    </div>
-                    <ul class="space-y-3 md:space-y-4">
-                        <li class="flex items-start">
-                            <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
-                            <div>
-                                <p class="text-gray-800 text-sm md:text-base">Reunión de personal médico - 19 Agosto, 9:00</p>
-                                <p class="text-xs md:text-sm text-gray-500">Sala de conferencias principal</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
-                            <div>
-                                <p class="text-gray-800 text-sm md:text-base">Actualización de protocolos COVID-19</p>
-                                <p class="text-xs md:text-sm text-gray-500">Nuevas directrices disponibles</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2"></div>
-                            <div>
-                                <p class="text-gray-800">Mantenimiento sistema - 18 Septiembre</p>
-                                <p class="text-sm text-gray-500">De 22:00 a 23:30</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-    </section>
-    <%- include('footer') %>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const overlay = document.getElementById('personalization-overlay');
-      const panel = document.getElementById('personalization-panel');
-      const closeBtn = document.getElementById('personalization-close');
-      const triggers = document.querySelectorAll('[data-personalizacion-trigger]');
-      const perfilMenu = document.getElementById('perfil-menu');
-      const mobileMenu = document.getElementById('mobileMenu');
-      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-      const themeButtons = panel ? panel.querySelectorAll('[data-theme-option]') : [];
-      const languageButtons = panel ? panel.querySelectorAll('.personalization-language[data-language-option]') : [];
-      const THEME_KEY = 'reeva-theme';
-      let systemThemeUnsubscribe = null;
-
-      if (!overlay || !panel) {
-        return;
-      }
-
-      const updateActiveState = (elements, value, key) => {
-        elements.forEach((element) => {
-          const isActive = element.dataset[key] === value;
-          element.classList.toggle('is-active', isActive);
-          element.setAttribute('aria-pressed', String(isActive));
-        });
-      };
-
-      const applyLanguageHighlight = (language) => {
-        if (!languageButtons.length) {
-          return;
-        }
-        updateActiveState(languageButtons, language, 'languageOption');
-      };
-
-      const applyThemeHighlight = (theme) => {
-        if (!themeButtons.length) {
-          return;
-        }
-        updateActiveState(themeButtons, theme, 'themeOption');
-      };
-
-      const applySystemTheme = () => {
-        if (!window.matchMedia) {
-          return;
-        }
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.body.classList.toggle('theme-dark', prefersDark);
-        document.body.classList.toggle('theme-light', !prefersDark);
-      };
-
-      const setTheme = (theme) => {
-        const normalized = (theme || 'claro').toLowerCase();
-        localStorage.setItem(THEME_KEY, normalized);
-        document.body.dataset.theme = normalized;
-        document.body.classList.remove('theme-light', 'theme-dark');
-
-        if (systemThemeUnsubscribe) {
-          systemThemeUnsubscribe();
-          systemThemeUnsubscribe = null;
-        }
-
-        if (normalized === 'oscuro') {
-          document.body.classList.add('theme-dark');
-        } else if (normalized === 'claro') {
-          document.body.classList.add('theme-light');
-        } else if (window.matchMedia) {
-          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          const syncSystemTheme = () => applySystemTheme();
-          mediaQuery.addEventListener('change', syncSystemTheme);
-          systemThemeUnsubscribe = () => mediaQuery.removeEventListener('change', syncSystemTheme);
-          applySystemTheme();
-        }
-
-        applyThemeHighlight(normalized);
-        document.dispatchEvent(new CustomEvent('reeva:theme-change', { detail: { theme: normalized } }));
-      };
-
-      const savedTheme = localStorage.getItem(THEME_KEY) || 'claro';
-      setTheme(savedTheme);
-      applyLanguageHighlight((window.reevaGetLanguage && window.reevaGetLanguage()) || 'es');
-
-      themeButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const { themeOption } = button.dataset;
-          setTheme(themeOption);
-        });
-      });
-
-      languageButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const { languageOption } = button.dataset;
-          if (window.reevaSetLanguage) {
-            window.reevaSetLanguage(languageOption);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoxCare - <%= __("welcome.greeting") %></title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#9b4f88',
+            secondary: '#6b7280'
+          },
+          borderRadius: {
+            'button': '8px'
           }
-        });
-      });
-
-      document.addEventListener('reeva:language-change', (event) => {
-        if (event && event.detail && event.detail.language) {
-          applyLanguageHighlight(event.detail.language);
         }
-      });
-
-      const closeMobileMenuIfOpen = () => {
-        if (!mobileMenu || !mobileMenuOverlay) {
-          return;
-        }
-        if (!mobileMenu.classList.contains('translate-x-full')) {
-          mobileMenu.classList.remove('translate-x-0');
-          mobileMenu.classList.add('translate-x-full');
-          setTimeout(() => {
-            mobileMenuOverlay.classList.add('hidden');
-          }, 300);
-        }
-      };
-
-      const openPanel = () => {
-        if (perfilMenu) {
-          perfilMenu.classList.add('hidden');
-        }
-        closeMobileMenuIfOpen();
-
-        overlay.classList.remove('pointer-events-none');
-        panel.classList.remove('pointer-events-none');
-
-        requestAnimationFrame(() => {
-          overlay.classList.remove('opacity-0');
-          overlay.classList.add('opacity-100');
-          panel.classList.remove('translate-x-full');
-          panel.classList.add('translate-x-0');
-        });
-
-        document.body.style.overflow = 'hidden';
-        panel.setAttribute('aria-hidden', 'false');
-      };
-
-      const closePanel = () => {
-        overlay.classList.add('pointer-events-none');
-        panel.classList.add('pointer-events-none');
-        overlay.classList.remove('opacity-100');
-        overlay.classList.add('opacity-0');
-        panel.classList.remove('translate-x-0');
-        panel.classList.add('translate-x-full');
-        document.body.style.overflow = '';
-        panel.setAttribute('aria-hidden', 'true');
-      };
-
-      overlay.addEventListener('click', closePanel);
-      if (closeBtn) {
-        closeBtn.addEventListener('click', closePanel);
       }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+  <link rel="stylesheet" href="/css/Bienvenida-y-Opciones.css">
+</head>
 
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          closePanel();
-        }
-      });
+<body>
+  <%- include('header') %>
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden">
+    <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10 hero-gradient"></div>
+    <div class="container mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row items-center relative z-20">
+      <div class="w-full md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4" data-i18n="welcome.title">
+          <%= __("welcome.title") %>
+        </h1>
+        <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0" data-i18n="welcome.subtitle">
+          <%= __("welcome.subtitle") %>
+        </p>
+      </div>
+    </div>
+    <img src="/images/hospital.jpeg" alt="Hospital Padre Hurtado"
+      class="absolute top-0 right-0 h-full w-full md:w-1/2 object-cover opacity-30 md:opacity-100">
+  </section>
 
-      triggers.forEach((trigger) => {
-        trigger.addEventListener('click', (event) => {
-          event.preventDefault();
-          openPanel();
-        });
-      });
-    });
-    </script>
+  <!-- Welcome Message -->
+  <section class="bg-white py-6 md:py-8">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col items-center text-center mb-6 md:mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2" data-i18n="welcome.greeting">
+          <%= __("welcome.greeting") %>
+        </h2>
+        <p class="text-gray-600 text-base md:text-lg mb-4 md:mb-6" data-i18n="welcome.question">
+          <%= __("welcome.question") %>
+        </p>
+      </div>
+
+      <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-left" data-i18n="welcome.section.firstSteps">
+        <%= __("welcome.section.firstSteps") %>
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <!-- Dashboard Card -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
+          <div class="flex items-center mb-3 md:mb-4">
+            <div
+              class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+              <i class="ri-dashboard-line ri-lg"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.dashboard.title">
+              <%= __("welcome.cards.dashboard.title") %>
+            </h3>
+          </div>
+          <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.dashboard.description">
+              <%= __("welcome.cards.dashboard.description") %>
+            </p>
+            <ul class="space-y-1 text-primary text-sm md:text-base">
+              <li data-i18n="welcome.cards.dashboard.list.a">• <%= __("welcome.cards.dashboard.list.a") %></li>
+              <li data-i18n="welcome.cards.dashboard.list.b">• <%= __("welcome.cards.dashboard.list.b") %></li>
+              <li data-i18n="welcome.cards.dashboard.list.c">• <%= __("welcome.cards.dashboard.list.c") %></li>
+            </ul>
+          </div>
+          <a href="/dashboard"
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base"
+            data-i18n="welcome.cards.dashboard.button">
+            <%= __("welcome.cards.dashboard.button") %>
+          </a>
+        </div>
+
+        <!-- Matrix Box Card -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
+          <div class="flex items-center mb-3 md:mb-4">
+            <div
+              class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+              <i class="ri-grid-line ri-lg"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.matrix.title">
+              <%= __("welcome.cards.matrix.title") %>
+            </h3>
+          </div>
+          <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.matrix.description">
+              <%= __("welcome.cards.matrix.description") %>
+            </p>
+            <ul class="space-y-1 text-primary text-sm md:text-base">
+              <li data-i18n="welcome.cards.matrix.list.a">• <%= __("welcome.cards.matrix.list.a") %></li>
+              <li data-i18n="welcome.cards.matrix.list.b">• <%= __("welcome.cards.matrix.list.b") %></li>
+              <li data-i18n="welcome.cards.matrix.list.c">• <%= __("welcome.cards.matrix.list.c") %></li>
+            </ul>
+          </div>
+          <a href="/matriz-box"
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base"
+            data-i18n="welcome.cards.matrix.button">
+            <%= __("welcome.cards.matrix.button") %>
+          </a>
+        </div>
+
+        <!-- Agenda Card -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border border-primary/20">
+          <div class="flex items-center mb-3 md:mb-4">
+            <div
+              class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+              <i class="ri-calendar-2-line ri-lg"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.agenda.title">
+              <%= __("welcome.cards.agenda.title") %>
+            </h3>
+          </div>
+          <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.agenda.description">
+              <%= __("welcome.cards.agenda.description") %>
+            </p>
+            <ul class="space-y-1 text-primary text-sm md:text-base">
+              <li data-i18n="welcome.cards.agenda.list.a">• <%= __("welcome.cards.agenda.list.a") %></li>
+              <li data-i18n="welcome.cards.agenda.list.b">• <%= __("welcome.cards.agenda.list.b") %></li>
+              <li data-i18n="welcome.cards.agenda.list.c">• <%= __("welcome.cards.agenda.list.c") %></li>
+            </ul>
+          </div>
+          <a href="/agenda"
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base"
+            data-i18n="welcome.cards.agenda.button">
+            <%= __("welcome.cards.agenda.button") %>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warning / Degraded -->
+  <% if (warningMessage) { %>
+  <section class="bg-yellow-50 border-l-4 border-yellow-400 py-4">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center gap-3">
+        <i class="ri-error-warning-line text-2xl text-yellow-600"></i>
+        <div>
+          <p class="text-yellow-800 font-medium" data-i18n="welcome.warning.message"><%= warningMessage %></p>
+          <% if (fromCache) { %>
+          <p class="text-yellow-700 text-sm mt-1" data-i18n="welcome.warning.cache"><%= __("welcome.warning.cache") %></p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- Info Relevante -->
+  <section class="bg-gray-50 py-8 md:py-12">
+    <div class="container mx-auto px-4">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8" data-i18n="welcome.section.info">
+        <%= __("welcome.section.info") %>
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-2">
+        <!-- Próxima Cita -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+          <div class="flex items-center mb-3 md:mb-4">
+            <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
+              <i class="ri-calendar-event-line ri-lg"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2" data-i18n="welcome.appointment.title">
+              <%= __("welcome.appointment.title") %>
+            </h3>
+          </div>
+          <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
+            <% if (next_appointment_date) { %>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.date"><%= __("welcome.appointment.date") %></span>
+              <span class="font-medium text-sm md:text-base"><%= next_appointment_date %></span>
+            </div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.hour"><%= __("welcome.appointment.hour") %></span>
+              <span class="font-medium text-sm md:text-base"><%= next_appointment_time %></span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.type"><%= __("welcome.appointment.type") %></span>
+              <span class="font-medium text-sm md:text-base"><%= tipo_consulta %></span>
+            </div>
+            <% } else { %>
+            <div class="text-center py-4">
+              <i class="ri-calendar-close-line text-4xl text-gray-400 mb-2"></i>
+              <p class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.noAppointments">
+                <%= __("welcome.appointment.noAppointments") %>
+              </p>
+              <% if (systemDegraded) { %>
+              <p class="text-gray-500 text-xs mt-2" data-i18n="welcome.appointment.degraded">
+                <%= __("welcome.appointment.degraded") %>
+              </p>
+              <% } %>
+            </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Notificaciones -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+          <div class="flex items-center mb-3 md:mb-4">
+            <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
+              <i class="ri-notification-3-line ri-lg"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2" data-i18n="welcome.notifications.title">
+              <%= __("welcome.notifications.title") %>
+            </h3>
+          </div>
+          <ul class="space-y-3 md:space-y-4">
+            <li class="flex items-start">
+              <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
+              <div>
+                <p class="text-gray-800 text-sm md:text-base" data-i18n="welcome.notifications.items.a.title">
+                  <%= __("welcome.notifications.items.a.title") %>
+                </p>
+                <p class="text-xs md:text-sm text-gray-500" data-i18n="welcome.notifications.items.a.desc">
+                  <%= __("welcome.notifications.items.a.desc") %>
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start">
+              <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
+              <div>
+                <p class="text-gray-800 text-sm md:text-base" data-i18n="welcome.notifications.items.b.title">
+                  <%= __("welcome.notifications.items.b.title") %>
+                </p>
+                <p class="text-xs md:text-sm text-gray-500" data-i18n="welcome.notifications.items.b.desc">
+                  <%= __("welcome.notifications.items.b.desc") %>
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start">
+              <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2"></div>
+              <div>
+                <p class="text-gray-800 text-sm md:text-base" data-i18n="welcome.notifications.items.c.title">
+                  <%= __("welcome.notifications.items.c.title") %>
+                </p>
+                <p class="text-xs md:text-sm text-gray-500" data-i18n="welcome.notifications.items.c.desc">
+                  <%= __("welcome.notifications.items.c.desc") %>
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  <%- include('footer') %>
 </body>
 </html>

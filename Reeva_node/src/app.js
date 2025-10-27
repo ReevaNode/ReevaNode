@@ -9,10 +9,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
 import flash from "connect-flash";
+import cookieParser from "cookie-parser";
+import i18n from "./config/i18n.js";
+
 import requireAuth from "./middlewares/requireAuth.js";
 import { config, validarConfig } from "./config/index.js";
 import { loggerRequest, loggerError } from "./utils/logger.js";
-import Logger from "./utils/logger.js";
 
 // rutas
 import authRouter from "./routes/auth.js";
@@ -21,6 +23,7 @@ import dashboardRouter from "./routes/dashboard.js";
 import adminBDDRouter from "./routes/adminBDD.js";
 import agendaRouter from "./routes/agenda.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
+import languageRouter from "./routes/language.js"; 
 
 const app = express();
 
@@ -28,18 +31,21 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// config de sesion segura
+// ===== Middlewares base =====
+app.use(cookieParser());
+app.use(i18n.init);
+
 app.use(session({
   secret: config.seguridad.sessionSecret,
   resave: false,
   saveUninitialized: false,
   rolling: true,
-  name: 'reeva.sid', 
+  name: 'reeva.sid',
   cookie: {
     maxAge: config.seguridad.sessionMaxAge,
-    httpOnly: true, 
-    secure: config.seguridad.sessionSecure, 
-    sameSite: config.seguridad.sessionSameSite, 
+    httpOnly: true,
+    secure: config.seguridad.sessionSecure,
+    sameSite: config.seguridad.sessionSameSite,
     path: '/',
   }
 }));
@@ -53,61 +59,64 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-  // Usuario
   res.locals.user = req.session.user || null;
-  
-  // Preferencias de personalización con valores por defecto
-  res.locals.userLang = req.session.userLang || 'es';
-  res.locals.userTheme = req.session.userTheme || 'claro';
-  
-  // Variables de entorno necesarias en el frontend
+
+  // Preferencias del usuario
+  const lang = req.session.userLang || 'es';
+  const theme = req.session.userTheme || 'claro';
+
+  i18n.setLocale(req, lang);
+  res.locals.__ = res.__; 
+
+  res.locals.userLang = lang;
+  res.locals.userTheme = theme;
+
+  // Variables de entorno para frontend
   const authApiBase = process.env.AUTH_API_BASE || config.api?.authBase;
   res.locals.AUTH_API_BASE = authApiBase;
-  
-  // Debug detallado (puedes comentar despues de verificar)
+
+  // Log de sesion
   if (req.session.user) {
     console.log('Sesión actual:', {
       email: req.session.user.email,
-      idioma: res.locals.userLang,
-      aspecto: res.locals.userTheme,
+      idioma: lang,
+      aspecto: theme,
       hasToken: !!req.session.user.idToken
     });
   }
-  
-  // Advertencia si falta AUTH_API_BASE
+
   if (!process.env.AUTH_API_BASE) {
     console.warn('AUTH_API_BASE no está definida en .env, usando fallback:', authApiBase);
   }
-  
+
   next();
 });
 
-app.use(express.json({ limit: '50mb' })); // aumentar limite para crear multiples agendas
-app.use(express.urlencoded({ extended: true, limit: '50mb' })); 
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan("dev"));
-app.use(loggerRequest); 
+app.use(loggerRequest);
 
-// archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/languages", express.static(path.join(__dirname, "languages")));
 
-// motor de vistas
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-// rutas
 app.use("/", authRouter);
 app.use("/", requireAuth, bienvenidaRouter);
 app.use("/", requireAuth, dashboardRouter);
 app.use("/", requireAuth, adminBDDRouter);
 app.use("/", requireAuth, agendaRouter);
 app.use("/", requireAuth, matrizBoxRouter);
+app.use("/", languageRouter); 
 
-// 404
+// ===== 404 =====
 app.use((req, res) => {
-  res.status(404).send("Pagina no encontrada");
+  res.status(404).send("Página no encontrada");
 });
 
-// manejo de errores
+// ===== Manejo de errores =====
 app.use(loggerError);
 
 export default app;

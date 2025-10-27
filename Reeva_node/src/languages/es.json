@@ -35,5 +35,78 @@
     "loading": "Cargando...",
     "error": "Error",
     "success": "Éxito"
+  },
+  "welcome": {
+    "title": "Bienvenido a BoxCare",
+    "subtitle": "Tu sistema de gestión de boxes de atención médica.",
+    "greeting": "Bienvenido/a",
+    "question": "¿Qué desea hacer hoy?",
+    "section": {
+      "firstSteps": "Primeros Pasos",
+      "info": "Información Relevante"
+    },
+    "cards": {
+      "dashboard": {
+        "title": "Dashboard",
+        "description": "Accede a estadísticas clave del hospital, métricas de rendimiento, indicadores de calidad y reportes en tiempo real.",
+        "list": {
+          "a": "Estadísticas de ocupación",
+          "b": "Métricas de atención",
+          "c": "Reportes mensuales"
+        },
+        "button": "Ir a Dashboard"
+      },
+      "matrix": {
+        "title": "Matriz Box",
+        "description": "Visualiza el estado de cada box médico, porcentaje de ocupación y disponibilidad en tiempo real.",
+        "list": {
+          "a": "Estado de cada box",
+          "b": "% de ocupación",
+          "c": "Disponibilidad inmediata"
+        },
+        "button": "Ver Matriz Box"
+      },
+      "agenda": {
+        "title": "Agenda",
+        "description": "Consulta el calendario de cada box por día, semana o mes. Programa y gestiona citas médicas.",
+        "list": {
+          "a": "Calendario por box",
+          "b": "Vista día/semana/mes",
+          "c": "Gestión de citas"
+        },
+        "button": "Ver Agenda"
+      }
+    },
+    "appointment": {
+      "title": "Próxima Cita",
+      "date": "Fecha:",
+      "hour": "Hora:",
+      "type": "Tipo Consulta:",
+      "noAppointments": "No hay citas programadas",
+      "degraded": "El sistema está temporalmente degradado",
+      "cache": "Mostrando datos desde caché"
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "items": {
+        "a": {
+          "title": "Reunión de personal médico - 19 Agosto, 9:00",
+          "desc": "Sala de conferencias principal"
+        },
+        "b": {
+          "title": "Actualización de protocolos COVID-19",
+          "desc": "Nuevas directrices disponibles"
+        },
+        "c": {
+          "title": "Mantenimiento sistema - 18 Septiembre",
+          "desc": "De 22:00 a 23:30"
+        }
+      }
+    },
+    "warning": {
+      "message": "Advertencia del sistema",
+      "cache": "Mostrando datos desde caché"
+    }
   }
 }
+

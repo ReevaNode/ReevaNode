@@ -8,28 +8,20 @@
 <script>
   (function() {
     try {
-      // Intentar obtener del servidor (inyectado por EJS)
       const serverTheme = '<%= userTheme %>';
       const serverLang = '<%= userLang %>';
-      
-      // Si hay preferencias del servidor, guardarlas inmediatamente en localStorage
       if (serverTheme && serverTheme !== 'undefined' && serverTheme !== '') {
         localStorage.setItem('reeva-theme', serverTheme);
       }
       if (serverLang && serverLang !== 'undefined' && serverLang !== '') {
         localStorage.setItem('reeva-language', serverLang);
       }
-      
-      // Ahora leer desde localStorage (que ya tiene las preferencias del servidor)
       const theme = localStorage.getItem('reeva-theme') || 'claro';
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
       let finalTheme = theme;
       if (theme === 'sistema') {
         finalTheme = prefersDark ? 'oscuro' : 'claro';
       }
-
-      // Aplicar el tema inmediatamente (antes de que se renderice la pagina)
       if (finalTheme === 'oscuro') {
         document.documentElement.classList.add('theme-dark');
         document.body?.classList.add('theme-dark');
@@ -37,7 +29,6 @@
         document.documentElement.classList.add('theme-light');
         document.body?.classList.add('theme-light');
       }
-      
       console.log('Tema aplicado inmediatamente:', finalTheme, '(servidor:', serverTheme, ')');
     } catch (e) {
       console.warn('Error al aplicar tema inicial:', e);
@@ -50,44 +41,40 @@
   <div class="container mx-auto flex items-center justify-between">
     <!-- Logo a la izquierda -->
     <div class="flex items-center gap-4 flex-none">
-      <img
-        src="/images/icono2.png"
-        alt="Logo Hospital Padre Hurtado"
-        class="w-32 h-auto object-contain"
-      />
+      <img src="/images/icono2.png" alt="Logo Hospital Padre Hurtado" class="w-32 h-auto object-contain" />
     </div>
-    
+
     <!-- Desktop Navigation -->
     <div class="hidden md:flex flex-1 justify-center gap-8">
       <a href="/bienvenida" class="flex items-center gap-2 transition-colors <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
-        <span class="font-medium">Inicio</span>
+        <span class="font-medium" data-i18n="header.home"><%= __("header.home") %></span>
       </a>
       <a href="/dashboard" class="flex items-center gap-2 transition-colors <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
-        <span class="font-medium">Dashboard</span>
+        <span class="font-medium" data-i18n="header.dashboard"><%= __("header.dashboard") %></span>
       </a>
       <a href="/matriz-box" class="flex items-center gap-2 transition-colors <%= navStateClass('matriz-box') %>">
         <i class="ri-grid-line ri-lg"></i>
-        <span class="font-medium">Matriz Box</span>
+        <span class="font-medium" data-i18n="header.boxMatrix"><%= __("header.boxMatrix") %></span>
       </a>
       <a href="/agenda" class="flex items-center gap-2 transition-colors <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
-        <span class="font-medium">Agenda</span>
+        <span class="font-medium" data-i18n="header.agenda"><%= __("header.agenda") %></span>
       </a>
       <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
       <a href="/admin-bdd" class="flex items-center gap-2 transition-colors <%= (typeof activePage !== 'undefined' && activePage === 'admin-bdd') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
         <i class="ri-database-2-line ri-lg"></i>
-        <span class="font-medium">Admin BD</span>
+        <span class="font-medium" data-i18n="header.adminDB"><%= __("header.adminDB") %></span>
       </a>
       <% } %>
     </div>
-    
+
     <!-- Desktop Profile -->
     <div class="hidden md:flex items-center gap-6 flex-none">
       <div id="language-wrapper" class="relative">
         <button id="language-toggle" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-primary transition-colors">
-          <span class="uppercase">ES</span>
+          <span class="uppercase"><%= userLang === 'en' ? 'EN' : 'ES' %></span>
           <i class="ri-arrow-down-s-line text-base"></i>
         </button>
         <div id="language-menu" class="hidden absolute right-0 mt-2 w-24 bg-white border border-gray-200 rounded shadow-lg py-1 z-50">
@@ -98,26 +85,26 @@
       <div id="perfil-wrapper" class="relative">
         <a href="#" id="perfil-btn" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors cursor-pointer">
           <i class="ri-user-line ri-lg"></i>
-          <span class="font-medium">Perfil</span>
+          <span class="font-medium" data-i18n="header.profile"><%= __("header.profile") %></span>
         </a>
-        <!-- Menú desplegable, aparece al hacer click en Perfil -->
         <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 hidden" style="z-index: 9999;">
           <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
             <i class="ri-user-line ri-lg"></i>
-            <span class="font-medium">Mi Espacio</span>
+            <span class="font-medium" data-i18n="header.mySpace"><%= __("header.mySpace") %></span>
           </a>
           <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
             <i class="ri-settings-3-line ri-lg"></i>
-            <span class="font-medium">Personalización</span>
+            <span class="font-medium" data-i18n="header.personalization"><%= __("header.personalization") %></span>
           </a>
           <div class="border-t my-2"></div>
           <a href="/logout" class="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
             <i class="ri-logout-box-r-line ri-lg"></i>
-            <span class="font-medium">Cerrar Sesión</span>
+            <span class="font-medium" data-i18n="header.logout"><%= __("header.logout") %></span>
           </a>
         </div>
       </div>
     </div>
+
     <!-- Hamburger button para mobile -->
     <div class="md:hidden">
       <button id="mobileMenuBtn" class="text-gray-700 hover:text-primary p-2">
@@ -136,54 +123,47 @@
 <div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50 md:hidden">
   <div class="p-6">
     <div class="flex items-center justify-between mb-8">
-      <h2 class="text-xl font-semibold text-gray-800">Menú</h2>
+      <h2 class="text-xl font-semibold text-gray-800" data-i18n="common.menu"><%= __("common.menu") %></h2>
       <button id="close-mobile-menu" class="text-gray-500 hover:text-gray-700">
         <i class="ri-close-line ri-xl"></i>
       </button>
     </div>
-    
+
     <nav class="space-y-4">
       <a href="/bienvenida" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('bienvenida') %>">
         <i class="ri-home-4-line ri-lg"></i>
-        <span class="font-medium">Inicio</span>
+        <span class="font-medium" data-i18n="header.home"><%= __("header.home") %></span>
       </a>
-      
       <a href="/dashboard" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('dashboard') %>">
         <i class="ri-line-chart-line ri-lg"></i>
-        <span class="font-medium">Dashboard</span>
+        <span class="font-medium" data-i18n="header.dashboard"><%= __("header.dashboard") %></span>
       </a>
-      
       <a href="/matriz-box" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('matriz-box') %>">
         <i class="ri-grid-line ri-lg"></i>
-        <span class="font-medium">Matriz Box</span>
+        <span class="font-medium" data-i18n="header.boxMatrix"><%= __("header.boxMatrix") %></span>
       </a>
-      
       <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('agenda') %>">
         <i class="ri-calendar-2-line ri-lg"></i>
-        <span class="font-medium">Agenda</span>
+        <span class="font-medium" data-i18n="header.agenda"><%= __("header.agenda") %></span>
       </a>
-      
       <% if (user && user.permissions && user.permissions.includes('admin.database')) { %>
       <a href="/admin-bdd" class="flex items-center gap-3 transition-colors py-2 <%= (typeof activePage !== 'undefined' && activePage === 'admin-bdd') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %>">
         <i class="ri-database-2-line ri-lg"></i>
-        <span class="font-medium">Admin BD</span>
+        <span class="font-medium" data-i18n="header.adminDB"><%= __("header.adminDB") %></span>
       </a>
       <% } %>
-      
       <hr class="my-4 border-gray-200">
-      
       <a href="/bienvenida" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
         <i class="ri-user-line ri-lg"></i>
-        <span class="font-medium">Mi Espacio</span>
+        <span class="font-medium" data-i18n="header.mySpace"><%= __("header.mySpace") %></span>
       </a>
       <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
         <i class="ri-settings-3-line ri-lg"></i>
-        <span class="font-medium">Personalización</span>
+        <span class="font-medium" data-i18n="header.personalization"><%= __("header.personalization") %></span>
       </a>
-      
       <a href="/logout" class="flex items-center gap-3 text-red-600 hover:text-red-700 transition-colors py-2">
         <i class="ri-logout-box-r-line ri-lg"></i>
-        <span class="font-medium">Cerrar Sesión</span>
+        <span class="font-medium" data-i18n="header.logout"><%= __("header.logout") %></span>
       </a>
     </nav>
   </div>
@@ -194,90 +174,53 @@
 
 <aside id="personalization-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="personalization-title" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out z-50 flex flex-col pointer-events-none">
   <div class="flex items-start gap-3 px-6 py-5 border-b border-gray-200">
-    <div class="personalization-icon text-xl">
-      <i class="ri-magic-line"></i>
-    </div>
+    <div class="personalization-icon text-xl"><i class="ri-magic-line"></i></div>
     <div class="flex-1">
-      <h2 id="personalization-title" class="text-xl font-semibold text-gray-800">Personalización</h2>
-      <p class="text-sm text-gray-500">Configura la apariencia e idioma de la plataforma</p>
+      <h2 id="personalization-title" class="text-xl font-semibold text-gray-800" data-i18n="personalization.title"><%= __("personalization.title") %></h2>
+      <p class="text-sm text-gray-500" data-i18n="personalization.subtitle"><%= __("personalization.subtitle") %></p>
     </div>
-    <button id="personalization-close" class="text-gray-400 hover:text-primary transition-colors text-xl" aria-label="Cerrar panel">
+    <button id="personalization-close" class="text-gray-400 hover:text-primary transition-colors text-xl" aria-label="<%= __('common.close') %>">
       <i class="ri-close-line"></i>
     </button>
   </div>
-  
+
   <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
     <section class="personalization-card">
       <div class="flex items-center gap-3 mb-5">
-        <div class="personalization-icon text-lg">
-          <i class="ri-brush-line"></i>
-        </div>
+        <div class="personalization-icon text-lg"><i class="ri-brush-line"></i></div>
         <div>
-          <h3 class="text-lg font-semibold text-gray-800">Apariencia</h3>
-          <p class="text-sm text-gray-500">Elige el modo que mejor se adapte a ti</p>
+          <h3 class="text-lg font-semibold text-gray-800" data-i18n="personalization.appearance.title"><%= __("personalization.appearance.title") %></h3>
+          <p class="text-sm text-gray-500" data-i18n="personalization.appearance.subtitle"><%= __("personalization.appearance.subtitle") %></p>
         </div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button type="button" data-theme-option="claro" class="personalization-option" aria-pressed="false">
-          <span class="personalization-option-icon">
-            <i class="ri-sun-line"></i>
-          </span>
-          <span>Claro</span>
-        </button>
-        <button type="button" data-theme-option="oscuro" class="personalization-option" aria-pressed="false">
-          <span class="personalization-option-icon">
-            <i class="ri-moon-clear-line"></i>
-          </span>
-          <span>Oscuro</span>
-        </button>
-        <button type="button" data-theme-option="sistema" class="personalization-option" aria-pressed="false">
-          <span class="personalization-option-icon">
-            <i class="ri-macbook-line"></i>
-          </span>
-          <span>Sistema</span>
-        </button>
+        <button data-theme-option="claro" class="personalization-option"><i class="ri-sun-line"></i> <span data-i18n="personalization.appearance.light"><%= __("personalization.appearance.light") %></span></button>
+        <button data-theme-option="oscuro" class="personalization-option"><i class="ri-moon-clear-line"></i> <span data-i18n="personalization.appearance.dark"><%= __("personalization.appearance.dark") %></span></button>
+        <button data-theme-option="sistema" class="personalization-option"><i class="ri-macbook-line"></i> <span data-i18n="personalization.appearance.system"><%= __("personalization.appearance.system") %></span></button>
       </div>
     </section>
-    
+
     <section class="personalization-card">
       <div class="flex items-center gap-3 mb-5">
-        <div class="personalization-icon text-lg">
-          <i class="ri-translate-2"></i>
-        </div>
+        <div class="personalization-icon text-lg"><i class="ri-translate-2"></i></div>
         <div>
-          <h3 class="text-lg font-semibold text-gray-800">Idioma</h3>
-          <p class="text-sm text-gray-500">Selecciona el idioma preferido de la interfaz</p>
+          <h3 class="text-lg font-semibold text-gray-800" data-i18n="personalization.language.title"><%= __("personalization.language.title") %></h3>
+          <p class="text-sm text-gray-500" data-i18n="personalization.language.subtitle"><%= __("personalization.language.subtitle") %></p>
         </div>
       </div>
       <div class="space-y-3">
-        <button type="button" data-language-option="es" class="personalization-language" aria-pressed="false">
-          <span class="flex items-center gap-3">
-            <span class="personalization-option-icon">
-              <i class="ri-flag-2-line"></i>
-            </span>
-            <span>Español</span>
-          </span>
-          <i class="ri-check-line personalization-language-check" aria-hidden="true"></i>
-        </button>
-        <button type="button" data-language-option="en" class="personalization-language" aria-pressed="false">
-          <span class="flex items-center gap-3">
-            <span class="personalization-option-icon">
-              <i class="ri-earth-line"></i>
-            </span>
-            <span>Inglés</span>
-          </span>
-          <i class="ri-check-line personalization-language-check" aria-hidden="true"></i>
-        </button>
+        <button data-language-option="es" class="personalization-language"><i class="ri-flag-2-line"></i> <span data-i18n="personalization.language.spanish"><%= __("personalization.language.spanish") %></span><i class="ri-check-line personalization-language-check"></i></button>
+        <button data-language-option="en" class="personalization-language"><i class="ri-earth-line"></i> <span data-i18n="personalization.language.english"><%= __("personalization.language.english") %></span><i class="ri-check-line personalization-language-check"></i></button>
       </div>
     </section>
   </div>
-  
+
   <div class="px-6 py-5 border-t border-gray-200">
     <p class="text-xs text-gray-400">BoxCare v1.0.0 · Hospital Padre Hurtado</p>
   </div>
 </aside>
 <script>
-// Toggle del menú móvil
+// Toggle del menu movil
 document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const mobileMenu = document.getElementById('mobileMenu');
@@ -440,7 +383,11 @@ const initPersonalizationPanel = () => {
   };
 
   const openPanel = () => {
-    perfilMenu?.classList.add('hidden');
+    if (perfilMenu && !perfilMenu.classList.contains('hidden')) {
+      perfilMenu.classList.add('hidden');
+      perfilMenu.style.display = 'none';
+    }
+
     closeMobileMenuIfOpen();
     overlay.classList.remove('pointer-events-none');
     panel.classList.remove('pointer-events-none');
@@ -530,13 +477,11 @@ const initPersonalizationPanel = () => {
     button.addEventListener('click', () => {
       const { languageOption } = button.dataset;
       if (window.reevaSetLanguage) {
-        // reevaSetLanguage ya dispara el evento internamente
-        window.reevaSetLanguage(languageOption);
+        window.reevaSetLanguage(languageOption, true);
       }
     });
   });
   
-  // Actualizar highlights cuando cambia el idioma (sin disparar guardado)
   document.addEventListener('reeva:language-change', (event) => {
     if (event && event.detail && event.detail.language) {
       applyLanguageHighlight(event.detail.language);
@@ -664,19 +609,16 @@ if (document.readyState === 'loading') {
   
   const AUTH_API_BASE = '<%= AUTH_API_BASE %>';
   
-  // Estado para evitar múltiples llamadas simultaneas
   let isSaving = false;
   let saveTimeout = null;
   
   let isInitialized = false;
   
-  // Esperar a que termine la inicialización
   setTimeout(() => {
     isInitialized = true;
     console.log('Inicialización completada, guardados automáticos activados');
   }, 1000);
   
-  // Actualizar sesion del servidor Express
   async function updateSessionPreferences(idioma, aspecto) {
     try {
       const response = await fetch('/update-session-preferences', {
@@ -700,15 +642,12 @@ if (document.readyState === 'loading') {
     }
   }
   
-  // Guardar en el servidor cuando cambian las preferencias
   async function saveToServer(idioma, aspecto) {
-    // No guardar si aún estamos inicializando
     if (!isInitialized) {
       console.log('Guardado omitido: página aún inicializando');
       return;
     }
     
-    // Evitar llamadas simultaneas
     if (isSaving) {
       console.log('Ya hay un guardado en proceso, esperando...');
       return;
@@ -776,7 +715,7 @@ if (document.readyState === 'loading') {
     }
   }
   
-  // Funcion con debounce para evitar multiples guardados rápidos
+  // Funcion con debounce para evitar multiples guardados rapidos
   function debouncedSave(idioma, aspecto) {
     if (saveTimeout) {
       clearTimeout(saveTimeout);
@@ -881,4 +820,40 @@ if (document.readyState === 'loading') {
   console.log('API Base:', AUTH_API_BASE);
   console.log('Token disponible:', '<%= user && user.idToken ? "Sí" : "No" %>');
 })();
+</script>
+<script>
+// === CAMBIO DE IDIOMA DINAMICO (sin recargar) ===
+document.addEventListener('reeva:language-change', async (event) => {
+  const newLang = event.detail.language;
+  console.log("Cambio de idioma detectado:", newLang);
+
+  localStorage.setItem('reeva-language', newLang);
+
+  try {
+    const response = await fetch(`/languages/${newLang}.json`);
+    if (!response.ok) throw new Error("Error al cargar archivo de idioma");
+
+    const translations = await response.json();
+
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.dataset.i18n;
+      const translated = key.split('.').reduce((obj, k) => obj?.[k], translations);
+      if (translated) el.textContent = translated;
+    });
+
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+      const key = el.dataset.i18nPlaceholder;
+      const translated = key.split('.').reduce((obj, k) => obj?.[k], translations);
+      if (translated) el.setAttribute("placeholder", translated);
+    });
+
+    document.querySelectorAll("#language-toggle span.uppercase").forEach(el => {
+      el.textContent = newLang.toUpperCase();
+    });
+
+    console.log("Idioma aplicado dinámicamente:", newLang);
+  } catch (err) {
+    console.error("Error al cambiar idioma dinámicamente:", err);
+  }
+});
 </script>
