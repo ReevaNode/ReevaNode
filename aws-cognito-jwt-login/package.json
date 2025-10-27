@@ -10,12 +10,14 @@
     "info": "serverless info --verbose"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.600.0",
-    "@aws-sdk/client-dynamodb": "^3.600.0",
-    "@aws-sdk/lib-dynamodb": "^3.600.0"
+    "@aws-sdk/client-cognito-identity-provider": "^3.917.0",
+    "@aws-sdk/client-dynamodb": "^3.917.0",
+    "@aws-sdk/lib-dynamodb": "^3.917.0",
+    "aws-sdk": "^2.1692.0"
   },
   "devDependencies": {
     "serverless": "^3.38.0",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-offline": "^13.6.0"
   }
 }

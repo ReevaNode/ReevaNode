@@ -16,7 +16,9 @@ import {
   ScanCommand,
   DeleteCommand
 } from "@aws-sdk/lib-dynamodb";
+
 import { sendAuthNotification, sendErrorNotification } from "../services/notificationService.js";
+import { fetchPersonalization } from "../services/personalizationService.js";
 import { config } from "../config/index.js";
 
 const router = Router();
@@ -239,6 +241,39 @@ router.post("/auth/login", async (req, res) => {
       permissions: user.permissions || [],
     };
 
+    try {
+      console.log('Obteniendo personalización para:', user.email);
+      const personalization = await fetchPersonalization(auth.IdToken);
+      const prefs = personalization.personalization || {};
+
+      // Extraer preferencias
+      const userLang = prefs.idioma || 'es';
+      const userTheme = prefs.aspecto || 'claro';
+
+      // Guardar en sesion
+      req.session.userLang = userLang;
+      req.session.userTheme = userTheme;
+
+      console.log('Personalización aplicada:', {
+        email: user.email,
+        idioma: userLang,
+        aspecto: userTheme
+      });
+
+    } catch (err) {
+      console.warn('No se pudo obtener personalización:', err.message);
+      
+      // Valores por defecto si falla
+      req.session.userLang = 'es';
+      req.session.userTheme = 'claro';
+      
+      console.log('Usando valores por defecto:', {
+        idioma: req.session.userLang,
+        aspecto: req.session.userTheme
+      });
+    }
+
+    // respuesta
     return res.json({
       ok: true,
       message: "Login exitoso",
@@ -246,7 +281,9 @@ router.post("/auth/login", async (req, res) => {
         email: user.email,
         username: user.username,
         roles: user.roles,
-        permissions: user.permissions
+        permissions: user.permissions,
+        idioma: req.session.userLang,
+        aspecto: req.session.userTheme
       }
     });
 
@@ -264,6 +301,47 @@ router.post("/auth/login", async (req, res) => {
     });
     
     return res.status(401).json({ ok: false, error: "Credenciales invalidas o usuario no confirmado" });
+  }
+});
+
+router.post("/update-session-preferences", async (req, res) => {
+  try {
+    const { idioma, aspecto } = req.body;
+    
+    if (!req.session.user) {
+      return res.status(401).json({ ok: false, error: "No hay sesión activa" });
+    }
+    
+    // Validar parametros
+    if (!idioma || !aspecto) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "Parámetros idioma y aspecto son obligatorios" 
+      });
+    }
+    
+    // Actualizar sesion
+    req.session.userLang = idioma;
+    req.session.userTheme = aspecto;
+    
+    console.log('Sesión actualizada:', {
+      email: req.session.user.email,
+      idioma,
+      aspecto
+    });
+    
+    return res.json({
+      ok: true,
+      message: "Sesión actualizada",
+      preferences: { idioma, aspecto }
+    });
+    
+  } catch (error) {
+    console.error("Error actualizando sesión:", error);
+    return res.status(500).json({ 
+      ok: false, 
+      error: "Error al actualizar sesión" 
+    });
   }
 });
 

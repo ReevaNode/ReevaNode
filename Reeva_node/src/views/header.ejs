@@ -8,6 +8,19 @@
 <script>
   (function() {
     try {
+      // Intentar obtener del servidor (inyectado por EJS)
+      const serverTheme = '<%= userTheme %>';
+      const serverLang = '<%= userLang %>';
+      
+      // Si hay preferencias del servidor, guardarlas inmediatamente en localStorage
+      if (serverTheme && serverTheme !== 'undefined' && serverTheme !== '') {
+        localStorage.setItem('reeva-theme', serverTheme);
+      }
+      if (serverLang && serverLang !== 'undefined' && serverLang !== '') {
+        localStorage.setItem('reeva-language', serverLang);
+      }
+      
+      // Ahora leer desde localStorage (que ya tiene las preferencias del servidor)
       const theme = localStorage.getItem('reeva-theme') || 'claro';
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -16,6 +29,7 @@
         finalTheme = prefersDark ? 'oscuro' : 'claro';
       }
 
+      // Aplicar el tema inmediatamente (antes de que se renderice la pagina)
       if (finalTheme === 'oscuro') {
         document.documentElement.classList.add('theme-dark');
         document.body?.classList.add('theme-dark');
@@ -23,6 +37,8 @@
         document.documentElement.classList.add('theme-light');
         document.body?.classList.add('theme-light');
       }
+      
+      console.log('Tema aplicado inmediatamente:', finalTheme, '(servidor:', serverTheme, ')');
     } catch (e) {
       console.warn('Error al aplicar tema inicial:', e);
     }
@@ -173,7 +189,7 @@
   </div>
 </div>
 
-<!-- Panel de Personalización -->
+<!-- Panel de Personalizacion -->
 <div id="personalization-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
 
 <aside id="personalization-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="personalization-title" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out z-50 flex flex-col pointer-events-none">
@@ -260,8 +276,6 @@
     <p class="text-xs text-gray-400">BoxCare v1.0.0 · Hospital Padre Hurtado</p>
   </div>
 </aside>
-
-<!-- Scripts del Header -->
 <script>
 // Toggle del menú móvil
 document.addEventListener('DOMContentLoaded', function() {
@@ -313,7 +327,7 @@ const initLanguageSelector = () => {
   const wrapper = document.getElementById('language-wrapper');
   const toggle = document.getElementById('language-toggle');
   const menu = document.getElementById('language-menu');
-  const options = document.querySelectorAll('[data-language-option]');
+  const options = document.querySelectorAll('#language-menu [data-language-option]');
   const label = toggle ? toggle.querySelector('span') : null;
   const STORAGE_KEY = 'reeva-language';
 
@@ -326,31 +340,39 @@ const initLanguageSelector = () => {
   }
   toggle.dataset.bound = 'true';
 
-  const setLanguage = (lang) => {
+   // Recibe parametro para saber si es cambio manual
+  const setLanguage = (lang, isUserAction = false) => {
     const value = (lang || 'es').toLowerCase();
     label.textContent = value.toUpperCase();
     toggle.dataset.language = value;
     document.documentElement.lang = value;
     localStorage.setItem(STORAGE_KEY, value);
     menu.classList.add('hidden');
-    document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
+    
+    // Solo disparar evento si es accion del usuario
+    if (isUserAction) {
+      console.log('Cambio manual de idioma detectado');
+      document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
+    }
   };
 
   window.reevaSetLanguage = setLanguage;
   window.reevaGetLanguage = () => localStorage.getItem(STORAGE_KEY) || 'es';
-
+  
+  // Inicializacion sin disparar evento
   const saved = localStorage.getItem(STORAGE_KEY);
-  setLanguage(saved || 'es');
-
+  setLanguage(saved || 'es', false); 
+  
   toggle.addEventListener('click', (event) => {
     event.preventDefault();
     menu.classList.toggle('hidden');
   });
-
+  
+  // CLICK en opciones: Si dispara evento
   options.forEach((option) => {
     option.addEventListener('click', () => {
       const { languageOption } = option.dataset;
-      setLanguage(languageOption);
+      setLanguage(languageOption, true); 
     });
   });
 
@@ -364,8 +386,8 @@ const initLanguageSelector = () => {
 document.addEventListener('DOMContentLoaded', initLanguageSelector);
 window.reevaInitLanguage = initLanguageSelector;
 
-// Panel de personalización
-const initPersonalizationPanel = () => {
+// Panel de personalizacion
+document.addEventListener('DOMContentLoaded', function() {
   const overlay = document.getElementById('personalization-overlay');
   const panel = document.getElementById('personalization-panel');
   const closeBtn = document.getElementById('personalization-close');
@@ -458,7 +480,8 @@ const initPersonalizationPanel = () => {
     document.body.classList.toggle('theme-light', !prefersDark);
   };
   
-  const setTheme = (theme) => {
+  // Recibe parametro para saber si es cambio manual
+  const setTheme = (theme, isUserAction = false) => {
     const normalized = (theme || 'claro').toLowerCase();
     localStorage.setItem(THEME_KEY, normalized);
     document.body.dataset.theme = normalized;
@@ -482,29 +505,38 @@ const initPersonalizationPanel = () => {
     }
     
     applyThemeHighlight(normalized);
-    document.dispatchEvent(new CustomEvent('reeva:theme-change', { detail: { theme: normalized } }));
+    
+    if (isUserAction) {
+      console.log('Cambio manual de tema detectado');
+      document.dispatchEvent(new CustomEvent('reeva:theme-change', { detail: { theme: normalized } }));
+    }
   };
   
+  // Inicializacion sin disparar eventos
   const savedTheme = localStorage.getItem(THEME_KEY) || 'claro';
-  setTheme(savedTheme);
+  setTheme(savedTheme, false); 
   applyLanguageHighlight((window.reevaGetLanguage && window.reevaGetLanguage()) || 'es');
   
+  // CLICK en botones de tema: SÍ dispara evento
   themeButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const { themeOption } = button.dataset;
-      setTheme(themeOption);
+      setTheme(themeOption, true); 
     });
   });
   
+  // CLICK en botones de idioma: SÍ dispara evento
   languageButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const { languageOption } = button.dataset;
       if (window.reevaSetLanguage) {
+        // reevaSetLanguage ya dispara el evento internamente
         window.reevaSetLanguage(languageOption);
       }
     });
   });
   
+  // Actualizar highlights cuando cambia el idioma (sin disparar guardado)
   document.addEventListener('reeva:language-change', (event) => {
     if (event && event.detail && event.detail.language) {
       applyLanguageHighlight(event.detail.language);
@@ -610,6 +642,12 @@ const initPerfilMenu = () => {
       perfilMenu.style.display = 'none';
     }
   });
+});
+
+// Menu de perfil desktop
+document.addEventListener('DOMContentLoaded', function() {
+  const perfilBtn = document.getElementById('perfil-btn');
+  const perfilMenu = document.getElementById('perfil-menu');
   
   console.log('Menú de perfil inicializado correctamente');
 };
@@ -622,4 +660,231 @@ if (document.readyState === 'loading') {
 } else {
   initPerfilMenu();
 }
+</script>
+<script>
+(function() {
+  'use strict';
+  
+  const THEME_KEY = 'reeva-theme';
+  const LANGUAGE_KEY = 'reeva-language';
+  
+  const AUTH_API_BASE = '<%= AUTH_API_BASE %>';
+  
+  // Estado para evitar múltiples llamadas simultaneas
+  let isSaving = false;
+  let saveTimeout = null;
+  
+  let isInitialized = false;
+  
+  // Esperar a que termine la inicialización
+  setTimeout(() => {
+    isInitialized = true;
+    console.log('Inicialización completada, guardados automáticos activados');
+  }, 1000);
+  
+  // Actualizar sesion del servidor Express
+  async function updateSessionPreferences(idioma, aspecto) {
+    try {
+      const response = await fetch('/update-session-preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ idioma, aspecto })
+      });
+      
+      if (response.ok) {
+        console.log('Sesión del servidor actualizada');
+        return true;
+      } else {
+        console.warn('No se pudo actualizar la sesión del servidor');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error actualizando sesión:', err);
+      return false;
+    }
+  }
+  
+  // Guardar en el servidor cuando cambian las preferencias
+  async function saveToServer(idioma, aspecto) {
+    // No guardar si aún estamos inicializando
+    if (!isInitialized) {
+      console.log('Guardado omitido: página aún inicializando');
+      return;
+    }
+    
+    // Evitar llamadas simultaneas
+    if (isSaving) {
+      console.log('Ya hay un guardado en proceso, esperando...');
+      return;
+    }
+    
+    try {
+      const idToken = '<%= user && user.idToken ? user.idToken : "" %>';
+      
+      if (!idToken) {
+        console.warn('No hay token de autenticación, no se puede guardar en servidor');
+        showSaveNotification('error', 'No hay sesión activa');
+        return false;
+      }
+      
+      isSaving = true;
+      const url = `${AUTH_API_BASE}/personalization`;
+      const payload = { idioma, aspecto };
+      
+      console.log('Guardando en DynamoDB:');
+      console.log('   URL:', url);
+      console.log('   Payload:', payload);
+      
+      // Guardar en DynamoDB
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        let errorMsg = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.error('Error data:', errorData);
+          errorMsg = errorData.error || errorData.message || errorMsg;
+        } catch (e) {
+          const text = await response.text();
+          console.error('Error text:', text);
+          errorMsg = text || errorMsg;
+        }
+        throw new Error(errorMsg);
+      }
+      
+      const data = await response.json();
+      console.log('Guardado exitoso en DynamoDB:', data);
+      
+      // Actualizar sesion del servidor Express
+      await updateSessionPreferences(idioma, aspecto);
+      
+      showSaveNotification('success');
+      return true;
+      
+    } catch (err) {
+      console.error('Error al guardar en servidor:', err);
+      showSaveNotification('error', err.message);
+      return false;
+    } finally {
+      isSaving = false;
+    }
+  }
+  
+  // Funcion con debounce para evitar multiples guardados rápidos
+  function debouncedSave(idioma, aspecto) {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    saveTimeout = setTimeout(() => {
+      saveToServer(idioma, aspecto);
+    }, 500);
+  }
+  
+  // Mostrar notificacion visual
+  function showSaveNotification(type, message) {
+    const existing = document.getElementById('save-notification');
+    if (existing) {
+      existing.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.id = 'save-notification';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 9999;
+      animation: slideIn 0.3s ease-out;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+    
+    if (type === 'success') {
+      notification.style.backgroundColor = '#10b981';
+      notification.style.color = 'white';
+      notification.innerHTML = '<i class="ri-check-line"></i> <span>Preferencias guardadas</span>';
+    } else {
+      notification.style.backgroundColor = '#ef4444';
+      notification.style.color = 'white';
+      notification.innerHTML = `<i class="ri-error-warning-line"></i> <span>${message || 'No se pudo guardar'}</span>`;
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+  
+  // Agregar animaciones CSS si no existen
+  if (!document.getElementById('notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Interceptar cambios de tema
+  document.addEventListener('reeva:theme-change', async (event) => {
+    if (event?.detail?.theme) {
+      const language = localStorage.getItem(LANGUAGE_KEY) || 'es';
+      console.log('Tema cambiado a:', event.detail.theme);
+      debouncedSave(language, event.detail.theme);
+    }
+  });
+  
+  // Interceptar cambios de idioma
+  document.addEventListener('reeva:language-change', async (event) => {
+    if (event?.detail?.language) {
+      const theme = localStorage.getItem(THEME_KEY) || 'claro';
+      console.log('Idioma cambiado a:', event.detail.language);
+      debouncedSave(event.detail.language, theme);
+    }
+  });
+  
+  console.log('Sistema de sincronizacion cargado');
+  console.log('API Base:', AUTH_API_BASE);
+  console.log('Token disponible:', '<%= user && user.idToken ? "Sí" : "No" %>');
+})();
 </script>

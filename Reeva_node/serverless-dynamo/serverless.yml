@@ -1,6 +1,6 @@
 service: reeva-dynamo
 
-frameworkVersion: '4'
+frameworkVersion: '3'
 
 provider:
   name: aws
@@ -165,6 +165,14 @@ functions:
       - httpApi:
           method: POST
           path: /seed/items
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  dotenv:
+    path: ../.env
 
 resources:
   Resources:

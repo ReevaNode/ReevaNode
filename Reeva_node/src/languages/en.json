@@ -1,0 +1,39 @@
+{
+  "header": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "boxMatrix": "Box Matrix",
+    "agenda": "Schedule",
+    "adminDB": "DB Admin",
+    "profile": "Profile",
+    "mySpace": "My Space",
+    "personalization": "Personalization",
+    "logout": "Sign Out"
+  },
+  "personalization": {
+    "title": "Personalization",
+    "subtitle": "Configure platform appearance and language",
+    "appearance": {
+      "title": "Appearance",
+      "subtitle": "Choose the mode that suits you best",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "title": "Language",
+      "subtitle": "Select your preferred interface language",
+      "spanish": "Spanish",
+      "english": "English"
+    }
+  },
+  "common": {
+    "menu": "Menu",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}
