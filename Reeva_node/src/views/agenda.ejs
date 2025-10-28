@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<%= userLang || 'es' %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title || 'Hospital Padre Hurtado' %></title>
-  <!-- Tailwind -->
+  <title data-i18n="agenda.title"><%= __("agenda.title") %></title>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
     tailwind.config = {
@@ -24,342 +23,217 @@
       }
     }
   </script>
-  <!-- Fuentes y librerías -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
-  <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <!-- Header CSS -->
   <link rel="stylesheet" href="/css/header.css" />
   <link rel="stylesheet" href="/css/agenda.css" />
 </head>
 <body class="font-sans">
   <%- include('header') %>
-
-  <!-- Contenido principal -->
   <main class="container mx-auto px-4 py-6">
     <% if (messages && messages.length > 0) { %>
       <div class="mb-4">
         <% messages.forEach(message => { %>
-          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-2">
-            <%= message %>
-          </div>
+          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-2"><%= message %></div>
         <% }) %>
       </div>
     <% } %>
     
+    <!-- Seleccion de box -->
     <form method="get" class="flex gap-4 mb-8 items-end">
       <div>
-        <label for="box_number" class="block text-sm font-medium mb-1">Box</label>
+        <label for="box_number" class="block text-sm font-medium mb-1" data-i18n="agenda.boxLabel"><%= __("agenda.boxLabel") %></label>
         <select id="box_number" name="box_number"
                 class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white">
-          <option value="" <%= box ? 'disabled' : 'selected' %> >-- Seleccione un box --</option>
-          <% boxes.forEach(b => { 
-               const value = b.numero || b.idbox || b.idBox || '';
-          %>
-            <option value="<%= value %>"
-              <%= (box && String(value) === String(box.numero || box.idbox || box.idBox)) ? 'selected' : '' %>>
+          <option value="" <%= box ? 'disabled' : 'selected' %> data-i18n="agenda.selectBoxPlaceholder">
+            <%= __("agenda.selectBoxPlaceholder") %>
+          </option>
+          <% boxes.forEach(b => { const value = b.numero || b.idbox || b.idBox || ''; %>
+            <option value="<%= value %>" <%= (box && String(value) === String(box.numero || box.idbox || box.idBox)) ? 'selected' : '' %>>
               Box <%= b.numero %> - <%= b.idtipobox.tipobox %>
             </option>
           <% }) %>
         </select>
       </div>
-      <button type="submit" class="bg-primary text-white px-4 py-2 rounded-button">Seleccionar</button>
+      <button type="submit" class="bg-primary text-white px-4 py-2 rounded-button" data-i18n="agenda.selectBtn"><%= __("agenda.selectBtn") %></button>
     </form>
     
-    <!-- Toggle inhabilitación -->
+    <!-- Boton habilitar/inhabilitar -->
     <% if (box) { %>
-      <button
-        id="toggleMantBtn"
-        class="<% if (disabled) { %>bg-green-600 hover:bg-green-700 border-green-600<% } else { %>bg-red-600 hover:bg-red-700 border-red-600<% } %> text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
-        onclick="openMantModal()"
-      >
+      <button id="toggleMantBtn"
+        class="<% if (disabled) { %>bg-green-600 hover:bg-green-700<% } else { %>bg-red-600 hover:bg-red-700<% } %> text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
+        onclick="openMantModal()">
         <% if (disabled) { %>
           <i class="ri-play-circle-line text-lg"></i>
-          Habilitar box
+          <span data-i18n="agenda.enableBox"><%= __("agenda.enableBox") %></span>
         <% } else { %>
           <i class="ri-stop-circle-line text-lg"></i>
-          Inhabilitar box
+          <span data-i18n="agenda.disableBox"><%= __("agenda.disableBox") %></span>
         <% } %>
       </button>
     <% } else { %>
-      <button disabled class="opacity-50 cursor-not-allowed bg-gray-400 text-white px-6 py-3 rounded-button mt-6">No hay box seleccionado</button>
+      <button disabled class="opacity-50 cursor-not-allowed bg-gray-400 text-white px-6 py-3 rounded-button mt-6" data-i18n="agenda.noBoxSelected">
+        <%= __("agenda.noBoxSelected") %>
+      </button>
     <% } %>
-
+    
     <!-- Modal Agregar Evento -->
-    <div
-      id="eventoModal"
-      class="fixed inset-0 z-50 flex items-center justify-center
-        bg-gray-500 bg-opacity-70 backdrop-blur-sm
-        hidden overflow-auto p-4"
-    >
+    <div id="eventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
       <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-        <h3 class="text-2xl font-medium text-center mb-8">Agregar evento</h3>
+        <h3 class="text-2xl font-medium text-center mb-8" data-i18n="agenda.addEventTitle"><%= __("agenda.addEventTitle") %></h3>
         <div id="timeRangeInfo" class="hidden mb-4 p-3 rounded bg-blue-50 text-blue-700 text-sm border border-blue-200">
           <i class="ri-information-line"></i>
-          <span>Cargando información del horario...</span>
+          <span data-i18n="agenda.loadingTimeInfo"><%= __("agenda.loadingTimeInfo") %></span>
         </div>
-          
-        <form
-          id="eventoForm"
-          method="post"
-          action="/add_evento/<%= box.idbox %>"
-          class="space-y-6"
-        >
-          <!-- Error inline -->
+        <form id="eventoForm" method="post" action="/add_evento/<%= box.idbox %>" class="space-y-6">
           <div id="addError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
-          
-          <!-- Número de box (readonly) -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Número de Box</label>
-            <input
-              type="text"
-              name="box_id"
-              class="w-full border rounded p-2 bg-gray-100"
-              readonly
-              value="<%= box.numero %>"
-            />
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.boxNumberLabel"><%= __("agenda.boxNumberLabel") %></label>
+            <input type="text" name="box_id" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= box.numero %>"/>
           </div>
-          
-          <!-- Especialidad -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Especialidad</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel"><%= __("agenda.specialtyLabel") %></label>
             <select id="especialidadSelect" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>— Selecciona especialidad —</option>
-              <% (tipos_profesional_normalizados || []).forEach(tipo => { %>
-                <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
-              <% }) %>
+              <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder"><%= __("agenda.selectSpecialtyPlaceholder") %></option>
+              <% (tipos_profesional_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
             </select>
           </div>
-          
-          <!-- Profesional -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Profesional</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.professionalLabel"><%= __("agenda.professionalLabel") %></label>
             <select id="profesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>— Selecciona profesional —</option>
+              <option value="" disabled selected data-i18n="agenda.selectProfessionalPlaceholder"><%= __("agenda.selectProfessionalPlaceholder") %></option>
             </select>
           </div>
-          
-          <!-- Hora inicio / fin -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
+              <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.startTimeLabel"><%= __("agenda.startTimeLabel") %></label>
               <input type="time" name="horainicio" min="08:00" max="19:00" class="w-full border rounded p-2" required />
             </div>
             <div>
-              <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
+              <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.endTimeLabel"><%= __("agenda.endTimeLabel") %></label>
               <input type="time" name="horafin" min="08:00" max="19:00" class="w-full border rounded p-2" required />
             </div>
           </div>
-          
-          <!-- Fecha -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Fecha</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label>
             <input type="date" name="fecha" class="w-full border rounded p-2" required />
           </div>
-          
-          <!-- Tipo de consulta -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Tipo de consulta</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.consultationTypeLabel"><%= __("agenda.consultationTypeLabel") %></label>
             <select name="idTipoConsulta" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>— Selecciona tipo —</option>
-              <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
-                <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
-              <% }) %>
+              <option value="" disabled selected data-i18n="agenda.selectConsultationPlaceholder"><%= __("agenda.selectConsultationPlaceholder") %></option>
+              <% (tipos_consulta_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
             </select>
           </div>
-          
-          <!-- Observaciones -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Detalle u observaciones</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label>
             <textarea name="observaciones" rows="4" class="w-full border rounded p-2"></textarea>
           </div>
-          
-          <!-- Botones -->
           <div class="flex justify-between">
-            <button type="button" onclick="cancelEventoCreation()" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
-            <button type="submit" id="addEventoBtn" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Agregar</button>
+            <button type="button" onclick="cancelEventoCreation()" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" data-i18n="agenda.cancelBtn"><%= __("agenda.cancelBtn") %></button>
+            <button type="submit" id="addEventoBtn" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="agenda.addBtn"><%= __("agenda.addBtn") %></button>
           </div>
         </form>
       </div>
     </div>
-      
+    
     <!-- Modal Inhabilitar/Habilitar -->
-    <div id="mantModal" class="fixed inset-0 z-50 flex items-center justify-center
-         bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
+    <div id="mantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
       <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-xl">
         <h3 class="text-2xl font-medium text-center mb-6">
           <% if (disabled) { %>
-            Habilitar box
+            <span data-i18n="agenda.enableBox"><%= __("agenda.enableBox") %></span>
           <% } else { %>
-            Inhabilitar box
+            <span data-i18n="agenda.disableBox"><%= __("agenda.disableBox") %></span>
           <% } %>
         </h3>
         <form method="post" action="/toggle_mantenimiento/<%= box.idbox %>" class="space-y-4">
           <div class="flex justify-between">
-            <button
-              type="button"
-              class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              onclick="closeMantModal()"
-            >Cancelar</button>
-            <button
-              type="submit"
-              class="px-6 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded"
-            >
-              <%= disabled ? 'Confirmar habilitación' : 'Confirmar inhabilitación' %>
+            <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="closeMantModal()" data-i18n="agenda.cancelBtn"><%= __("agenda.cancelBtn") %></button>
+            <button type="submit" class="px-6 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded">
+              <span data-i18n="<%= disabled ? 'agenda.confirmEnable' : 'agenda.confirmDisable' %>">
+                <%= disabled ? __("agenda.confirmEnable") : __("agenda.confirmDisable") %>
+              </span>
             </button>
           </div>
         </form>
       </div>
     </div>
     
-    <!-- Modal Editar Evento -->
-    <div
-      id="editEventoModal"
-      class="fixed inset-0 z-50 flex items-center justify-center
-         bg-gray-500 bg-opacity-70 backdrop-blur-sm
-         hidden overflow-auto p-4"
-    >
+    <!-- Modal Editar -->
+    <div id="editEventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
       <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-        <h3 class="text-2xl font-medium text-center mb-8">Editar evento</h3>
-        <form
-          id="editEventoForm"
-          method="post"
-          action=""
-        >
+        <h3 class="text-2xl font-medium text-center mb-8" data-i18n="agenda.editEventTitle"><%= __("agenda.editEventTitle") %></h3>
+        <form id="editEventoForm" method="post" action="">
           <input type="hidden" name="evento_id" id="editEventoId" />
-          
-          <!-- Error inline -->
           <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
-          
-          <!-- Especialidad -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Especialidad</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel"><%= __("agenda.specialtyLabel") %></label>
             <select id="editEspecialidadSelect" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>— Selecciona especialidad —</option>
-              <% (tipos_profesional_normalizados || []).forEach(tipo => { %>
-                <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
-              <% }) %>
+              <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder"><%= __("agenda.selectSpecialtyPlaceholder") %></option>
+              <% (tipos_profesional_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
             </select>
           </div>
-          
-          <!-- Profesional -->
           <div>
-            <label class="block text-sm text-gray-600 mb-2">Profesional</label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.professionalLabel"><%= __("agenda.professionalLabel") %></label>
             <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>— Selecciona profesional —</option>
+              <option value="" disabled selected data-i18n="agenda.selectProfessionalPlaceholder"><%= __("agenda.selectProfessionalPlaceholder") %></option>
             </select>
           </div>
-          
-          <!-- Hora inicio / fin -->
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
-              <input type="time" name="horainicio" id="editHoraInicio" min="08:00" max="19:00" class="w-full border rounded p-2" required />
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
-              <input type="time" name="horafin" id="editHoraFin" min="08:00" max="19:00" class="w-full border rounded p-2" required />
-            </div>
+            <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.startTimeLabel"><%= __("agenda.startTimeLabel") %></label><input type="time" name="horainicio" id="editHoraInicio" class="w-full border rounded p-2" required /></div>
+            <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.endTimeLabel"><%= __("agenda.endTimeLabel") %></label><input type="time" name="horafin" id="editHoraFin" class="w-full border rounded p-2" required /></div>
           </div>
-          
-          <!-- Fecha -->
-          <div>
-            <label class="block text-sm text-gray-600 mb-2">Fecha</label>
-            <input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required />
-          </div>
-          
-          <!-- Tipo de consulta -->
-          <div>
-            <label class="block text-sm text-gray-600 mb-2">Tipo de consulta</label>
-            <select name="idTipoConsulta" id="editTipoConsulta" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>— Selecciona tipo —</option>
-              <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
-                <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
-              <% }) %>
-            </select>
-          </div>
-          
-          <!-- Observaciones -->
-          <div>
-            <label class="block text-sm text-gray-600 mb-2">Detalle u observaciones</label>
-            <textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea>
-          </div>
-          
-          <!-- Botones -->
+          <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label><input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required /></div>
+          <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.consultationTypeLabel"><%= __("agenda.consultationTypeLabel") %></label><select name="idTipoConsulta" id="editTipoConsulta" class="w-full border rounded p-2" required><option value="" disabled selected data-i18n="agenda.selectConsultationPlaceholder"><%= __("agenda.selectConsultationPlaceholder") %></option><% (tipos_consulta_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %></select></div>
+          <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label><textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea></div>
           <div class="flex justify-between">
-            <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn">Eliminar</button>
-            <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar cambios</button>
+            <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn" data-i18n="agenda.deleteBtn"><%= __("agenda.deleteBtn") %></button>
+            <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="agenda.saveChanges"><%= __("agenda.saveChanges") %></button>
           </div>
         </form>
       </div>
     </div>
     
-    <!-- Calendario con FullCalendar -->
+    <!-- Calendario -->
     <section class="bg-white rounded-lg shadow-sm mt-6 md:mt-8 p-4 md:p-6">
-      <div class="mb-4 md:mb-6">
-        <h2 class="text-xl md:text-2xl font-semibold text-gray-800">Agenda General</h2>
-      </div>
+      <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800" data-i18n="agenda.mainTitle"><%= __("agenda.mainTitle") %></h2></div>
       
-      <!-- Banner instructivo colapsable -->
+      <!-- Banner instructivo -->
       <div id="instructionBanner" class="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg relative overflow-hidden">
-        <!-- Header siempre visible -->
         <div class="flex items-center justify-between p-4 cursor-pointer" id="bannerHeader">
           <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <i class="ri-question-line text-primary text-sm"></i>
-              </div>
-            </div>
+            <div class="flex-shrink-0"><div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center"><i class="ri-question-line text-primary text-sm"></i></div></div>
             <div>
-              <h4 class="text-sm font-medium text-gray-900">Ayuda - ¿Cómo usar el calendario?</h4>
-              <p class="text-xs text-gray-500">Haz clic para ver las instrucciones</p>
+              <h4 class="text-sm font-medium text-gray-900" data-i18n="agenda.helpTitle"><%= __("agenda.helpTitle") %></h4>
+              <p class="text-xs text-gray-500" data-i18n="agenda.helpSubtitle"><%= __("agenda.helpSubtitle") %></p>
             </div>
           </div>
           <button id="toggleBanner" class="text-gray-400 hover:text-gray-600 transition-all duration-200 transform hover:scale-110">
             <i id="bannerIcon" class="ri-arrow-down-s-line text-lg transition-transform duration-200"></i>
           </button>
         </div>
-        
-        <!-- Contenido colapsable -->
         <div id="bannerContent" class="px-4 pb-4 max-h-0 overflow-hidden transition-all duration-300">
           <div class="border-t border-purple-200 pt-3">
             <div class="space-y-3">
-              <div>
-                <h5 class="text-sm font-medium text-gray-900">¿Cómo crear una consulta?</h5>
-                <p class="text-sm text-gray-600">
-                  <span class="mx-2">•</span>
-                  <span class="font-medium text-primary">Clic simple:</span> Detecta automáticamente el bloque libre completo
-                </p>
-              </div>
-              <div>
-                <h5 class="text-sm font-medium text-gray-900">¿Cómo editar una consulta?</h5>
-                <p class="text-sm text-gray-600">
-                  <span class="mx-2">•</span>
-                  <span class="font-medium text-primary">Clic simple:</span> Editar o eliminar el evento
-                </p>
-              </div>
+              <div><h5 class="text-sm font-medium text-gray-900" data-i18n="agenda.createConsultation"><%= __("agenda.createConsultation") %></h5><p class="text-sm text-gray-600"><span class="mx-2">•</span><span class="font-medium text-primary" data-i18n="agenda.clickToCreate"><%= __("agenda.clickToCreate") %></span></p></div>
+              <div><h5 class="text-sm font-medium text-gray-900" data-i18n="agenda.editConsultation"><%= __("agenda.editConsultation") %></h5><p class="text-sm text-gray-600"><span class="mx-2">•</span><span class="font-medium text-primary" data-i18n="agenda.clickToEdit"><%= __("agenda.clickToEdit") %></span></p></div>
             </div>
           </div>
         </div>
-        
-        <!-- Barra de progreso animada -->
-        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-200 to-blue-200 opacity-40">
-          <div class="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse-slow"></div>
-        </div>
-      </div>    
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-200 to-blue-200 opacity-40"><div class="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse-slow"></div></div>
+      </div>
       
       <div id="calendar" class="w-full min-h-[600px] md:min-h-[700px] overflow-auto"></div>
-    </section> 
+    </section>
   </main>
   
   <%- include('footer') %>
-<!-- ░░ Scripts ░░ -->
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // gráfico de estado (si existe)
   const chartEl = document.getElementById('estadoChart');
   if (chartEl && typeof echarts !== 'undefined') {
     const chart = echarts.init(chartEl);
@@ -383,20 +257,14 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   const modal = document.getElementById('eventoModal');
   modal.addEventListener('click', e => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-    }
+    if (e.target === modal) modal.classList.add('hidden');
   });
 </script>
 
 <script>
   const mantModal = document.getElementById('mantModal');
-  function openMantModal() {
-    mantModal.classList.remove('hidden');
-  }
-  function closeMantModal() {
-    mantModal.classList.add('hidden');
-  }
+  function openMantModal() { mantModal.classList.remove('hidden'); }
+  function closeMantModal() { mantModal.classList.add('hidden'); }
   mantModal.addEventListener('click', e => {
     if (e.target === mantModal) closeMantModal();
   });
@@ -407,18 +275,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const eventoModal = document.getElementById('eventoModal');
   const mantModal   = document.getElementById('mantModal');
   
-  window.openEventoModal = function()  { 
-    if (eventoModal) eventoModal.classList.remove('hidden');
-  }
-  window.closeEventoModal = function() { 
-    if (eventoModal) eventoModal.classList.add('hidden');
-  }
-  window.openMantModal = function()    { 
-    if (mantModal) mantModal.classList.remove('hidden');
-  }
-  window.closeMantModal = function()   { 
-    if (mantModal) mantModal.classList.add('hidden');
-  }
+  window.openEventoModal = function()  { if (eventoModal) eventoModal.classList.remove('hidden'); }
+  window.closeEventoModal = function() { if (eventoModal) eventoModal.classList.add('hidden'); }
+  window.openMantModal = function()    { if (mantModal) mantModal.classList.remove('hidden'); }
+  window.closeMantModal = function()   { if (mantModal) mantModal.classList.add('hidden'); }
   
   if (eventoModal) {
     eventoModal.addEventListener('click', e => {
@@ -437,33 +297,56 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('calendar');
-
-  // 🔹 Usar los eventos enviados por el backend directamente (sin esperar fetch)
   const eventos = <%- eventos_json || '[]' %>;
-
+  const userLang = '<%= userLang || "es" %>';
+  
+  // Textos traducidos
+  const texts = {
+    today: userLang === 'en' ? 'Today' : 'Hoy',
+    month: userLang === 'en' ? 'Month' : 'Mes',
+    week: userLang === 'en' ? 'Week' : 'Semana',
+    day: userLang === 'en' ? 'Day' : 'Día',
+    allDay: userLang === 'en' ? 'all-day' : 'todo el día'
+  };
+  
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridDay',
-    locale: 'es',
+    locale: userLang === 'en' ? 'en' : 'es',
     timeZone: 'local',
     height: 'auto',
     contentHeight: 600,
     aspectRatio: 1.2,
     nowIndicator: true,
+    
+    // Formato de hora para eventos
+    eventTimeFormat: {
+      hour: 'numeric',
+      minute: '2-digit',
+      meridiem: userLang === 'en' ? 'short' : false,
+      hour12: userLang === 'en'
+    },
+    
+    // Formato de hora para las etiquetas del eje (8:00, 9:00, etc.)
+    slotLabelFormat: {
+      hour: 'numeric',
+      minute: '2-digit',
+      meridiem: userLang === 'en' ? 'short' : false,
+      hour12: userLang === 'en'
+    },
+    
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     buttonText: {
-      today: 'Hoy',
-      month: 'Mes',
-      week: 'Semana',
-      day: 'Día'
+      today: texts.today,
+      month: texts.month,
+      week: texts.week,
+      day: texts.day
     },
-
-    // 🔹 Carga inmediata con los eventos embebidos
+    allDayText: texts.allDay,
     events: eventos,
-
     slotMinHeight: 30,
     slotDuration: '00:05:00',
     snapDuration: '00:01:00',
@@ -474,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
     selectMirror: false,
     selectOverlap: false,
     unselectAuto: false,
-
+    
     dateClick: function(info) {
       console.log('=== CLICK EN CALENDARIO ===');
       console.log('Fecha click:', info.date);
@@ -496,12 +379,12 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTimeRestrictions(bloqueCompleto);
       }
     },
-
+    
     select: function(selectionInfo) {
       openEventoModalWithTime(selectionInfo.start, selectionInfo.end);
       calendar.unselect();
     },
-
+    
     eventClick: function(info) {
       if (info.event.classNames.includes('custom-placeholder')) {
         const originalBlock = info.event.extendedProps.originalBlock;
@@ -514,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       openEditEventoModal(info.event);
     },
-
+    
     eventDidMount: function() {
       setTimeout(markEmptySlots, 100);
     },
@@ -527,18 +410,13 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(markEmptySlots, 100);
     }
   });
-
+  
   window.__calendar = calendar;
   calendar.render();
-
-  // El calendario se muestra altiro: asegurar visibilidad y altura estable
   calendarEl.style.visibility = 'visible';
   calendarEl.style.opacity = '1';
   calendarEl.style.minHeight = '700px';
-
-  // -------------------------
-  // FUNCIONES AUXILIARES
-  // -------------------------
+  
   function markEmptySlots() {
     document.querySelectorAll('.fc-timegrid-slot.empty-slot, .fc-timegrid-slot.empty-block').forEach(slot => {
       slot.classList.remove('empty-slot', 'empty-block');
@@ -552,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     dayColumns.forEach((column, columnIndex) => {
       const slots = column.querySelectorAll('.fc-timegrid-slot');
-      
       const emptyBlocks = [];
       let currentBlock = [];
       
@@ -587,17 +464,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-
 <script>
   const profesionales = <%- JSON.stringify(profesionales_normalizados || []) %>;
-  // Depuración rápida: imprime los profesionales que llegaron desde el servidor
+  const userLang = '<%= userLang || "es" %>';
   console.log('PROFESIONALES desde servidor:', profesionales);
   const especialidadSelect = document.getElementById('especialidadSelect');
   const profesionalSelect = document.getElementById('profesionalSelect');
-  // Helper: rellenar un select de profesionales con un filtro opcional de especialidad
+  
+  const selectProfPlaceholder = userLang === 'en' ? 'Select professional' : '— Selecciona profesional —';
+  
   function fillProfesionalSelect(selectEl, especialidadId) {
     if (!selectEl) return;
-    selectEl.innerHTML = '<option value="" disabled selected>— Selecciona profesional —</option>';
+    selectEl.innerHTML = `<option value="" disabled selected>${selectProfPlaceholder}</option>`;
     profesionales.forEach(function(prof) {
       if (!especialidadId || String(prof.especialidad) === String(especialidadId)) {
         const opt = document.createElement('option');
@@ -607,8 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-
-  // Rellenar inicialmente ambos selects (add y edit) con todos los profesionales
+  
   document.addEventListener('DOMContentLoaded', function() {
     try {
       fillProfesionalSelect(profesionalSelect, null);
@@ -616,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
       fillProfesionalSelect(editProfesionalSelect, null);
     } catch (e) { console.warn('Error rellenando selects de profesionales', e); }
   });
-
+  
   especialidadSelect && especialidadSelect.addEventListener('change', function() {
     const especialidadId = this.value;
     fillProfesionalSelect(profesionalSelect, especialidadId);
@@ -626,15 +503,12 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 const editEventoModal = document.getElementById('editEventoModal');
 const editEventoForm = document.getElementById('editEventoForm');
-
 function pad(num) {
   return num.toString().padStart(2, '0');
 }
-
 function toLocalTimeString(dateObj) {
   return pad(dateObj.getHours()) + ':' + pad(dateObj.getMinutes());
 }
-
 function openEditEventoModal(evento) {
   const err = document.getElementById('editError');
   if (err) {
@@ -681,7 +555,6 @@ function openEditEventoModal(evento) {
   })();
   
   document.getElementById('editObservaciones').value = evento.extendedProps.observaciones || '';
-  editEventoForm.action = `/editar_evento/${evento.id}/`;
   editEventoForm.action = `/editar_evento/${evento.id}`;
   editEventoModal.classList.remove('hidden');
 }
@@ -692,7 +565,10 @@ editEventoModal.addEventListener('click', e => {
 
 document.getElementById('deleteEventoBtn').onclick = function() {
   const eventoId = document.getElementById('editEventoId').value;
-  if (confirm('¿Seguro que quieres eliminar este evento?')) {
+  const confirmMsg = userLang === 'en' 
+    ? 'Are you sure you want to delete this event?' 
+    : '¿Seguro que quieres eliminar este evento?';
+  if (confirm(confirmMsg)) {
     window.location.href = `/eliminar_evento/${eventoId}`;
   }
 };
@@ -734,13 +610,14 @@ if (eventoForm) {
     if (errorBox) { errorBox.classList.add('hidden'); errorBox.textContent = ''; }
     const addBtn = document.getElementById('addEventoBtn');
     const prevLabel = addBtn ? addBtn.textContent : '';
-    if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Agregando…'; }
-  const formData = new FormData(eventoForm);
-  const params = new URLSearchParams();
-  for (const pair of formData.entries()) params.append(pair[0], pair[1]);
-  const url = eventoForm.action;
+    const addingText = userLang === 'en' ? 'Adding…' : 'Agregando…';
+    if (addBtn) { addBtn.disabled = true; addBtn.textContent = addingText; }
+    const formData = new FormData(eventoForm);
+    const params = new URLSearchParams();
+    for (const pair of formData.entries()) params.append(pair[0], pair[1]);
+    const url = eventoForm.action;
     try {
-  const resp = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+      const resp = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
       const isJson = resp.headers.get('content-type')?.includes('application/json');
       if (isJson) {
         const data = await resp.json();
@@ -751,13 +628,15 @@ if (eventoForm) {
           eventoForm.reset();
           return;
         } else {
-          if (errorBox) { errorBox.textContent = data.error || 'Error al crear el evento.'; errorBox.classList.remove('hidden'); }
+          const errorMsg = data.error || (userLang === 'en' ? 'Error creating event.' : 'Error al crear el evento.');
+          if (errorBox) { errorBox.textContent = errorMsg; errorBox.classList.remove('hidden'); }
         }
       } else {
         window.location.reload();
       }
     } catch (err) {
-      if (errorBox) { errorBox.textContent = 'Error de red. Intenta nuevamente.'; errorBox.classList.remove('hidden'); }
+      const networkError = userLang === 'en' ? 'Network error. Please try again.' : 'Error de red. Intenta nuevamente.';
+      if (errorBox) { errorBox.textContent = networkError; errorBox.classList.remove('hidden'); }
     } finally {
       if (addBtn) { addBtn.disabled = false; addBtn.textContent = prevLabel; }
     }
@@ -788,7 +667,8 @@ editEventoForm.addEventListener('submit', async function(e) {
     if (isJson) {
       const data = await resp.json();
       if (!data.ok) {
-        errorBox.textContent = data.error || 'No se pudo guardar.';
+        const errorMsg = data.error || (userLang === 'en' ? 'Could not save.' : 'No se pudo guardar.');
+        errorBox.textContent = errorMsg;
         errorBox.classList.remove('hidden');
         return;
       }
@@ -798,7 +678,8 @@ editEventoForm.addEventListener('submit', async function(e) {
     }
     window.location.reload();
   } catch (err) {
-    errorBox.textContent = 'Error de red. Intenta nuevamente.';
+    const networkError = userLang === 'en' ? 'Network error. Please try again.' : 'Error de red. Intenta nuevamente.';
+    errorBox.textContent = networkError;
     errorBox.classList.remove('hidden');
   }
 });
@@ -806,16 +687,26 @@ editEventoForm.addEventListener('submit', async function(e) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const timeErrorMsg = userLang === 'en' 
+    ? 'Time must be between 08:00 and 19:00' 
+    : 'La hora debe estar entre 08:00 y 19:00';
+  const orderErrorMsg = userLang === 'en'
+    ? 'End time must be after start time'
+    : 'La hora de fin debe ser posterior a la hora de inicio';
+  const alertMsg = userLang === 'en'
+    ? 'Please verify that times are between 08:00 and 19:00 and that the end time is after the start time'
+    : 'Por favor, verifique que las horas estén entre 08:00 y 19:00 y que la hora de fin sea posterior a la de inicio';
+  
   function validateTimeRange(timeInput) {
     const timeValue = timeInput.value;
     if (timeValue) {
       const [hours, minutes] = timeValue.split(':').map(Number);
       const timeInMinutes = hours * 60 + minutes;
-  const minTime = 8 * 60;
-  const maxTime = 19 * 60;
+      const minTime = 8 * 60;
+      const maxTime = 19 * 60;
       
       if (timeInMinutes < minTime || timeInMinutes > maxTime) {
-  timeInput.setCustomValidity('La hora debe estar entre 08:00 y 19:00');
+        timeInput.setCustomValidity(timeErrorMsg);
         return false;
       } else {
         timeInput.setCustomValidity('');
@@ -833,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const endMinutes = endTime[0] * 60 + endTime[1];
       
       if (endMinutes <= startMinutes) {
-        endInput.setCustomValidity('La hora de fin debe ser posterior a la hora de inicio');
+        endInput.setCustomValidity(orderErrorMsg);
         return false;
       } else {
         endInput.setCustomValidity('');
@@ -883,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (!isValid) {
         e.preventDefault();
-  alert('Por favor, verifique que las horas estén entre 08:00 y 19:00 y que la hora de fin sea posterior a la de inicio');
+        alert(alertMsg);
       }
     });
   });
@@ -983,10 +874,12 @@ function formatDuration(start, end) {
   const hours = Math.floor(duration / 60);
   const minutes = duration % 60;
   
+  const availableText = userLang === 'en' ? 'available' : 'disponible';
+  
   if (hours > 0) {
-    return minutes > 0 ? `${hours}h ${minutes}m disponible` : `${hours}h disponible`;
+    return minutes > 0 ? `${hours}h ${minutes}m ${availableText}` : `${hours}h ${availableText}`;
   } else {
-    return `${minutes}m disponible`;
+    return `${minutes}m ${availableText}`;
   }
 }
 
@@ -996,10 +889,11 @@ function createCustomPlaceholder(bloqueInfo, fechaClick) {
   removeCustomPlaceholder();
   
   const calendar = window.__calendar;
+  const newEventText = userLang === 'en' ? 'New event' : 'Nuevo evento';
   
   currentPlaceholder = {
     id: 'placeholder-' + Date.now(),
-    title: `📅 Nuevo evento (${formatDuration(bloqueInfo.start, bloqueInfo.end)})`,
+    title: `📅 ${newEventText} (${formatDuration(bloqueInfo.start, bloqueInfo.end)})`,
     start: new Date(bloqueInfo.start),
     end: new Date(bloqueInfo.end),
     backgroundColor: '#3b82f6',
@@ -1076,7 +970,9 @@ function updatePlaceholderDuration(startTime, duration) {
       durationText = `${minutes}m`;
     }
     
-    const newTitle = `📅 Nuevo evento (${durationText} seleccionado)`;
+    const selectedText = userLang === 'en' ? 'selected' : 'seleccionado';
+    const newEventText = userLang === 'en' ? 'New event' : 'Nuevo evento';
+    const newTitle = `📅 ${newEventText} (${durationText} ${selectedText})`;
     
     currentPlaceholder = {
       id: 'placeholder-' + Date.now(),
@@ -1308,7 +1204,10 @@ function openEventoModalWithTime(fechaStart, fechaEnd) {
   if (infoDiv) {
     const infoSpan = infoDiv.querySelector('span');
     if (infoSpan) {
-      const mensaje = `Horario disponible: ${tiempoStart} - ${tiempoEnd} (${duracionTexto} libres). Selecciona el rango específico que necesites.`;
+      const availableText = userLang === 'en' ? 'free' : 'libres';
+      const selectText = userLang === 'en' ? 'Select the specific range you need.' : 'Selecciona el rango específico que necesites.';
+      const scheduleText = userLang === 'en' ? 'Available schedule' : 'Horario disponible';
+      const mensaje = `${scheduleText}: ${tiempoStart} - ${tiempoEnd} (${duracionTexto} ${availableText}). ${selectText}`;
       infoSpan.textContent = mensaje;
       console.log('Mensaje actualizado:', mensaje);
     } else {

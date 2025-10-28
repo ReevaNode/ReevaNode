@@ -558,3 +558,8 @@ body.theme-dark #instructionBanner::before {
     min-height: 4rem !important;
   }
 }
+
+.fc-day-header,
+.fc-day {
+  text-transform: capitalize;
+}

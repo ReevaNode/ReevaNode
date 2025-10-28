@@ -107,6 +107,41 @@
       "message": "Advertencia del sistema",
       "cache": "Mostrando datos desde caché"
     }
+  },
+  "agenda": {
+    "title": "Agenda",
+    "boxLabel": "Box",
+    "selectBoxPlaceholder": "Seleccione un box",
+    "selectBtn": "Seleccionar",
+    "enableBox": "Habilitar box",
+    "disableBox": "Inhabilitar box",
+    "noBoxSelected": "No hay box seleccionado",
+    "addEventTitle": "Agregar Evento",
+    "loadingTimeInfo": "Cargando horario disponible...",
+    "boxNumberLabel": "Número de Box",
+    "specialtyLabel": "Especialidad",
+    "selectSpecialtyPlaceholder": "Seleccione especialidad",
+    "professionalLabel": "Profesional",
+    "selectProfessionalPlaceholder": "Seleccione profesional",
+    "startTimeLabel": "Hora Inicio",
+    "endTimeLabel": "Hora Fin",
+    "dateLabel": "Fecha",
+    "consultationTypeLabel": "Tipo de Consulta",
+    "selectConsultationPlaceholder": "Seleccione tipo de consulta",
+    "notesLabel": "Observaciones (opcional)",
+    "cancelBtn": "Cancelar",
+    "addBtn": "Agregar",
+    "confirmEnable": "Confirmar habilitación",
+    "confirmDisable": "Confirmar inhabilitación",
+    "editEventTitle": "Editar Evento",
+    "deleteBtn": "Eliminar",
+    "saveChanges": "Guardar Cambios",
+    "mainTitle": "Agenda General",
+    "helpTitle": "Ayuda - ¿Cómo usar el calendario?",
+    "helpSubtitle": "Haz clic para ver las instrucciones",
+    "createConsultation": "¿Cómo crear una consulta?",
+    "clickToCreate": "Clic simple: Detecta automáticamente el bloque libre completo",
+    "editConsultation": "¿Cómo editar una consulta?",
+    "clickToEdit": "Clic simple: Editar o eliminar el evento"
   }
 }
-

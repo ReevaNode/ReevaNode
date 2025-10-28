@@ -67,14 +67,14 @@
         "button": "View Box Matrix"
       },
       "agenda": {
-        "title": "Agenda",
+        "title": "Schedule",
         "description": "Check the schedule for each box by day, week, or month. Plan and manage medical appointments.",
         "list": {
           "a": "Box calendar",
           "b": "Day/week/month view",
           "c": "Appointment management"
         },
-        "button": "View Agenda"
+        "button": "View Schedule"
       }
     },
     "appointment": {
@@ -107,5 +107,41 @@
       "message": "System warning",
       "cache": "Showing data from cache"
     }
+  },
+  "agenda": {
+    "title": "Schedule",
+    "boxLabel": "Box",
+    "selectBoxPlaceholder": "Select a box",
+    "selectBtn": "Select",
+    "enableBox": "Enable box",
+    "disableBox": "Disable box",
+    "noBoxSelected": "No box selected",
+    "addEventTitle": "Add Event",
+    "loadingTimeInfo": "Loading available time...",
+    "boxNumberLabel": "Box Number",
+    "specialtyLabel": "Specialty",
+    "selectSpecialtyPlaceholder": "Select specialty",
+    "professionalLabel": "Professional",
+    "selectProfessionalPlaceholder": "Select professional",
+    "startTimeLabel": "Start Time",
+    "endTimeLabel": "End Time",
+    "dateLabel": "Date",
+    "consultationTypeLabel": "Consultation Type",
+    "selectConsultationPlaceholder": "Select consultation type",
+    "notesLabel": "Notes (optional)",
+    "cancelBtn": "Cancel",
+    "addBtn": "Add",
+    "confirmEnable": "Confirm enable",
+    "confirmDisable": "Confirm disable",
+    "editEventTitle": "Edit Event",
+    "deleteBtn": "Delete",
+    "saveChanges": "Save Changes",
+    "mainTitle": "General Schedule",
+    "helpTitle": "Help - How to use the calendar?",
+    "helpSubtitle": "Click to see instructions",
+    "createConsultation": "How to create a consultation?",
+    "clickToCreate": "Single click: Automatically detects the complete free block",
+    "editConsultation": "How to edit a consultation?",
+    "clickToEdit": "Single click: Edit or delete the event"
   }
 }
