@@ -187,15 +187,22 @@
     border: 2px solid;
     border-radius: 0.75rem;
     padding: 1.25rem;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: fadeIn 0.3s ease-in;
     cursor: pointer;
     position: relative;
+    display: block;
+    text-decoration: none;
+    color: inherit;
 }
 
 .box-card:hover {
-    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px) scale(1.02);
+}
+
+.box-card:active {
+    transform: translateY(-2px) scale(1.01);
 }
 
 .box-card.libre { 

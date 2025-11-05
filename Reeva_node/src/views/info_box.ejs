@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reeva - Información del Box <%= box.numero %></title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#9c4d9e',
+            secondary: '#57b5e7'
+          },
+          borderRadius: {
+            'button': '8px'
+          },
+          fontFamily: {
+            'sans': ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+
+  <!-- ECharts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/es.global.min.js"></script>
+
+  <!-- Agenda CSS -->
+  <link rel="stylesheet" href="/css/agenda.css" />
+
+  <style>
+    body { background-color:#f5f5f5; }
+    
+    /* Calendar styling */
+    .fc-event-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #calendar .fc-scrollgrid,
+    #calendar .fc-scrollgrid td,
+    #calendar .fc-scrollgrid th,
+    #calendar .fc-timegrid-slot,
+    #calendar .fc-timegrid-col,
+    #calendar .fc-daygrid-day,
+    #calendar .fc-daygrid-day-frame { background:#ffffff !important; }
+    
+    /* Modal animations */
+    #itemsModal { transition: opacity .22s ease; }
+    #itemsModal.hidden { opacity:0; }
+    #itemsModal.fade-in { opacity:1; }
+    #itemsModal .items-panel { 
+      transition: transform .22s ease, opacity .22s ease; 
+      transform:translateY(12px) scale(.97); 
+      opacity:0; 
+    }
+    #itemsModal.fade-in .items-panel { 
+      transform:translateY(0) scale(1); 
+      opacity:1; 
+    }
+  </style>
+</head>
+<body class="font-sans">
+
+<!-- Header -->
+<%- include('header') %>
+
+<!-- Main -->
+<main class="container mx-auto px-4 md:px-6 py-4 md:py-6 max-w-7xl">
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+
+      <!-- Left Column -->
+      <div class="space-y-6">
+
+          <!-- Box Card -->
+          <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] overflow-hidden">
+            <img src="/images/doctor.jpg.webp"
+            alt="Especialidad" 
+            class="w-full h-48 object-cover object-top">
+              <div class="p-4">
+                  <div class="text-4xl font-bold"><%= box.numero %></div>
+                  <div class="text-sm font-semibold text-gray-700 mt-1">
+                      BOX <%= box.especialidad.toUpperCase() %>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Estado Box -->
+          <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-4">
+              <div class="text-center mb-2 font-medium">Ocupación del Día</div>
+              <div class="w-full h-48" id="estadoChart"></div>
+          </div>
+
+      </div>
+
+      <!-- Middle Column (span=2) -->
+      <div class="space-y-6 md:col-span-2">
+
+            <!-- Pacientes atendidos Card -->
+            <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
+              <h2 class="text-lg font-medium text-gray-800 mb-4">Pacientes atendidos</h2>
+              <div class="grid grid-cols-2 gap-4">
+
+                <!-- Diario -->
+                <div class="flex items-center">
+                  <i class="ri-calendar-line ri-2x text-gray-700"></i>
+                  <div class="ml-4">
+                    <div class="text-3xl font-bold">
+                      <%= total_diario %>
+                    </div>
+                    <div class="text-sm text-gray-600">Diario</div>
+                  </div>
+                </div>
+
+                <!-- Mensual -->
+                <div class="flex items-center">
+                  <i class="ri-calendar-line ri-2x text-gray-700"></i>
+                  <div class="ml-4">
+                    <div class="text-3xl font-bold">
+                      <%= mensual %>
+                    </div>
+                    <div class="text-sm text-gray-600">Mensual</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          <!-- Items del Box -->
+          <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-800">Elementos del Box</h2>
+                <button id="editarItemsBtn" type="button" class="text-sm px-3 py-1.5 rounded-button bg-primary text-white hover:opacity-90">Editar</button>
+              </div>
+              <div id="listaItemsBox" class="space-y-2">
+                  <% if (elementos && elementos.length > 0) { %>
+                    <% elementos.forEach(item => { %>
+                      <div class="flex items-center justify-between text-sm border border-gray-100 rounded px-3 py-2">
+                        <span class="font-medium"><%= item.nombre %></span>
+                        <span class="text-gray-700">x <%= item.cantidad %></span>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <p class="text-sm text-gray-500">Sin registros.</p>
+                  <% } %>
+              </div>
+          </div>
+
+      </div>
+  </div>
+
+  <!-- Estadísticas rápidas -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+      <div class="bg-white rounded shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold"><%= horas_tot %></div>
+          <div class="text-sm text-gray-600">Horas Totales</div>
+      </div>
+      <div class="bg-white rounded shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold"><%= ingresos %></div>
+          <div class="text-sm text-gray-600">Ingresos</div>
+      </div>
+      <div class="bg-white rounded shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold"><%= controles %></div>
+          <div class="text-sm text-gray-600">Controles</div>
+      </div>
+      <div class="bg-white rounded shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold"><%= altas %></div>
+          <div class="text-sm text-gray-600">Altas</div>
+      </div>
+      <div class="bg-white rounded shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold"><%= gestiones %></div>
+          <div class="text-sm text-gray-600">Gestión</div>
+      </div>
+  </div>
+
+  <!-- Calendario con FullCalendar -->
+  <section class="bg-white rounded-lg shadow-sm mt-6 md:mt-8 p-4 md:p-6">
+    <div class="mb-4 md:mb-6">
+      <h2 class="text-xl md:text-2xl font-semibold text-gray-800">Agenda del Box</h2>
+    </div>
+    
+    <!-- Banner instructivo colapsable -->
+    <div id="instructionBanner" class="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg relative overflow-hidden">
+      <!-- Header siempre visible -->
+      <div class="flex items-center justify-between p-4 cursor-pointer" id="bannerHeader">
+        <div class="flex items-center space-x-3">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <i class="ri-question-line text-primary text-sm"></i>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-900">Ayuda - ¿Cómo usar el calendario?</h4>
+            <p class="text-xs text-gray-500">Haz clic para ver las instrucciones</p>
+          </div>
+        </div>
+        <button id="toggleBanner" class="text-gray-400 hover:text-gray-600 transition-all duration-200 transform hover:scale-110">
+          <i id="bannerIcon" class="ri-arrow-down-s-line text-lg transition-transform duration-200"></i>
+        </button>
+      </div>
+      
+      <!-- Contenido colapsable -->
+      <div id="bannerContent" class="px-4 pb-4 max-h-0 overflow-hidden transition-all duration-300">
+        <div class="border-t border-purple-200 pt-3">
+          <div class="space-y-3">
+            <div>
+              <h5 class="text-sm font-medium text-gray-900">¿Cómo crear una consulta?</h5>
+              <p class="text-sm text-gray-600">
+                <span class="mx-2">•</span>
+                <span class="font-medium text-primary">Clic simple:</span> Detecta automáticamente el bloque libre completo
+              </p>
+            </div>
+            <div>
+              <h5 class="text-sm font-medium text-gray-900">¿Cómo editar una consulta?</h5>
+              <p class="text-sm text-gray-600">
+                <span class="mx-2">•</span>
+                <span class="font-medium text-primary">Clic simple:</span> Editar o eliminar el evento
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Barra de progreso animada -->
+      <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-200 to-blue-200 opacity-40">
+        <div class="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse-slow"></div>
+      </div>
+    </div>    
+    
+    <div id="calendar" class="w-full min-h-[600px] md:min-h-[700px] overflow-auto"></div>
+  </section>
+
+  <!-- toggle box (habilitar/inhabilitar) -->
+  <button
+    id="toggleMantBtn"
+    class="<%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
+    onclick="openMantModal()"
+  >
+    <% if (disabled) { %>
+      <i class="ri-play-circle-line text-lg"></i>
+      Habilitar box
+    <% } else { %>
+      <i class="ri-stop-circle-line text-lg"></i>
+      Inhabilitar box
+    <% } %>
+  </button>
+
+</main>
+
+<!-- Modal Items -->
+<div id="itemsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm overflow-auto p-4">
+  <div class="items-panel bg-white rounded-2xl p-8 w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-2xl font-medium">Editar Elementos del Box</h3>
+      <button id="cerrarItemsModal" class="text-gray-400 hover:text-gray-600">
+        <i class="ri-close-line ri-2x"></i>
+      </button>
+    </div>
+
+    <div id="itemsLoading" class="text-center py-8 text-gray-500">
+      Cargando elementos...
+    </div>
+
+    <div id="itemsList" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
+
+    <div id="itemsStatus" class="text-sm text-center mb-4 text-green-600"></div>
+
+    <div class="flex justify-between">
+      <button id="cancelItemsBtn" type="button" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
+      <button id="saveItemsBtn" type="button" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar Evento -->
+<div
+  id="eventoModal"
+  class="fixed inset-0 z-50 flex items-center justify-center
+    bg-gray-500 bg-opacity-70 backdrop-blur-sm
+    hidden overflow-auto p-4"
+>
+  <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
+    <h3 class="text-2xl font-medium text-center mb-8">Agregar evento</h3>
+    <div id="timeRangeInfo" class="hidden mb-4 p-3 rounded bg-blue-50 text-blue-700 text-sm border border-blue-200">
+      <i class="ri-information-line"></i>
+      <span>Cargando información del horario...</span>
+    </div>
+      
+    <form
+      id="eventoForm"
+      method="post"
+      action="/add_evento/<%= box.idBox %>"
+      class="space-y-6"
+    >
+      <!-- Error inline -->
+      <div id="addError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
+      
+      <!-- Número de box (readonly) -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Número de Box</label>
+        <input
+          type="text"
+          name="box_id"
+          class="w-full border rounded p-2 bg-gray-100"
+          readonly
+          value="<%= box.numero %>"
+        />
+      </div>
+      
+      <!-- Profesional (sin especialidad) -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Profesional</label>
+        <select id="profesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
+          <option value="" disabled selected>— Selecciona profesional —</option>
+          <% (profesionales_normalizados || []).forEach(prof => { %>
+            <option value="<%= prof.id %>"><%= prof.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+      
+      <!-- Hora inicio / fin -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
+          <input type="time" name="horainicio" min="08:00" max="19:00" class="w-full border rounded p-2" required />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
+          <input type="time" name="horafin" min="08:00" max="19:00" class="w-full border rounded p-2" required />
+        </div>
+      </div>
+      
+      <!-- Fecha -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Fecha</label>
+        <input type="date" name="fecha" class="w-full border rounded p-2" required />
+      </div>
+      
+      <!-- Tipo de consulta -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Tipo de consulta</label>
+        <select name="idTipoConsulta" class="w-full border rounded p-2" required>
+          <option value="" disabled selected>— Selecciona tipo —</option>
+          <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
+            <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+      
+      <!-- Observaciones -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Detalle u observaciones</label>
+        <textarea name="observaciones" rows="4" class="w-full border rounded p-2"></textarea>
+      </div>
+      
+      <!-- Botones -->
+      <div class="flex justify-between">
+        <button type="button" onclick="cancelEventoCreation()" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
+        <button type="submit" id="addEventoBtn" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Agregar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Editar Evento -->
+<div
+  id="editEventoModal"
+  class="fixed inset-0 z-50 flex items-center justify-center
+     bg-gray-500 bg-opacity-70 backdrop-blur-sm
+     hidden overflow-auto p-4"
+>
+  <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
+    <h3 class="text-2xl font-medium text-center mb-8">Editar evento</h3>
+    <form
+      id="editEventoForm"
+      method="post"
+      action=""
+    >
+      <input type="hidden" name="evento_id" id="editEventoId" />
+      
+      <!-- Error inline -->
+      <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
+      
+      <!-- Profesional (sin especialidad) -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Profesional</label>
+        <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
+          <option value="" disabled selected>— Selecciona profesional —</option>
+          <% (profesionales_normalizados || []).forEach(prof => { %>
+            <option value="<%= prof.id %>"><%= prof.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+      
+      <!-- Hora inicio / fin -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
+          <input type="time" name="horainicio" id="editHoraInicio" min="08:00" max="19:00" class="w-full border rounded p-2" required />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
+          <input type="time" name="horafin" id="editHoraFin" min="08:00" max="19:00" class="w-full border rounded p-2" required />
+        </div>
+      </div>
+      
+      <!-- Fecha -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Fecha</label>
+        <input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required />
+      </div>
+      
+      <!-- Tipo de consulta -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Tipo de consulta</label>
+        <select name="idTipoConsulta" id="editTipoConsulta" class="w-full border rounded p-2" required>
+          <option value="" disabled selected>— Selecciona tipo —</option>
+          <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
+            <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+      
+      <!-- Estado (solo para admin) -->
+      <% if (user && user.rol === 'admin') { %>
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Estado</label>
+        <select name="idEstado" id="editEstado" class="w-full border rounded p-2">
+          <% tipos_estado.forEach(te => { %>
+            <option value="<%= te.idTipoEstado %>"><%= te.estado %></option>
+          <% }) %>
+        </select>
+      </div>
+      <% } %>
+      
+      <!-- Observaciones -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Detalle u observaciones</label>
+        <textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea>
+      </div>
+      
+      <!-- Botones -->
+      <div class="flex justify-between">
+        <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn">Eliminar</button>
+        <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Mantenimiento -->
+<div id="mantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-xl">
+    <h3 class="text-2xl font-medium text-center mb-6">
+      <%= disabled ? 'Habilitar box' : 'Inhabilitar box' %>
+    </h3>
+    <p class="text-center text-gray-600 mb-6">
+      <%= disabled ? '¿Está seguro que desea habilitar este box?' : '¿Está seguro que desea inhabilitar este box?' %>
+    </p>
+    <div class="flex justify-between">
+      <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="closeMantModal()">
+        Cancelar
+      </button>
+      <button type="button" class="px-4 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded" onclick="toggleMantenimiento()">
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+// Variables globales
+const boxId = <%= box.idBox %>;
+const eventos = <%- eventos_json %>;
+
+// ECharts - Gráfico de ocupación
+document.addEventListener('DOMContentLoaded', () => {
+  const chart = echarts.init(document.getElementById('estadoChart'));
+  const pctOcupado = <%= pct_ocupado %>;
+  chart.setOption({
+    series:[{
+      type:'pie',
+      radius:['60%','80%'],
+      label:{
+        show:true,
+        position:'center',
+        formatter: `${pctOcupado}%`,
+        fontSize:24,
+        fontWeight:'bold'
+      },
+      data:[
+        { value: pctOcupado, name:'Ocupado', itemStyle:{color:'#4ade80'} },
+        { value: <%= pct_libre %>, name:'Libre', itemStyle:{color:'#e2f8e9'} }
+      ]
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+});
+</script>
+
+<script>
+const eventoModal = document.getElementById('eventoModal');
+eventoModal.addEventListener('click', e => {
+  if (e.target === eventoModal) {
+    eventoModal.classList.add('hidden');
+  }
+});
+</script>
+
+<script>
+const mantModal = document.getElementById('mantModal');
+function openMantModal() {
+  mantModal.classList.remove('hidden');
+}
+function closeMantModal() {
+  mantModal.classList.add('hidden');
+}
+mantModal.addEventListener('click', e => {
+  if (e.target === mantModal) closeMantModal();
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const calendarEl = document.getElementById('calendar');
+
+  // 🔹 Usar los eventos enviados por el backend directamente (sin esperar fetch)
+  const eventos = <%- eventos_json || '[]' %>;
+
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'timeGridDay',
+    locale: 'es',
+    timeZone: 'local',
+    height: 'auto',
+    contentHeight: 600,
+    aspectRatio: 1.2,
+    nowIndicator: true,
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    buttonText: {
+      today: 'Hoy',
+      month: 'Mes',
+      week: 'Semana',
+      day: 'Día'
+    },
+
+    // 🔹 Carga inmediata con los eventos embebidos
+    events: eventos,
+
+    slotMinHeight: 30,
+    slotDuration: '00:05:00',
+    snapDuration: '00:01:00',
+    slotLabelInterval: '00:30:00',
+    slotMinTime: '08:00:00',
+    slotMaxTime: '19:00:00',
+    selectable: true,
+    selectMirror: false,
+    selectOverlap: false,
+    unselectAuto: false,
+
+    dateClick: function(info) {
+      console.log('=== CLICK EN CALENDARIO ===');
+      console.log('Fecha click:', info.date);
+      
+      const bloqueCompleto = detectarBloqueLibreCompleto(info.date);
+      console.log('Bloque detectado:', bloqueCompleto);
+      
+      if (bloqueCompleto) {
+        console.log('Duración del bloque:', (new Date(bloqueCompleto.end) - new Date(bloqueCompleto.start)) / 60000, 'minutos');
+        
+        const bloqueKey = `${bloqueCompleto.start}_${bloqueCompleto.end}`;
+        const currentBloqueKey = currentBloqueInfo ? `${currentBloqueInfo.start}_${currentBloqueInfo.end}` : null;
+        
+        if (!currentPlaceholder || bloqueKey !== currentBloqueKey) {
+          createCustomPlaceholder(bloqueCompleto, info.date);
+        }
+        
+        openEventoModalWithTime(bloqueCompleto.start, bloqueCompleto.end);
+        updateTimeRestrictions(bloqueCompleto);
+      }
+    },
+
+    select: function(selectionInfo) {
+      openEventoModalWithTime(selectionInfo.start, selectionInfo.end);
+      calendar.unselect();
+    },
+
+    eventClick: function(info) {
+      if (info.event.classNames.includes('custom-placeholder')) {
+        const originalBlock = info.event.extendedProps.originalBlock;
+        if (originalBlock) {
+          openEventoModalWithTime(originalBlock.start, originalBlock.end);
+          updateTimeRestrictions(originalBlock);
+        }
+        return;
+      }
+      
+      openEditEventoModal(info.event);
+    },
+
+    eventDidMount: function() {
+      setTimeout(markEmptySlots, 100);
+    },
+    
+    viewDidMount: function() {
+      setTimeout(markEmptySlots, 100);
+    },
+    
+    datesSet: function() {
+      setTimeout(markEmptySlots, 100);
+    }
+  });
+
+  window.__calendar = calendar;
+  calendar.render();
+
+  // El calendario se muestra altiro: asegurar visibilidad y altura estable
+  calendarEl.style.visibility = 'visible';
+  calendarEl.style.opacity = '1';
+  calendarEl.style.minHeight = '700px';
+
+  // -------------------------
+  // FUNCIONES AUXILIARES
+  // -------------------------
+  function markEmptySlots() {
+    document.querySelectorAll('.fc-timegrid-slot.empty-slot, .fc-timegrid-slot.empty-block').forEach(slot => {
+      slot.classList.remove('empty-slot', 'empty-block');
+      slot.removeAttribute('data-block-id');
+      slot.removeAttribute('data-block-size');
+      slot.removeAttribute('data-is-first');
+      slot.removeAttribute('data-is-last');
+    });
+    
+    const dayColumns = document.querySelectorAll('.fc-timegrid-col');
+    
+    dayColumns.forEach((column, columnIndex) => {
+      const slots = column.querySelectorAll('.fc-timegrid-slot');
+      
+      const emptyBlocks = [];
+      let currentBlock = [];
+      
+      slots.forEach((slot, index) => {
+        const hasEvent = slot.querySelector('.fc-event, .fc-event-main');
+        if (!hasEvent) {
+          slot.classList.add('empty-slot');
+          currentBlock.push(slot);
+        } else {
+          if (currentBlock.length > 0) {
+            emptyBlocks.push([...currentBlock]);
+            currentBlock = [];
+          }
+        }
+      });
+      
+      if (currentBlock.length > 0) {
+        emptyBlocks.push(currentBlock);
+      }
+      
+      emptyBlocks.forEach((block, blockIndex) => {
+        block.forEach((slot, slotIndex) => {
+          slot.classList.add('empty-block');
+          slot.setAttribute('data-block-id', `${columnIndex}-${blockIndex}`);
+          slot.setAttribute('data-block-size', block.length);
+          slot.setAttribute('data-is-first', slotIndex === 0 ? 'true' : 'false');
+          slot.setAttribute('data-is-last', slotIndex === block.length - 1 ? 'true' : 'false');
+        });
+      });
+    });
+  }
+});
+</script>
+
+<script>
+  // Los selects de profesional ya están poblados directamente en el HTML
+</script>
+
+<script>
+const editEventoModal = document.getElementById('editEventoModal');
+const editEventoForm = document.getElementById('editEventoForm');
+
+function pad(num) {
+  return num.toString().padStart(2, '0');
+}
+
+function toLocalTimeString(dateObj) {
+  return pad(dateObj.getHours()) + ':' + pad(dateObj.getMinutes());
+}
+
+function openEditEventoModal(evento) {
+  const err = document.getElementById('editError');
+  if (err) {
+    err.textContent = '';
+    err.classList.add('hidden');
+  }
+  
+  // Rellenar profesional directamente (sin especialidad)
+  const editProfesionalSelect = document.getElementById('editProfesionalSelect');
+  const idUsuario = evento.extendedProps.idUsuario || evento.extendedProps.usuario_id;
+  if (editProfesionalSelect && idUsuario) {
+    editProfesionalSelect.value = String(idUsuario);
+  }
+  
+  // Rellenar campos básicos
+  document.getElementById('editEventoId').value = evento.id;
+  document.getElementById('editHoraInicio').value = toLocalTimeString(evento.start);
+  document.getElementById('editHoraFin').value = toLocalTimeString(evento.end);
+  document.getElementById('editFecha').value = evento.start.toISOString().slice(0,10);
+  
+  // Rellenar tipo de consulta
+  const tipoConsultaSelect = document.getElementById('editTipoConsulta');
+  const idTipoConsulta = evento.extendedProps.idTipoConsulta || evento.extendedProps.tipo_id;
+  if (tipoConsultaSelect && idTipoConsulta) {
+    tipoConsultaSelect.value = String(idTipoConsulta);
+  }
+  
+  // Rellenar estado (solo si es admin)
+  const estadoSelect = document.getElementById('editEstado');
+  if (estadoSelect) {
+    const idEstado = evento.extendedProps.idEstado || '1';
+    estadoSelect.value = String(idEstado);
+  }
+  
+  // Rellenar observaciones
+  document.getElementById('editObservaciones').value = evento.extendedProps.observaciones || '';
+  
+  // Configurar action del form
+  editEventoForm.action = `/editar_evento/${evento.id}`;
+  editEventoModal.classList.remove('hidden');
+}
+
+editEventoModal.addEventListener('click', e => {
+  if (e.target === editEventoModal) editEventoModal.classList.add('hidden');
+});
+
+document.getElementById('deleteEventoBtn').onclick = async function() {
+  const eventoId = document.getElementById('editEventoId').value;
+  const boxId = <%= box.idBox || box.idbox %>;
+  
+  if (confirm('¿Seguro que quieres eliminar este evento?')) {
+    try {
+      const response = await fetch(`/eliminar_evento/${eventoId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        // Cerrar modal y recargar página actual
+        editEventoModal.classList.add('hidden');
+        window.location.href = `/info-box/${boxId}`;
+      } else {
+        alert('Error al eliminar el evento');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al eliminar el evento');
+    }
+  }
+};
+</script>
+
+<script>
+async function refreshCalendarEvents() {
+  try {
+    const boxId = <%= box.idBox || box.idbox %>;
+    const url = `/info-box/${boxId}/events`;
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (window.__calendar && Array.isArray(data)) {
+      window.__calendar.batchRendering(() => {
+        window.__calendar.removeAllEvents();
+        data.forEach(ev => window.__calendar.addEvent(ev));
+      });
+    }
+  } catch (_) { }
+}
+</script>
+
+<script>
+const eventoForm = document.getElementById('eventoForm');
+if (eventoForm) {
+  eventoForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const errorBox = document.getElementById('addError');
+    if (errorBox) { errorBox.classList.add('hidden'); errorBox.textContent = ''; }
+    const addBtn = document.getElementById('addEventoBtn');
+    const prevLabel = addBtn ? addBtn.textContent : '';
+    if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Agregando…'; }
+    const formData = new FormData(eventoForm);
+    const params = new URLSearchParams();
+    for (const pair of formData.entries()) params.append(pair[0], pair[1]);
+    const url = eventoForm.action;
+    try {
+      const resp = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+      const isJson = resp.headers.get('content-type')?.includes('application/json');
+      if (isJson) {
+        const data = await resp.json();
+        if (data.ok) {
+          await refreshCalendarEvents();
+          if (addBtn) { addBtn.disabled = false; addBtn.textContent = prevLabel; }
+          eventoModal.classList.add('hidden');
+          eventoForm.reset();
+          removeCustomPlaceholder();
+          return;
+        } else {
+          if (errorBox) { errorBox.textContent = data.error || 'Error al crear el evento.'; errorBox.classList.remove('hidden'); }
+        }
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      if (errorBox) { errorBox.textContent = 'Error de red. Intenta nuevamente.'; errorBox.classList.remove('hidden'); }
+    } finally {
+      if (addBtn) { addBtn.disabled = false; addBtn.textContent = prevLabel; }
+    }
+  });
+}
+</script>
+
+<script>
+editEventoForm.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const errorBox = document.getElementById('editError');
+  errorBox.classList.add('hidden');
+  errorBox.textContent = '';
+  const formData = new FormData(editEventoForm);
+  const params = new URLSearchParams();
+  for (const pair of formData.entries()) params.append(pair[0], pair[1]);
+  const url = editEventoForm.action;
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    });
+    const isJson = resp.headers.get('content-type')?.includes('application/json');
+    if (isJson) {
+      const data = await resp.json();
+      if (!data.ok) {
+        errorBox.textContent = data.error || 'No se pudo guardar.';
+        errorBox.classList.remove('hidden');
+        return;
+      }
+      await refreshCalendarEvents();
+      editEventoModal.classList.add('hidden');
+      return;
+    }
+    window.location.reload();
+  } catch (err) {
+    errorBox.textContent = 'Error de red. Intenta nuevamente.';
+    errorBox.classList.remove('hidden');
+  }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function validateTimeRange(timeInput) {
+    const timeValue = timeInput.value;
+    if (timeValue) {
+      const [hours, minutes] = timeValue.split(':').map(Number);
+      const timeInMinutes = hours * 60 + minutes;
+      const minTime = 8 * 60;
+      const maxTime = 19 * 60;
+      
+      if (timeInMinutes < minTime || timeInMinutes > maxTime) {
+        timeInput.setCustomValidity('La hora debe estar entre 08:00 y 19:00');
+        return false;
+      } else {
+        timeInput.setCustomValidity('');
+        return true;
+      }
+    }
+    return true;
+  }
+  
+  function validateTimeOrder(startInput, endInput) {
+    if (startInput.value && endInput.value) {
+      const startTime = startInput.value.split(':').map(Number);
+      const endTime = endInput.value.split(':').map(Number);
+      const startMinutes = startTime[0] * 60 + startTime[1];
+      const endMinutes = endTime[0] * 60 + endTime[1];
+      
+      if (endMinutes <= startMinutes) {
+        endInput.setCustomValidity('La hora de fin debe ser posterior a la hora de inicio');
+        return false;
+      } else {
+        endInput.setCustomValidity('');
+        return true;
+      }
+    }
+    return true;
+  }
+  
+  const timeInputs = document.querySelectorAll('input[type="time"]');
+  timeInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      validateTimeRange(this);
+      
+      const form = this.closest('form');
+      if (form) {
+        const startInput = form.querySelector('input[name="horainicio"]');
+        const endInput = form.querySelector('input[name="horafin"]');
+        if (startInput && endInput) {
+          validateTimeOrder(startInput, endInput);
+        }
+      }
+    });
+    
+    input.addEventListener('blur', function() {
+      validateTimeRange(this);
+    });
+  });
+  
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const formTimeInputs = form.querySelectorAll('input[type="time"]');
+      const startInput = form.querySelector('input[name="horainicio"]');
+      const endInput = form.querySelector('input[name="horafin"]');
+      let isValid = true;
+      
+      formTimeInputs.forEach(input => {
+        if (!validateTimeRange(input)) {
+          isValid = false;
+        }
+      });
+      
+      if (startInput && endInput && !validateTimeOrder(startInput, endInput)) {
+        isValid = false;
+      }
+      
+      if (!isValid) {
+        e.preventDefault();
+        alert('Por favor, verifique que las horas estén entre 08:00 y 19:00 y que la hora de fin sea posterior a la de inicio');
+      }
+    });
+  });
+});
+
+function showSelectedBlock(fechaStart, fechaEnd) {
+  document.querySelectorAll('.fc-timegrid-slot.block-selected').forEach(slot => {
+    slot.classList.remove('block-selected');
+  });
+  
+  const slots = document.querySelectorAll('.fc-timegrid-body .fc-timegrid-slot');
+  slots.forEach(slot => {
+    const slotTime = getSlotTime(slot);
+    if (slotTime && slotTime >= fechaStart && slotTime < fechaEnd) {
+      slot.classList.add('block-selected');
+    }
+  });
+  
+  setTimeout(() => {
+    document.querySelectorAll('.fc-timegrid-slot.block-selected').forEach(slot => {
+      slot.classList.remove('block-selected');
+    });
+  }, 3000);
+}
+
+function getSlotTime(slot) {
+  const timeText = slot.closest('.fc-timegrid-col')?.querySelector('.fc-timegrid-axis-cushion')?.textContent;
+  if (!timeText) return null;
+  
+  const today = new Date();
+  const [hours, minutes] = timeText.split(':').map(Number);
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours || 0, minutes || 0);
+}
+
+function detectarBloqueLibreCompleto(fechaClick) {
+  if (!window.__calendar) return null;
+  
+  const fechaClickDate = new Date(fechaClick);
+  const diaClick = fechaClickDate.toDateString();
+  
+  const eventosDelDia = window.__calendar.getEvents().filter(evento => {
+    return evento.start && evento.start.toDateString() === diaClick;
+  });
+  
+  eventosDelDia.sort((a, b) => a.start.getTime() - b.start.getTime());
+  
+  const inicioJornada = new Date(fechaClickDate);
+  inicioJornada.setHours(8, 0, 0, 0);
+  
+  const finJornada = new Date(fechaClickDate);
+  finJornada.setHours(19, 0, 0, 0);
+  
+  const bloquesOcupados = eventosDelDia.map(evento => ({
+    start: new Date(evento.start),
+    end: new Date(evento.end)
+  }));
+  
+  let inicioBloque = inicioJornada;
+  
+  for (let i = 0; i < bloquesOcupados.length; i++) {
+    const bloqueActual = bloquesOcupados[i];
+    
+    if (fechaClick >= inicioBloque && fechaClick < bloqueActual.start) {
+      return {
+        start: inicioBloque,
+        end: bloqueActual.start
+      };
+    }
+    
+    inicioBloque = bloqueActual.end;
+  }
+  
+  if (fechaClick >= inicioBloque && fechaClick <= finJornada) {
+    return {
+      start: inicioBloque,
+      end: finJornada
+    };
+  }
+  
+  if (bloquesOcupados.length === 0) {
+    return {
+      start: inicioJornada,
+      end: finJornada
+    };
+  }
+  
+  return null;
+}
+
+let currentPlaceholder = null;
+let lastSelectedStartTime = null;
+let lastSelectedEndTime = null;
+let currentBloqueInfo = null;
+
+function formatDuration(start, end) {
+  const duration = (new Date(end) - new Date(start)) / 60000;
+  const hours = Math.floor(duration / 60);
+  const minutes = duration % 60;
+  
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}h ${minutes}m disponible` : `${hours}h disponible`;
+  } else {
+    return `${minutes}m disponible`;
+  }
+}
+
+function createCustomPlaceholder(bloqueInfo, fechaClick) {
+  if (!bloqueInfo) return;
+  
+  removeCustomPlaceholder();
+  
+  const calendar = window.__calendar;
+  
+  currentPlaceholder = {
+    id: 'placeholder-' + Date.now(),
+    title: `📅 Nuevo evento (${formatDuration(bloqueInfo.start, bloqueInfo.end)})`,
+    start: new Date(bloqueInfo.start),
+    end: new Date(bloqueInfo.end),
+    backgroundColor: '#3b82f6',
+    borderColor: '#1d4ed8',
+    textColor: '#ffffff',
+    classNames: ['custom-placeholder'],
+    editable: false,
+    display: 'auto',
+    overlap: true,
+    constraint: false,
+    extendedProps: {
+      isPlaceholder: true,
+      originalBlock: bloqueInfo
+    }
+  };
+  
+  calendar.addEvent(currentPlaceholder);
+  
+  setTimeout(() => {
+    const eventElement = calendar.getEventById(currentPlaceholder.id);
+    if (eventElement) {
+      eventElement.setStart(new Date(bloqueInfo.start));
+      eventElement.setEnd(new Date(bloqueInfo.end));
+      calendar.render();
+    }
+  }, 50);
+  
+  console.log('Placeholder creado ocupando todo el bloque:', {
+    start: bloqueInfo.start,
+    end: bloqueInfo.end,
+    duration: (new Date(bloqueInfo.end) - new Date(bloqueInfo.start)) / 60000 + ' minutos'
+  });
+}
+
+function removeCustomPlaceholder() {
+  if (currentPlaceholder && window.__calendar) {
+    const event = window.__calendar.getEventById(currentPlaceholder.id);
+    if (event) {
+      event.remove();
+      console.log('Placeholder removido:', currentPlaceholder.id);
+    }
+    currentPlaceholder = null;
+  }
+}
+
+function updatePlaceholderDuration(startTime, duration) {
+  if (!currentPlaceholder) {
+    console.log('No hay placeholder actual para actualizar');
+    return;
+  }
+  
+  const calendarInstance = window.__calendar;
+  const eventInstance = calendarInstance.getEventById(currentPlaceholder.id);
+  
+  if (eventInstance && startTime && duration > 0) {
+    const startDate = new Date(startTime);
+    const endDate = new Date(startDate.getTime() + (duration * 60000));
+    
+    console.log('Actualizando placeholder:', {
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      duration: duration + ' minutos'
+    });
+    
+    eventInstance.remove();
+    
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    let durationText = '';
+    if (hours > 0) {
+      durationText = `${hours}h`;
+      if (minutes > 0) durationText += ` ${minutes}m`;
+    } else {
+      durationText = `${minutes}m`;
+    }
+    
+    const newTitle = `📅 Nuevo evento (${durationText} seleccionado)`;
+    
+    currentPlaceholder = {
+      id: 'placeholder-' + Date.now(),
+      title: newTitle,
+      start: startDate,
+      end: endDate,
+      backgroundColor: '#3b82f6',
+      borderColor: '#1d4ed8',
+      textColor: '#ffffff',
+      classNames: ['custom-placeholder'],
+      editable: false,
+      display: 'auto',
+      overlap: true,
+      constraint: false,
+      extendedProps: {
+        isPlaceholder: true,
+        originalBlock: currentPlaceholder.extendedProps.originalBlock
+      }
+    };
+    
+    calendarInstance.addEvent(currentPlaceholder);
+    
+    setTimeout(() => {
+      calendarInstance.render();
+    }, 10);
+    
+    console.log('Placeholder recreado exitosamente con nuevo tamaño');
+  } else {
+    console.log('Error: no se pudo actualizar placeholder', {
+      eventInstance: !!eventInstance,
+      startTime: startTime,
+      duration: duration
+    });
+  }
+}
+
+function updateTimeRestrictions(bloqueInfo) {
+  const startTimeInput = document.querySelector('input[name="horainicio"]');
+  const endTimeInput = document.querySelector('input[name="horafin"]');
+  
+  if (!startTimeInput || !endTimeInput || !bloqueInfo) return;
+  
+  currentBloqueInfo = bloqueInfo;
+  
+  const formatTimeForInput = (date) => {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+  
+  const minTime = formatTimeForInput(new Date(bloqueInfo.start));
+  const maxTime = formatTimeForInput(new Date(bloqueInfo.end));
+  
+  startTimeInput.min = minTime;
+  startTimeInput.max = maxTime;
+  endTimeInput.min = minTime;
+  endTimeInput.max = maxTime;
+  
+  const specificStartTime = formatTimeForInput(new Date(bloqueInfo.start));
+  const specificEndTime = formatTimeForInput(new Date(bloqueInfo.end));
+  
+  let useStartTime = specificStartTime;
+  let useEndTime = specificEndTime;
+  let valuesRestored = false;
+  
+  if (lastSelectedStartTime && lastSelectedEndTime && 
+      lastSelectedStartTime >= minTime && lastSelectedStartTime <= maxTime &&
+      lastSelectedEndTime >= minTime && lastSelectedEndTime <= maxTime) {
+    useStartTime = lastSelectedStartTime;
+    useEndTime = lastSelectedEndTime;
+    valuesRestored = true;
+    console.log('Restaurando valores guardados:', useStartTime, '-', useEndTime);
+  }
+  
+  if (!startTimeInput.value || valuesRestored) startTimeInput.value = useStartTime;
+  if (!endTimeInput.value || valuesRestored) endTimeInput.value = useEndTime;
+  
+  lastSelectedStartTime = startTimeInput.value;
+  lastSelectedEndTime = endTimeInput.value;
+  
+  const currentStartTime = startTimeInput.value;
+  const currentEndTime = endTimeInput.value;
+  
+  if (currentStartTime && currentEndTime) {
+    const [startHours, startMinutes] = currentStartTime.split(':').map(Number);
+    const [endHours, endMinutes] = currentEndTime.split(':').map(Number);
+    
+    const selectedDate = new Date(bloqueInfo.start);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    const actualStartDate = new Date(selectedDate);
+    actualStartDate.setHours(startHours, startMinutes);
+    
+    const actualEndDate = new Date(selectedDate);
+    actualEndDate.setHours(endHours, endMinutes);
+    
+    const currentDuration = (actualEndDate - actualStartDate) / 60000;
+    if (currentDuration > 0) {
+      setTimeout(() => {
+        updatePlaceholderDuration(actualStartDate, currentDuration);
+        console.log('Placeholder ajustado a valores del formulario:', currentStartTime, '-', currentEndTime);
+      }, 50);
+    }
+  }
+  
+  const existingStartHandler = startTimeInput._changeHandler;
+  const existingEndHandler = endTimeInput._changeHandler;
+  
+  if (existingStartHandler) {
+    startTimeInput.removeEventListener('change', existingStartHandler);
+  }
+  if (existingEndHandler) {
+    endTimeInput.removeEventListener('change', existingEndHandler);
+  }
+  
+  const startTimeHandler = function() {
+    const selectedTime = this.value;
+    const endTime = endTimeInput.value;
+    
+    lastSelectedStartTime = selectedTime;
+    lastSelectedEndTime = endTime;
+    
+    if (selectedTime && endTime) {
+      const [startHours, startMinutes] = selectedTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+      
+      const selectedDate = new Date(bloqueInfo.start);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      const startDate = new Date(selectedDate);
+      startDate.setHours(startHours, startMinutes);
+      
+      const endDate = new Date(selectedDate);
+      endDate.setHours(endHours, endMinutes);
+      
+      const duration = (endDate - startDate) / 60000;
+      
+      if (duration > 0) {
+        updatePlaceholderDuration(startDate, duration);
+        console.log('Placeholder actualizado por cambio manual de hora inicio:', duration, 'minutos');
+      }
+    }
+  };
+  
+  const endTimeHandler = function() {
+    const startTime = startTimeInput.value;
+    const selectedEndTime = this.value;
+    
+    lastSelectedStartTime = startTime;
+    lastSelectedEndTime = selectedEndTime;
+    
+    if (startTime && selectedEndTime) {
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = selectedEndTime.split(':').map(Number);
+      
+      const selectedDate = new Date(bloqueInfo.start);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      const startDate = new Date(selectedDate);
+      startDate.setHours(startHours, startMinutes);
+      
+      const endDate = new Date(selectedDate);
+      endDate.setHours(endHours, endMinutes);
+      
+      const duration = (endDate - startDate) / 60000;
+      
+      if (duration > 0) {
+        updatePlaceholderDuration(startDate, duration);
+        console.log('Placeholder actualizado por cambio manual de hora fin:', duration, 'minutos');
+      }
+    }
+  };
+  
+  startTimeInput.addEventListener('change', startTimeHandler);
+  endTimeInput.addEventListener('change', endTimeHandler);
+  
+  startTimeInput._changeHandler = startTimeHandler;
+  endTimeInput._changeHandler = endTimeHandler;
+  
+  console.log('Restricciones de tiempo establecidas:', {
+    min: minTime,
+    max: maxTime
+  });
+}
+
+function openEventoModalWithTime(fechaStart, fechaEnd) {
+  console.log('=== openEventoModalWithTime LLAMADA ===', fechaStart, fechaEnd);
+  
+  const err = document.getElementById('addError');
+  if (err) {
+    err.textContent = '';
+    err.classList.add('hidden');
+  }
+  
+  const tiempoStart = formatTimeForInput(fechaStart);
+  const tiempoEnd = formatTimeForInput(fechaEnd);
+  const dateStr = formatDateForInput(fechaStart);
+  
+  setSelectedTimeRango(fechaStart, fechaEnd);
+  showSelectedBlock(fechaStart, fechaEnd);
+  
+  const duracionMinutos = (fechaEnd.getTime() - fechaStart.getTime()) / (1000 * 60);
+  const horas = Math.floor(duracionMinutos / 60);
+  const minutos = duracionMinutos % 60;
+  
+  let duracionTexto = '';
+  if (horas > 0 && minutos > 0) {
+    duracionTexto = `${horas}h ${minutos}min`;
+  } else if (horas > 0) {
+    duracionTexto = `${horas}h`;
+  } else {
+    duracionTexto = `${minutos}min`;
+  }
+  
+  console.log('Valores calculados:', {
+    tiempoStart,
+    tiempoEnd,
+    duracionTexto,
+    duracionMinutos
+  });
+  
+  const horaInicioInput = document.querySelector('input[name="horainicio"]');
+  const horaFinInput = document.querySelector('input[name="horafin"]');
+  horaInicioInput.value = tiempoStart;
+  horaFinInput.value = tiempoEnd;
+  document.querySelector('input[name="fecha"]').value = dateStr;
+  
+  const infoDiv = document.getElementById('timeRangeInfo');
+  if (infoDiv) {
+    const infoSpan = infoDiv.querySelector('span');
+    if (infoSpan) {
+      const mensaje = `Horario disponible: ${tiempoStart} - ${tiempoEnd} (${duracionTexto} libres). Selecciona el rango específico que necesites.`;
+      infoSpan.textContent = mensaje;
+      console.log('Mensaje actualizado:', mensaje);
+    } else {
+      console.log('ERROR: No se encontró el span dentro de timeRangeInfo');
+    }
+    infoDiv.classList.remove('hidden');
+  } else {
+    console.log('ERROR: No se encontró el div timeRangeInfo');
+  }
+  
+  openEventoModal();
+}
+
+function openEventoModal() {
+  const eventoModal = document.getElementById('eventoModal');
+  if (eventoModal) eventoModal.classList.remove('hidden');
+}
+
+function closeEventoModal() {
+  const eventoModal = document.getElementById('eventoModal');
+  if (eventoModal) eventoModal.classList.add('hidden');
+}
+
+function formatTimeForInput(fecha) {
+  const horas = fecha.getHours().toString().padStart(2, '0');
+  const minutos = fecha.getMinutes().toString().padStart(2, '0');
+  return `${horas}:${minutos}`;
+}
+
+function formatDateForInput(fecha){
+  const año = fecha.getFullYear();
+  const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+  const dia = fecha.getDate().toString().padStart(2, '0');
+  return `${año}-${mes}-${dia}`;
+}
+
+let selectedTimeRango = null;
+
+function setSelectedTimeRango(start, end){
+  selectedTimeRango = {
+    start: formatTimeForInput(start),
+    end: formatTimeForInput(end)
+  };
+}
+
+function cancelEventoCreation() {
+  closeEventoModal();
+  removeCustomPlaceholder();
+  lastSelectedStartTime = null;
+  lastSelectedEndTime = null;
+  currentBloqueInfo = null;
+  console.log('Creación de evento cancelada - placeholder removido y valores limpiados');
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const banner = document.getElementById('instructionBanner');
+  const toggleBanner = document.getElementById('toggleBanner');
+  const bannerHeader = document.getElementById('bannerHeader');
+  const bannerContent = document.getElementById('bannerContent');
+  const bannerIcon = document.getElementById('bannerIcon');
+  
+  let isExpanded = false;
+  const bannerKey = 'calendarHelp_infoBox_expanded';
+  
+  const savedState = localStorage.getItem(bannerKey);
+  if (savedState === 'true') {
+    expandBanner();
+  }
+  
+  if (bannerHeader && toggleBanner) {
+    bannerHeader.addEventListener('click', toggleBannerState);
+    toggleBanner.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleBannerState();
+    });
+  }
+  
+  function toggleBannerState() {
+    if (isExpanded) {
+      collapseBanner();
+    } else {
+      expandBanner();
+    }
+  }
+  
+  function expandBanner() {
+    if (!bannerContent || !bannerIcon) return;
+    
+    isExpanded = true;
+    bannerContent.style.maxHeight = bannerContent.scrollHeight + 'px';
+    bannerIcon.style.transform = 'rotate(180deg)';
+    localStorage.setItem(bannerKey, 'true');
+  }
+  
+  function collapseBanner() {
+    if (!bannerContent || !bannerIcon) return;
+    
+    isExpanded = false;
+    bannerContent.style.maxHeight = '0';
+    bannerIcon.style.transform = 'rotate(0deg)';
+    localStorage.setItem(bannerKey, 'false');
+  }
+});
+</script>
+
+<script>
+  const horaInicio = agendaHoraInicio.value;
+  const duracion = parseInt(agendaDuracion.value);
+  
+  const start = new Date(`${fecha}T${horaInicio}`);
+  const end = new Date(start.getTime() + duracion * 60000);
+  
+  const formatDateTime = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${d} ${h}:${min}:00`;
+  };
+  
+  const data = {
+    idUsuario: agendaUsuario.value,
+    idTipoConsulta: agendaTipoConsulta.value,
+    idEstado: agendaEstado.value,
+    horainicio: formatDateTime(start),
+    horaTermino: formatDateTime(end),
+    observaciones: agendaObservaciones.value
+  };
+  
+  const isEdit = agendaId.value !== '';
+  const url = isEdit 
+    ? `/info-box/${boxId}/agenda/${agendaId.value}`
+    : `/info-box/${boxId}/agenda`;
+  const method = isEdit ? 'PUT' : 'POST';
+  
+  agendaStatus.textContent = 'guardando...';
+  agendaStatus.className = 'text-sm text-center text-gray-600';
+  
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    
+    const result = await res.json();
+    
+    if (result.ok) {
+      agendaStatus.textContent = 'guardado correctamente';
+      agendaStatus.className = 'text-sm text-center text-green-600';
+      setTimeout(() => {
+        cerrarAgendaModal();
+        location.reload();
+      }, 700);
+    } else {
+      agendaStatus.textContent = 'error al guardar';
+      agendaStatus.className = 'text-sm text-center text-red-600';
+    }
+  } catch (err) {
+    agendaStatus.textContent = 'error de red';
+    agendaStatus.className = 'text-sm text-center text-red-600';
+  }
+});
+
+deleteAgendaBtn.addEventListener('click', async () => {
+  if (!confirm('¿eliminar esta agenda?')) return;
+  
+  agendaStatus.textContent = 'eliminando...';
+  agendaStatus.className = 'text-sm text-center text-gray-600';
+  
+  try {
+    const res = await fetch(`/info-box/${boxId}/agenda/${agendaId.value}`, {
+      method: 'DELETE'
+    });
+    
+    const result = await res.json();
+    
+    if (result.ok) {
+      agendaStatus.textContent = 'eliminado correctamente';
+      agendaStatus.className = 'text-sm text-center text-green-600';
+      setTimeout(() => {
+        cerrarAgendaModal();
+        location.reload();
+      }, 700);
+    } else {
+      agendaStatus.textContent = 'error al eliminar';
+      agendaStatus.className = 'text-sm text-center text-red-600';
+    }
+  } catch (err) {
+    agendaStatus.textContent = 'error de red';
+    agendaStatus.className = 'text-sm text-center text-red-600';
+  }
+});
+
+// items editor
+const itemsModal = document.getElementById('itemsModal');
+const editarItemsBtn = document.getElementById('editarItemsBtn');
+const cerrarItemsModalBtn = document.getElementById('cerrarItemsModal');
+const cancelItemsBtn = document.getElementById('cancelItemsBtn');
+const saveItemsBtn = document.getElementById('saveItemsBtn');
+const itemsListEl = document.getElementById('itemsList');
+const itemsLoadingEl = document.getElementById('itemsLoading');
+const itemsStatusEl = document.getElementById('itemsStatus');
+
+let itemsData = [];
+const itemsApiUrl = `/info-box/${boxId}/items`;
+
+let itemsCloseTimer = null;
+
+function openItemsModal(){
+  if(itemsCloseTimer){ clearTimeout(itemsCloseTimer); itemsCloseTimer=null; }
+  itemsModal.classList.remove('hidden');
+  requestAnimationFrame(() => itemsModal.classList.add('fade-in'));
+  loadItems();
+}
+
+function closeItemsModal(){
+  itemsModal.classList.remove('fade-in');
+  itemsCloseTimer = setTimeout(() => {
+    itemsModal.classList.add('hidden');
+  }, 230);
+}
+
+editarItemsBtn.addEventListener('click', openItemsModal);
+cerrarItemsModalBtn.addEventListener('click', closeItemsModal);
+cancelItemsBtn.addEventListener('click', closeItemsModal);
+itemsModal.addEventListener('click', e => { if(e.target === itemsModal) closeItemsModal(); });
+
+function renderItemsEditor(){
+  itemsListEl.innerHTML = '';
+  itemsData.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'border rounded-md p-3 flex flex-col gap-2 bg-gray-50/60';
+    card.innerHTML = `
+      <div class="text-sm font-medium text-gray-800 line-clamp-2">${item.nombre}</div>
+      <div class="flex items-center justify-between mt-1">
+        <button type="button" class="dec px-2 py-1 rounded bg-white border text-gray-600 hover:bg-gray-100" data-id="${item.id}">-</button>
+        <span class="cantidad font-semibold" data-id="${item.id}">${item.cantidad}</span>
+        <button type="button" class="inc px-2 py-1 rounded bg-white border text-gray-600 hover:bg-gray-100" data-id="${item.id}">+</button>
+      </div>`;
+    itemsListEl.appendChild(card);
+  });
+  itemsListEl.classList.remove('hidden');
+}
+
+function loadItems(){
+  itemsLoadingEl.classList.remove('hidden');
+  itemsListEl.classList.add('hidden');
+  fetch(itemsApiUrl, {headers:{'Accept':'application/json'}})
+    .then(r => r.json())
+    .then(data => {
+      itemsData = data.items || [];
+      renderItemsEditor();
+      itemsLoadingEl.classList.add('hidden');
+    })
+    .catch(() => {
+      itemsLoadingEl.textContent = 'Error al cargar items';
+    });
+}
+
+itemsListEl.addEventListener('click', e => {
+  if(e.target.classList.contains('inc') || e.target.classList.contains('dec')){
+    const id = e.target.getAttribute('data-id');
+    const item = itemsData.find(i => String(i.id) === String(id));
+    if(!item) return;
+    if(e.target.classList.contains('inc')) item.cantidad += 1; 
+    else item.cantidad = Math.max(0, item.cantidad - 1);
+    const span = itemsListEl.querySelector(`span.cantidad[data-id="${id}"]`);
+    if(span) span.textContent = item.cantidad;
+  }
+});
+
+function guardarItems(){
+  itemsStatusEl.textContent = 'Guardando...';
+  fetch(itemsApiUrl, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({items: itemsData.map(i => ({id:i.id, cantidad:i.cantidad}))})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.ok){
+      itemsStatusEl.textContent = 'Guardado correctamente';
+      // Actualizar lista en la tarjeta principal
+      const listaBox = document.getElementById('listaItemsBox');
+      listaBox.innerHTML = '';
+      const activos = data.items.filter(i => i.cantidad > 0);
+      if(activos.length === 0){
+        listaBox.innerHTML = '<p class="text-sm text-gray-500">Sin registros.</p>';
+      } else {
+        activos.forEach(it => {
+          const row = document.createElement('div');
+          row.className='flex items-center justify-between text-sm border border-gray-100 rounded px-3 py-2';
+          row.innerHTML = `<span class='font-medium'>${it.nombre}</span><span class='text-gray-700'>x ${it.cantidad}</span>`;
+          listaBox.appendChild(row);
+        });
+      }
+      setTimeout(() => { closeItemsModal(); itemsStatusEl.textContent=''; }, 700);
+    } else {
+      itemsStatusEl.textContent = 'Error al guardar';
+    }
+  })
+  .catch(() => { itemsStatusEl.textContent = 'Error de red'; });
+}
+
+saveItemsBtn.addEventListener('click', guardarItems);
+
+// Mantenimiento Modal
+function openMantModal() {
+  document.getElementById('mantModal').classList.remove('hidden');
+}
+
+function closeMantModal() {
+  document.getElementById('mantModal').classList.add('hidden');
+}
+
+function toggleMantenimiento() {
+// Mantenimiento Modal
+function toggleMantenimiento() {
+  alert('Funcionalidad de mantenimiento próximamente');
+  closeMantModal();
+}
+</script>
+
+</body>
+</html>

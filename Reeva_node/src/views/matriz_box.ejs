@@ -121,7 +121,7 @@
                                              box.estado === 'Finalizado' ? 'ri-checkbox-circle-line' :
                                              box.estado === 'Inhabilitado' ? 'ri-forbid-line' : 'ri-question-line';
                         %>
-                            <div class="box-card <%= estadoClass %>" 
+                            <a href="/info-box/<%= box.idBox %>" class="box-card <%= estadoClass %>" 
                                  data-numero="<%= box.numero %>" 
                                  data-especialidad="<%= especialidad.toLowerCase() %>" 
                                  data-estado="<%= box.estado.toLowerCase() %>">
@@ -199,7 +199,7 @@
                                 </div>
                             </div>
 
-                        </div>
+                        </a>
                     <% }); %>
                     </div>
                 </div>

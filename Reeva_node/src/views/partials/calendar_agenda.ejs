@@ -1,0 +1,292 @@
+<!-- calendario fullcalendar modular -->
+<div id="calendar" class="bg-white"></div>
+
+<style>
+  .fc-event-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #calendar .fc-scrollgrid,
+  #calendar .fc-scrollgrid td,
+  #calendar .fc-scrollgrid th,
+  #calendar .fc-timegrid-slot,
+  #calendar .fc-timegrid-col,
+  #calendar .fc-daygrid-day,
+  #calendar .fc-daygrid-day-frame { 
+    background:#ffffff !important; 
+  }
+
+  .empty-slot {
+    position: relative;
+  }
+
+  .empty-block {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .empty-block:hover {
+    background-color: rgba(156, 77, 158, 0.08) !important;
+  }
+
+  .empty-block[data-is-first="true"]:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #9c4d9e;
+  }
+
+  .empty-block[data-is-last="true"]:hover::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #9c4d9e;
+  }
+
+  .custom-placeholder {
+    opacity: 0.5;
+    border-left: 3px dashed #9c4d9e !important;
+    background: linear-gradient(90deg, rgba(156, 77, 158, 0.1), rgba(156, 77, 158, 0.05)) !important;
+  }
+</style>
+
+<script>
+if (typeof window.initCalendar === 'undefined') {
+  window.initCalendar = function(config) {
+    const {
+      eventos = [],
+      onEventClick = null,
+      onSelect = null,
+      onDateClick = null,
+      enableSelection = true,
+      enableDateClick = true
+    } = config || {};
+
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) {
+      console.error('elemento #calendar no encontrado');
+      return null;
+    }
+
+    let currentPlaceholder = null;
+    let currentBloqueInfo = null;
+
+    // detectar bloque libre completo
+    function detectarBloqueLibreCompleto(clickDate) {
+      const currentView = calendar.view;
+      const viewStart = currentView.activeStart;
+      const viewEnd = currentView.activeEnd;
+
+      const allEvents = calendar.getEvents();
+      
+      const clickTime = clickDate.getTime();
+      const clickDateOnly = new Date(clickDate.getFullYear(), clickDate.getMonth(), clickDate.getDate());
+      
+      const eventsOnSameDay = allEvents.filter(event => {
+        if (event.classNames && event.classNames.includes('custom-placeholder')) {
+          return false;
+        }
+        
+        const eventDateOnly = new Date(event.start.getFullYear(), event.start.getMonth(), event.start.getDate());
+        return eventDateOnly.getTime() === clickDateOnly.getTime();
+      }).sort((a, b) => a.start - b.start);
+
+      let bloqueStart = new Date(clickDateOnly);
+      bloqueStart.setHours(8, 0, 0, 0);
+      
+      let bloqueEnd = new Date(clickDateOnly);
+      bloqueEnd.setHours(19, 0, 0, 0);
+
+      for (let event of eventsOnSameDay) {
+        const eventStart = event.start.getTime();
+        const eventEnd = event.end.getTime();
+
+        if (eventEnd <= clickTime && eventEnd > bloqueStart.getTime()) {
+          bloqueStart = new Date(eventEnd);
+        }
+        
+        if (eventStart >= clickTime && eventStart < bloqueEnd.getTime()) {
+          bloqueEnd = new Date(eventStart);
+          break;
+        }
+      }
+
+      if (bloqueStart.getTime() >= bloqueEnd.getTime()) {
+        return null;
+      }
+
+      return {
+        start: bloqueStart,
+        end: bloqueEnd
+      };
+    }
+
+    // crear placeholder visual
+    function createCustomPlaceholder(bloqueInfo, clickDate) {
+      if (currentPlaceholder) {
+        currentPlaceholder.remove();
+        currentPlaceholder = null;
+      }
+
+      currentBloqueInfo = bloqueInfo;
+
+      currentPlaceholder = calendar.addEvent({
+        start: bloqueInfo.start,
+        end: bloqueInfo.end,
+        display: 'background',
+        classNames: ['custom-placeholder'],
+        extendedProps: {
+          originalBlock: bloqueInfo
+        }
+      });
+    }
+
+    // marcar slots vacios
+    function markEmptySlots() {
+      document.querySelectorAll('.fc-timegrid-slot.empty-slot, .fc-timegrid-slot.empty-block').forEach(slot => {
+        slot.classList.remove('empty-slot', 'empty-block');
+        slot.removeAttribute('data-block-id');
+        slot.removeAttribute('data-block-size');
+        slot.removeAttribute('data-is-first');
+        slot.removeAttribute('data-is-last');
+      });
+      
+      const dayColumns = document.querySelectorAll('.fc-timegrid-col');
+      
+      dayColumns.forEach((column, columnIndex) => {
+        const slots = column.querySelectorAll('.fc-timegrid-slot');
+        const emptyBlocks = [];
+        let currentBlock = [];
+        
+        slots.forEach((slot, index) => {
+          const hasEvent = slot.querySelector('.fc-event, .fc-event-main');
+          if (!hasEvent) {
+            slot.classList.add('empty-slot');
+            currentBlock.push(slot);
+          } else {
+            if (currentBlock.length > 0) {
+              emptyBlocks.push([...currentBlock]);
+              currentBlock = [];
+            }
+          }
+        });
+        
+        if (currentBlock.length > 0) {
+          emptyBlocks.push(currentBlock);
+        }
+        
+        emptyBlocks.forEach((block, blockIndex) => {
+          block.forEach((slot, slotIndex) => {
+            slot.classList.add('empty-block');
+            slot.setAttribute('data-block-id', `${columnIndex}-${blockIndex}`);
+            slot.setAttribute('data-block-size', block.length);
+            slot.setAttribute('data-is-first', slotIndex === 0 ? 'true' : 'false');
+            slot.setAttribute('data-is-last', slotIndex === block.length - 1 ? 'true' : 'false');
+          });
+        });
+      });
+    }
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'timeGridDay',
+      locale: 'es',
+      timeZone: 'local',
+      height: 'auto',
+      contentHeight: 600,
+      aspectRatio: 1.2,
+      nowIndicator: true,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      buttonText: {
+        today: 'hoy',
+        month: 'mes',
+        week: 'semana',
+        day: 'dia'
+      },
+      events: eventos,
+      slotMinHeight: 30,
+      slotDuration: '00:05:00',
+      snapDuration: '00:01:00',
+      slotLabelInterval: '00:30:00',
+      slotMinTime: '08:00:00',
+      slotMaxTime: '19:00:00',
+      selectable: enableSelection,
+      selectMirror: false,
+      selectOverlap: false,
+      unselectAuto: false,
+
+      dateClick: function(info) {
+        if (!enableDateClick) return;
+        
+        const bloqueCompleto = detectarBloqueLibreCompleto(info.date);
+        
+        if (bloqueCompleto) {
+          const bloqueKey = `${bloqueCompleto.start}_${bloqueCompleto.end}`;
+          const currentBloqueKey = currentBloqueInfo ? `${currentBloqueInfo.start}_${currentBloqueInfo.end}` : null;
+          
+          if (!currentPlaceholder || bloqueKey !== currentBloqueKey) {
+            createCustomPlaceholder(bloqueCompleto, info.date);
+          }
+          
+          if (onDateClick) {
+            onDateClick(bloqueCompleto.start, bloqueCompleto.end, info);
+          }
+        }
+      },
+
+      select: function(selectionInfo) {
+        if (onSelect) {
+          onSelect(selectionInfo.start, selectionInfo.end, selectionInfo);
+        }
+        calendar.unselect();
+      },
+
+      eventClick: function(info) {
+        if (info.event.classNames.includes('custom-placeholder')) {
+          const originalBlock = info.event.extendedProps.originalBlock;
+          if (originalBlock && onDateClick) {
+            onDateClick(originalBlock.start, originalBlock.end, info);
+          }
+          return;
+        }
+        
+        if (onEventClick) {
+          onEventClick(info.event, info);
+        }
+      },
+
+      eventDidMount: function() {
+        setTimeout(markEmptySlots, 100);
+      },
+      
+      viewDidMount: function() {
+        setTimeout(markEmptySlots, 100);
+      },
+      
+      datesSet: function() {
+        setTimeout(markEmptySlots, 100);
+      }
+    });
+
+    calendar.render();
+
+    calendarEl.style.visibility = 'visible';
+    calendarEl.style.opacity = '1';
+    calendarEl.style.minHeight = '700px';
+
+    window.__calendar = calendar;
+    
+    return calendar;
+  };
+}
+</script>

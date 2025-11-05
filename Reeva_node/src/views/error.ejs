@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Reeva</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#9b4f88',secondary:'#6b7280'}}}}</script>
+    
+    <!-- Remixicon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+
+<div class="min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <!-- Icon -->
+        <div class="mb-6">
+            <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <i class="ri-error-warning-line text-3xl text-red-600"></i>
+            </div>
+        </div>
+        
+        <!-- Error Message -->
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">
+            <%= typeof error !== 'undefined' && error.status ? `Error ${error.status}` : 'Error' %>
+        </h1>
+        
+        <p class="text-gray-600 mb-6">
+            <%= typeof message !== 'undefined' ? message : 'Ha ocurrido un error inesperado' %>
+        </p>
+        
+        <% if (typeof error !== 'undefined' && error.stack && process.env.NODE_ENV !== 'production') { %>
+        <details class="text-left bg-gray-50 rounded p-4 mb-6">
+            <summary class="cursor-pointer font-medium text-gray-700 mb-2">Detalles técnicos</summary>
+            <pre class="text-xs text-gray-600 overflow-auto"><%= error.stack %></pre>
+        </details>
+        <% } %>
+        
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="javascript:history.back()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                <i class="ri-arrow-left-line"></i> Volver
+            </a>
+            <a href="/bienvenida" class="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
+                <i class="ri-home-4-line"></i> Ir al inicio
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -23,7 +23,8 @@ import dashboardRouter from "./routes/dashboard.js";
 import adminBDDRouter from "./routes/adminBDD.js";
 import agendaRouter from "./routes/agenda.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
-import languageRouter from "./routes/language.js"; 
+import languageRouter from "./routes/language.js";
+import infoBoxRouter from "./routes/infoBox.js";
 
 const app = express();
 
@@ -109,7 +110,8 @@ app.use("/", requireAuth, dashboardRouter);
 app.use("/", requireAuth, adminBDDRouter);
 app.use("/", requireAuth, agendaRouter);
 app.use("/", requireAuth, matrizBoxRouter);
-app.use("/", languageRouter); 
+app.use("/", languageRouter);
+app.use("/", requireAuth, infoBoxRouter);
 
 // ===== 404 =====
 app.use((req, res) => {
