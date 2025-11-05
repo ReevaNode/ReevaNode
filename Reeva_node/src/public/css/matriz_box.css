@@ -601,6 +601,22 @@
     }
 }
 
+body.theme-dark .especialidad-title {
+    color: #ffffff !important;
+}
+
+body.theme-dark .box-title {
+    color: #ffffff !important;
+}
+
+body.theme-dark .medico-name {
+    color: #ffffff !important;
+}
+
+body.theme-dark .progress-percentage {
+    color: #94a3b8 !important;
+}
+
 /* tema oscuro */
 body.theme-dark {
     background: #0f172a;
@@ -721,12 +737,6 @@ body.theme-dark .status-filter-total:hover {
 /* badges de estado */
 body.theme-dark .status-badge {
     border: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-/* texto de especialidades mas claro */
-body.theme-dark .especialidad-header h3,
-body.theme-dark .especialidad-header .text-gray-600 {
-    color: #cbd5e1 !important;
 }
 
 /* ocupacion con fondo sutil */
