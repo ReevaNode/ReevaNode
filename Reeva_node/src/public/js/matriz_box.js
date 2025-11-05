@@ -1,11 +1,34 @@
 // matriz_box.js
+const userLang = window.userLang || 'es';
+
+const texts = {
+    es: {
+        total: 'Total:',
+        free: 'Libre:',
+        reserved: 'Reservado:',
+        inAttention: 'En Atención:',
+        finished: 'Finalizado:',
+        disabled: 'Inhabilitado:'
+    },
+    en: {
+        total: 'Total:',
+        free: 'Available:',
+        reserved: 'Reserved:',
+        inAttention: 'In Care:',
+        finished: 'Completed:',
+        disabled: 'Disabled:'
+    }
+};
+
+const t = texts[userLang] || texts.es;
 
 // actualizar hora de ultima actualizacion
 function updateTime() {
     const now = new Date();
     const timeElement = document.getElementById('last-update-time');
     if (timeElement) {
-        timeElement.textContent = now.toLocaleString('es-ES');
+        const locale = userLang === 'en' ? 'en-US' : 'es-ES';
+        timeElement.textContent = now.toLocaleString(locale);
     }
 }
 
@@ -58,7 +81,7 @@ function updateStatusSummary() {
         finalizado: 0,
         inhabilitado: 0
     };
-
+    
     boxes.forEach(box => {
         const estado = box.dataset.estado.toLowerCase();
         if (estado.includes('inhabilitado')) {
@@ -73,16 +96,16 @@ function updateStatusSummary() {
             counts.finalizado++;
         }
     });
-
+    
     const summaryContainer = document.getElementById('status-summary');
     if (summaryContainer) {
         summaryContainer.innerHTML = `
-            <button class="status-filter-btn status-filter-total" onclick="filterByStatus('')">Total: ${counts.total}</button>
-            <button class="status-filter-btn status-filter-libre" onclick="filterByStatus('libre')">Libre: ${counts.libre}</button>
-            <button class="status-filter-btn status-filter-reservado" onclick="filterByStatus('esperando')">Reservado: ${counts.reservado}</button>
-            <button class="status-filter-btn status-filter-atencion" onclick="filterByStatus('atencion')">En Atención: ${counts.atencion}</button>
-            <button class="status-filter-btn status-filter-finalizado" onclick="filterByStatus('finalizado')">Finalizado: ${counts.finalizado}</button>
-            <button class="status-filter-btn status-filter-inhabilitado" onclick="filterByStatus('inhabilitado')">Inhabilitado: ${counts.inhabilitado}</button>
+            <button class="status-filter-btn status-filter-total" onclick="filterByStatus('', event)">${t.total} ${counts.total}</button>
+            <button class="status-filter-btn status-filter-libre" onclick="filterByStatus('libre', event)">${t.free} ${counts.libre}</button>
+            <button class="status-filter-btn status-filter-reservado" onclick="filterByStatus('esperando', event)">${t.reserved} ${counts.reservado}</button>
+            <button class="status-filter-btn status-filter-atencion" onclick="filterByStatus('atencion', event)">${t.inAttention} ${counts.atencion}</button>
+            <button class="status-filter-btn status-filter-finalizado" onclick="filterByStatus('finalizado', event)">${t.finished} ${counts.finalizado}</button>
+            <button class="status-filter-btn status-filter-inhabilitado" onclick="filterByStatus('inhabilitado', event)">${t.disabled} ${counts.inhabilitado}</button>
         `;
     }
 }
