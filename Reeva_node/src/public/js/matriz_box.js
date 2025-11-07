@@ -1,11 +1,105 @@
 // matriz_box.js
+const userLang = window.userLang || 'es';
+
+const texts = {
+    es: {
+        total: 'Total:',
+        free: 'Libre:',
+        reserved: 'Reservado:',
+        inAttention: 'En Atención:',
+        finished: 'Finalizado:',
+        disabled: 'Inhabilitado:',
+        // Estados
+        libre: 'Libre',
+        reservado: 'Reservado',
+        enAtencion: 'En Atención',
+        finalizado: 'Finalizado',
+        inhabilitado: 'Inhabilitado',
+        pacienteEsperando: 'Paciente Esperando',
+        pacienteAusente: 'Paciente Ausente',
+        // Especialidades
+        cirugia: 'Cirugía',
+        dermatologia: 'Dermatología',
+        ginecologia: 'Ginecología',
+        odontologia: 'Odontología',
+        oftalmologia: 'Oftalmología',
+        pediatria: 'Pediatría',
+        general: 'General',
+        sinEspecialidad: 'Sin Especialidad',
+        // Prefijos
+        doctor: 'Doctor'
+    },
+    en: {
+        total: 'Total:',
+        free: 'Available:',
+        reserved: 'Reserved:',
+        inAttention: 'In Care:',
+        finished: 'Completed:',
+        disabled: 'Disabled:',
+        // Estados
+        libre: 'Available',
+        reservado: 'Reserved',
+        enAtencion: 'In Care',
+        finalizado: 'Completed',
+        inhabilitado: 'Disabled',
+        pacienteEsperando: 'Patient Waiting',
+        pacienteAusente: 'Patient Absent',
+        // Especialidades
+        cirugia: 'Surgery',
+        dermatologia: 'Dermatology',
+        ginecologia: 'Gynecology',
+        odontologia: 'Dentistry',
+        oftalmologia: 'Ophthalmology',
+        pediatria: 'Pediatrics',
+        general: 'General',
+        sinEspecialidad: 'No Specialty',
+        // Prefijos
+        doctor: 'Doctor'
+    }
+};
+
+const t = texts[userLang] || texts.es;
+
+const specialtyMap = {
+    'Cirugía': 'cirugia',
+    'Dermatología': 'dermatologia',
+    'Ginecología': 'ginecologia',
+    'Odontología': 'odontologia',
+    'Oftalmología': 'oftalmologia',
+    'Pediatría': 'pediatria',
+    'General': 'general',
+    'Sin Especialidad': 'sinEspecialidad'
+};
+
+const stateMap = {
+    'Libre': 'libre',
+    'Reservado': 'reservado',
+    'En Atención': 'enAtencion',
+    'Finalizado': 'finalizado',
+    'Inhabilitado': 'inhabilitado',
+    'Paciente Esperando': 'pacienteEsperando',
+    'Paciente Ausente': 'pacienteAusente'
+};
+
+// Funcion para traducir especialidad
+function translateSpecialty(specialty) {
+    const key = specialtyMap[specialty];
+    return key ? t[key] : specialty;
+}
+
+// Funcion para traducir estado
+function translateState(state) {
+    const key = stateMap[state];
+    return key ? t[key] : state;
+}
 
 // actualizar hora de ultima actualizacion
 function updateTime() {
     const now = new Date();
     const timeElement = document.getElementById('last-update-time');
     if (timeElement) {
-        timeElement.textContent = now.toLocaleString('es-ES');
+        const locale = userLang === 'en' ? 'en-US' : 'es-ES';
+        timeElement.textContent = now.toLocaleString(locale);
     }
 }
 
@@ -14,6 +108,62 @@ function initializeProgressBars() {
     document.querySelectorAll('.progress-fill[data-progress]').forEach(el => {
         const val = parseFloat(el.getAttribute('data-progress')) || 0;
         el.style.width = val + '%';
+    });
+}
+
+// Traducir titulos de especialidades
+function translateSpecialtyTitles() {
+    document.querySelectorAll('.especialidad-title').forEach(titleEl => {
+        const text = titleEl.textContent.trim();
+        const match = text.match(/^(.+?)\s*\((\d+)\)$/);
+        if (match) {
+            const specialtyName = match[1].trim();
+            const count = match[2];
+            const icon = titleEl.querySelector('i');
+            const iconClass = icon ? icon.className : 'ri-stethoscope-line';
+            titleEl.innerHTML = `<i class="${iconClass} mr-2"></i>${translateSpecialty(specialtyName)} (${count})`;
+        }
+    });
+}
+
+// Traducir estados en las tarjetas
+function translateCardStates() {
+    document.querySelectorAll('.box-status-label').forEach(labelEl => {
+        const originalState = labelEl.textContent.trim();
+        labelEl.textContent = translateState(originalState);
+    });
+    
+    // Traducir estados en la seccion de pacientes
+    document.querySelectorAll('.patient-status').forEach(statusEl => {
+        const originalState = statusEl.textContent.trim();
+        statusEl.textContent = translateState(originalState);
+    });
+}
+
+// Traducir opciones del select de especialidades
+function translateSpecialtySelect() {
+    const select = document.getElementById('especialidadFilter');
+    if (!select) return;
+    
+    const options = select.querySelectorAll('option[data-specialty]');
+    
+    options.forEach(option => {
+        const originalSpecialty = option.getAttribute('data-specialty');
+        option.textContent = translateSpecialty(originalSpecialty);
+    });
+}
+
+function translateDoctorNames() {
+    document.querySelectorAll('.medico-name').forEach(nameEl => {
+        const text = nameEl.textContent.trim();
+        
+        const match = text.match(/^(Doctor|Médico)\s+(.+)$/);
+        
+        if (match) {
+            const specialtyName = match[2];
+            const translatedSpecialty = translateSpecialty(specialtyName);
+            nameEl.textContent = `${t.doctor} ${translatedSpecialty}`;
+        }
     });
 }
 
@@ -58,7 +208,7 @@ function updateStatusSummary() {
         finalizado: 0,
         inhabilitado: 0
     };
-
+    
     boxes.forEach(box => {
         const estado = box.dataset.estado.toLowerCase();
         if (estado.includes('inhabilitado')) {
@@ -73,16 +223,16 @@ function updateStatusSummary() {
             counts.finalizado++;
         }
     });
-
+    
     const summaryContainer = document.getElementById('status-summary');
     if (summaryContainer) {
         summaryContainer.innerHTML = `
-            <button class="status-filter-btn status-filter-total" onclick="filterByStatus('')">Total: ${counts.total}</button>
-            <button class="status-filter-btn status-filter-libre" onclick="filterByStatus('libre')">Libre: ${counts.libre}</button>
-            <button class="status-filter-btn status-filter-reservado" onclick="filterByStatus('esperando')">Reservado: ${counts.reservado}</button>
-            <button class="status-filter-btn status-filter-atencion" onclick="filterByStatus('atencion')">En Atención: ${counts.atencion}</button>
-            <button class="status-filter-btn status-filter-finalizado" onclick="filterByStatus('finalizado')">Finalizado: ${counts.finalizado}</button>
-            <button class="status-filter-btn status-filter-inhabilitado" onclick="filterByStatus('inhabilitado')">Inhabilitado: ${counts.inhabilitado}</button>
+            <button class="status-filter-btn status-filter-total" onclick="filterByStatus('', event)">${t.total} ${counts.total}</button>
+            <button class="status-filter-btn status-filter-libre" onclick="filterByStatus('libre', event)">${t.free} ${counts.libre}</button>
+            <button class="status-filter-btn status-filter-reservado" onclick="filterByStatus('esperando', event)">${t.reserved} ${counts.reservado}</button>
+            <button class="status-filter-btn status-filter-atencion" onclick="filterByStatus('atencion', event)">${t.inAttention} ${counts.atencion}</button>
+            <button class="status-filter-btn status-filter-finalizado" onclick="filterByStatus('finalizado', event)">${t.finished} ${counts.finalizado}</button>
+            <button class="status-filter-btn status-filter-inhabilitado" onclick="filterByStatus('inhabilitado', event)">${t.disabled} ${counts.inhabilitado}</button>
         `;
     }
 }
@@ -194,12 +344,20 @@ function filterBoxes() {
     }
 }
 
+window.cambiarVista = cambiarVista;
+window.toggleEspecialidad = toggleEspecialidad;
+window.filterByStatus = filterByStatus;
+
 // init cuando carga la pagina
 document.addEventListener('DOMContentLoaded', function() {
     console.log('matriz box js cargado');
     
     updateTime();
     initializeProgressBars();
+    translateSpecialtyTitles();
+    translateCardStates();
+    translateSpecialtySelect();
+    translateDoctorNames(); // NUEVA LÍNEA AGREGADA
     updateStatusSummary();
     
     // restaurar vista guardada
@@ -222,4 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (estadoFilter) {
         estadoFilter.addEventListener('change', filterBoxes);
     }
+    
+    document.addEventListener('reeva:language-change', function() {
+        setTimeout(() => {
+            location.reload(); 
+        }, 200);
+    });
 });

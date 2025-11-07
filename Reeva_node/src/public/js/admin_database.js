@@ -1,6 +1,16 @@
 // admin database javascript
 console.log('admin db js loaded');
 
+const __ = function(key) {
+    const finalKey = key.split('.').pop();
+    
+    if (window.i18nAdminDB && window.i18nAdminDB[finalKey]) {
+        return window.i18nAdminDB[finalKey];
+    }    
+    console.warn('Traducción no encontrada:', key);
+    return finalKey;
+};
+
 // definicion de relaciones entre campos y tablas FK
 const CAMPOS_RELACION = {
     idBox: { tabla: 'box', clavePrimaria: 'idBox' },
@@ -36,7 +46,7 @@ async function loadTable(tableName, reset = true) {
     }
     
     document.getElementById('contentArea').style.display = 'block';
-    document.getElementById('contentTitle').textContent = `tabla: ${tableName}`;
+    document.getElementById('contentTitle').textContent = `${__('adminDB.table')}: ${tableName}`;
     
     // determinar si es tabla agenda
     const isAgenda = tableName === 'agenda';
@@ -68,7 +78,7 @@ async function loadTable(tableName, reset = true) {
         if (btn) btn.style.display = isAgenda ? 'inline-block' : 'none';
     });
     
-    document.getElementById('tableContainer').innerHTML = '<div class="loading">cargando datos...</div>';
+    document.getElementById('tableContainer').innerHTML = `<div class="loading">${__('adminDB.loadingData')}</div>`;
     const pagination = document.getElementById('pagination');
     if (pagination) pagination.style.display = 'none';
     
@@ -100,7 +110,7 @@ async function loadTable(tableName, reset = true) {
                     currentData.sort((a, b) => {
                         const dateA = new Date(a.horainicio || 0);
                         const dateB = new Date(b.horainicio || 0);
-                        return dateB - dateA; // DESC
+                        return dateB - dateA;
                     });
                 }
                 // tablas de catalogo: ordenar por ID ASC
@@ -130,11 +140,10 @@ async function loadTable(tableName, reset = true) {
                             const numB = parseInt(valB);
                             
                             if (!isNaN(numA) && !isNaN(numB)) {
-                                return numA - numB; // orden numerico ASC
+                                return numA - numB;
                             }
                             
-                            // fallback a string
-                            return String(valA).localeCompare(String(valB)); // ASC
+                            return String(valA).localeCompare(String(valB));
                         });
                     }
                 }
@@ -150,17 +159,17 @@ async function loadTable(tableName, reset = true) {
             renderPagination();
             populateFilterOptions();
         } else {
-            showAlert('error', data.error || 'error al cargar datos');
+            showAlert('error', data.error || __('common.error'));
         }
     } catch (error) {
-        showAlert('error', 'error de conexion: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     }
 }
 
 // renderizar tabla
 function renderTable(data, fields) {
     if (data.length === 0) {
-        document.getElementById('tableContainer').innerHTML = '<div class="loading">no hay datos en esta tabla</div>';
+        document.getElementById('tableContainer').innerHTML = `<div class="loading">${__('adminDB.noData')}</div>`;
         return;
     }
 
@@ -168,9 +177,9 @@ function renderTable(data, fields) {
     
     // headers con onclick para ordenar
     fields.forEach(field => {
-        html += `<th style="cursor: pointer;" onclick="sortByColumn('${field}')" title="Click para ordenar por ${field}">${field}</th>`;
+        html += `<th style="cursor: pointer;" onclick="sortByColumn('${field}')" title="${__('adminDB.clickToSort')} ${field}">${field}</th>`;
     });
-    html += '<th>acciones</th></tr></thead><tbody>';
+    html += `<th>${__('adminDB.actions')}</th></tr></thead><tbody>`;
     
     // rows con formato mejorado
     data.forEach((row, index) => {
@@ -193,8 +202,8 @@ function renderTable(data, fields) {
             html += `<td title="${row[displayField] || row[field] || ''}">${value}</td>`;
         });
         html += `<td>
-            <button class="btn btn-primary" onclick="editRecord(${index})" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">editar</button>
-            <button class="btn btn-danger" onclick="deleteRecord(${index})" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">eliminar</button>
+            <button class="btn btn-primary" onclick="editRecord(${index})" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">${__('adminDB.edit')}</button>
+            <button class="btn btn-danger" onclick="deleteRecord(${index})" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">${__('adminDB.delete')}</button>
         </td></tr>`;
     });
     
@@ -247,12 +256,12 @@ function sortByColumn(columnName) {
 function renderPagination() {
     const paginationInfo = document.getElementById('paginationInfo');
     if (paginationInfo) {
-        paginationInfo.textContent = `mostrando ${currentData.length} registros`;
+        paginationInfo.textContent = `${__('adminDB.showing')} ${currentData.length} ${__('adminDB.records')}`;
     }
     
     let controls = '';
     if (lastEvaluatedKey) {
-        controls += '<button class="btn btn-secondary" onclick="loadTable(currentTable, false)">cargar mas</button>';
+        controls += `<button class="btn btn-secondary" onclick="loadTable(currentTable, false)">${__('adminDB.loadMore')}</button>`;
     }
     
     const paginationControls = document.getElementById('paginationControls');
@@ -274,7 +283,7 @@ function populateFilterOptions() {
     const filterFieldSelect = document.getElementById('filterField');
     
     if (filterFieldSelect) {
-        filterFieldSelect.innerHTML = '<option value="">seleccionar campo...</option>';
+        filterFieldSelect.innerHTML = `<option value="">${__('adminDB.selectField')}</option>`;
         tableFields.forEach(field => {
             filterFieldSelect.innerHTML += `<option value="${field}">${field}</option>`;
         });
@@ -289,7 +298,7 @@ function populateFilterOptions() {
     // poblar selector de ordenamiento con los mismos campos
     const sortFieldSelect = document.getElementById('sortField');
     if (sortFieldSelect) {
-        sortFieldSelect.innerHTML = '<option value="">sin ordenamiento...</option>';
+        sortFieldSelect.innerHTML = `<option value="">${__('adminDB.noSort')}</option>`;
         tableFields.forEach(field => {
             sortFieldSelect.innerHTML += `<option value="${field}">${field}</option>`;
         });
@@ -330,7 +339,7 @@ async function updateFilterValueInput(fieldName) {
                             <label class="inline-flex items-center">
                                 <input type="checkbox" id="toggle-filter-${fieldName}" 
                                     onchange="toggleFilterUserDisplay('${fieldName}')" class="mr-2">
-                                <span class="text-sm">mostrar como IDs</span>
+                                <span class="text-sm">${__('adminDB.showAsIds')}</span>
                             </label>
                         </div>
                     `;
@@ -338,7 +347,7 @@ async function updateFilterValueInput(fieldName) {
                 
                 newHTML += `
                     <select id="filterValue" class="w-full border rounded p-2">
-                        <option value="">seleccionar ${fieldName}...</option>
+                        <option value="">${__('adminDB.selectPlaceholder')} ${fieldName}...</option>
                 `;
                 
                 data.options.forEach(option => {
@@ -357,7 +366,7 @@ async function updateFilterValueInput(fieldName) {
     } else {
         // volver a input de texto normal
         parentDiv.innerHTML = `
-            <input type="text" id="filterValue" class="w-full border rounded p-2" placeholder="ingrese valor...">
+            <input type="text" id="filterValue" class="w-full border rounded p-2" placeholder="${__('adminDB.enterValue')}">
         `;
     }
 }
@@ -385,7 +394,6 @@ function toggleFilterUserDisplay(fieldName) {
     });
 }
 
-
 function applyFilters() {
     const filterField = document.getElementById('filterField');
     const filterValue = document.getElementById('filterValue');
@@ -396,7 +404,7 @@ function applyFilters() {
     const valor = filterValue.value.trim();
     
     if (!campo || !valor) {
-        showAlert('error', 'debes seleccionar un campo y especificar un valor');
+        showAlert('error', __('adminDB.specifyAtLeastOneFilter'));
         return;
     }
     
@@ -462,12 +470,12 @@ function applyFilters() {
     }
     
     if (filteredData.length === 0) {
-        showAlert('info', `no se encontraron registros que coincidan con "${valor}" en ${campo}`);
+        showAlert('info', `${__('adminDB.noRecordsFound')} "${valor}" ${__('adminDB.in')} ${campo}`);
     } else {
         const sortMsg = sortField && sortField.value 
-            ? ` (ordenados por ${sortField.value} ${sortOrder.value === 'asc' ? 'ascendente' : 'descendente'})` 
+            ? ` (${__('adminDB.sortedBy')} ${sortField.value} ${sortOrder.value === 'asc' ? __('adminDB.ascending') : __('adminDB.descending')})` 
             : '';
-        showAlert('success', `se encontraron ${filteredData.length} registros${sortMsg}`);
+        showAlert('success', `${__('adminDB.recordsFoundSorted')} ${filteredData.length} ${__('adminDB.records')}${sortMsg}`);
     }
     
     // renderizar solo los datos filtrados
@@ -530,7 +538,7 @@ function sortData(data, field, order = 'asc') {
 // funciones especificas para filtro de fecha de agenda
 async function applyAgendaDateFilter() {
     if (currentTable !== 'agenda') {
-        showAlert('error', 'este filtro solo funciona para la tabla agenda');
+        showAlert('error', __('adminDB.filterByDate'));
         return;
     }
     
@@ -538,22 +546,21 @@ async function applyAgendaDateFilter() {
     const dateEnd = document.getElementById('agendaDateEnd');
     
     if (!dateStart || !dateStart.value) {
-        showAlert('error', 'debes seleccionar al menos una fecha de inicio');
+        showAlert('error', __('adminDB.specifyAtLeastOneFilter'));
         return;
     }
     
-    const startDate = dateStart.value; // formato: "2025-10-27"
+    const startDate = dateStart.value;
     const endDate = dateEnd && dateEnd.value ? dateEnd.value : startDate;
     
-    // mostrar loading
-    document.getElementById('tableContainer').innerHTML = '<div class="loading">buscando agendas...</div>';
+    document.getElementById('tableContainer').innerHTML = `<div class="loading">${__('adminDB.loadingData')}</div>`;
     
     try {
         // construir parametros para consulta por indice
         const params = new URLSearchParams({
             dateStart: startDate,
             dateEnd: endDate,
-            limit: 1000 // obtener muchos registros para el rango de fecha
+            limit: 1000
         });
         
         const response = await fetch(`/admin-bdd/api/agenda/by-date?${params}`);
@@ -577,18 +584,18 @@ async function applyAgendaDateFilter() {
             }
             
             const sortMsg = sortField && sortField.value 
-                ? ` (ordenados por ${sortField.value} ${sortOrder.value === 'asc' ? 'ascendente' : 'descendente'})` 
+                ? ` (${__('adminDB.sortedBy')} ${sortField.value} ${sortOrder.value === 'asc' ? __('adminDB.ascending') : __('adminDB.descending')})` 
                 : '';
-            showAlert('success', `se encontraron ${currentData.length} agendas entre ${startDate} y ${endDate}${sortMsg}`);
+            showAlert('success', `${__('adminDB.recordsFoundSorted')} ${currentData.length} ${__('adminDB.records')} (${startDate} - ${endDate})${sortMsg}`);
             renderTable(currentData, tableFields);
         } else {
-            showAlert('error', data.error || 'error al buscar agendas');
+            showAlert('error', data.error || __('common.error'));
             currentData = [];
             renderTable([], tableFields);
         }
     } catch (error) {
         console.error('error aplicando filtro de fecha:', error);
-        showAlert('error', 'error de conexión: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     }
 }
 
@@ -620,14 +627,13 @@ function showCreateModal(multiple = false) {
     
     // modo multiple solo para agenda
     if (multiple && currentTable === 'agenda') {
-        if (modalTitle) modalTitle.textContent = 'crear multiples agendas';
+        if (modalTitle) modalTitle.textContent = __('adminDB.createMultiple2');
         renderAgendaMultipleForm();
         modal.style.display = 'block';
         return;
     }
     
-    // modo simple (todas las tablas)
-    if (modalTitle) modalTitle.textContent = 'crear nuevo registro';
+    if (modalTitle) modalTitle.textContent = __('adminDB.createNewRecord');
     
     // ocultar modo multiple
     const multipleCheckbox = document.getElementById('multipleCheckbox');
@@ -645,7 +651,7 @@ function showCreateModal(multiple = false) {
 function showUpdateModal() {
     const modal = document.getElementById('updateModal');
     if (!modal) {
-        showAlert('error', 'modal de actualizacion no encontrado');
+        showAlert('error', __('common.error'));
         return;
     }
     
@@ -662,7 +668,7 @@ function showUpdateModal() {
 function showDeleteModal() {
     const modal = document.getElementById('deleteModal');
     if (!modal) {
-        showAlert('error', 'modal de eliminacion no encontrado');
+        showAlert('error', __('common.error'));
         return;
     }
     
@@ -685,11 +691,11 @@ function editRecord(index) {
     const record = currentData[index];
     if (!record) return;
     
-    editingId = record[tableFields[0]]; // usar primer campo como id
+    editingId = record[tableFields[0]];
     
     const modalTitle = document.getElementById('modalTitle');
     if (modalTitle) {
-        modalTitle.textContent = 'editar registro';
+        modalTitle.textContent = __('adminDB.editEventTitle');
     }
     
     // ocultar checkbox de multiple en edicion
@@ -712,7 +718,7 @@ function deleteRecord(index) {
     const record = currentData[index];
     if (!record) return;
     
-    if (!confirm('estas seguro de que quieres eliminar este registro?')) {
+    if (!confirm(__('adminDB.confirmDelete'))) {
         return;
     }
     
@@ -734,7 +740,7 @@ function deleteRecord(index) {
     
     const primaryKey = primaryKeyMap[currentTable];
     if (!primaryKey) {
-        showAlert('error', 'no se pudo determinar la clave primaria');
+        showAlert('error', __('common.error'));
         return;
     }
     
@@ -750,14 +756,14 @@ function deleteRecord(index) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            showAlert('success', 'registro eliminado correctamente');
+            showAlert('success', __('adminDB.recordDeleted'));
             refreshTable();
         } else {
-            showAlert('error', result.error || 'error al eliminar');
+            showAlert('error', result.error || __('adminDB.deleteError'));
         }
     })
     .catch(error => {
-        showAlert('error', 'error de conexion: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     });
 }
 
@@ -816,14 +822,14 @@ async function renderFormFields(data) {
         
         // si estamos creando: omitir campo PK (se autogenera con UUID)
         if (!editingId && isPrimaryKey) {
-            continue; // omitir campo PK al crear
+            continue;
         }
         
         // al editar: mostrar PK como readonly + hidden para enviar
         if (editingId && isPrimaryKey) {
             html += `
                 <div class="form-group">
-                    <label class="block text-sm text-gray-600 mb-2">${field} (no modificable)</label>
+                    <label class="block text-sm text-gray-600 mb-2">${field} (${__('adminDB.notEditable')})</label>
                     <input type="text" value="${value}" readonly 
                            class="w-full border rounded p-2 bg-gray-100" />
                     <input type="hidden" name="${field}" value="${value}" />
@@ -842,11 +848,11 @@ async function renderFormFields(data) {
                     ${isUserField ? `
                         <div class="flex items-center gap-2 mb-2">
                             <input type="checkbox" id="toggle-${field}" onchange="toggleUserDisplay('${field}')" />
-                            <label for="toggle-${field}" class="text-xs text-gray-500">Mostrar como IDs</label>
+                            <label for="toggle-${field}" class="text-xs text-gray-500">${__('adminDB.showAsIds')}</label>
                         </div>
                     ` : ''}
                     <select name="${field}" id="select-${field}" class="w-full border rounded p-2 focus:border-primary focus:ring-primary bg-white">
-                        <option value="">— seleccionar ${field} —</option>`;
+                        <option value="">— ${__('adminDB.selectPlaceholder')} ${field} —</option>`;
             
             options.forEach(option => {
                 const selected = value == option.value ? 'selected' : '';
@@ -864,23 +870,23 @@ async function renderFormFields(data) {
                 if (value.includes('t') || value.includes('T')) {
                     // formato iso: "2025-08-17t08:00:00"
                     const parts = value.toLowerCase().split('t');
-                    dateValue = parts[0]; // "2025-08-17"
-                    timeValue = parts[1].substring(0, 5); // "08:00"
+                    dateValue = parts[0];
+                    timeValue = parts[1].substring(0, 5);
                 } else if (value.includes(' ')) {
                     // formato con espacio: "2025-08-17 08:00:00"
                     const parts = value.split(' ');
-                    dateValue = parts[0]; // "2025-08-17"
-                    timeValue = parts[1].substring(0, 5); // "08:00"
+                    dateValue = parts[0];
+                    timeValue = parts[1].substring(0, 5);
                 } else if (value.includes('-')) {
                     // solo fecha
                     dateValue = value;
-                    timeValue = '08:00'; // hora por defecto
+                    timeValue = '08:00';
                 }
             } else {
                 // valores por defecto cuando es null
                 const today = new Date();
-                dateValue = today.toISOString().split('T')[0]; // fecha de hoy
-                timeValue = '08:00'; // 8:00 am por defecto
+                dateValue = today.toISOString().split('T')[0];
+                timeValue = '08:00';
             }
             
             html += `
@@ -888,12 +894,12 @@ async function renderFormFields(data) {
                     <label class="block text-sm text-gray-600 mb-2">${field}</label>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">fecha</label>
+                            <label class="block text-xs text-gray-500 mb-1">${__('adminDB.date')}</label>
                             <input type="date" name="${field}_date" value="${dateValue}" 
                                    class="w-full border rounded p-2 focus:border-primary focus:ring-primary" required />
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">hora</label>
+                            <label class="block text-xs text-gray-500 mb-1">${__('adminDB.time')}</label>
                             <input type="time" name="${field}_time" value="${timeValue}" 
                                    class="w-full border rounded p-2 focus:border-primary focus:ring-primary" required />
                         </div>
@@ -909,8 +915,8 @@ async function renderFormFields(data) {
                 // si el valor viene como "2025-08-17 14:30:00"
                 const parts = value.split(' ');
                 if (parts.length >= 2) {
-                    dateValue = parts[0]; // "2025-08-17"
-                    timeValue = parts[1].substring(0, 5); // "14:30"
+                    dateValue = parts[0];
+                    timeValue = parts[1].substring(0, 5);
                 } else if (parts.length === 1) {
                     // solo fecha
                     dateValue = parts[0];
@@ -923,12 +929,12 @@ async function renderFormFields(data) {
                     <label class="block text-sm text-gray-600 mb-2">${field}</label>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">fecha</label>
+                            <label class="block text-xs text-gray-500 mb-1">${__('adminDB.date')}</label>
                             <input type="date" name="${field}_date" value="${dateValue}" 
                                    class="w-full border rounded p-2 focus:border-primary focus:ring-primary" />
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">hora</label>
+                            <label class="block text-xs text-gray-500 mb-1">${__('adminDB.time')}</label>
                             <input type="time" name="${field}_time" value="${timeValue}" 
                                    class="w-full border rounded p-2 focus:border-primary focus:ring-primary" />
                         </div>
@@ -936,8 +942,7 @@ async function renderFormFields(data) {
                 </div>
             `;
         } else {
-            // campo normal
-            const placeholder = value ? '' : `ingrese ${field.toLowerCase()}`;
+            const placeholder = value ? '' : `${__('adminDB.enter')} ${field.toLowerCase()}`;
             html += `
                 <div class="form-group">
                     <label class="block text-sm text-gray-600 mb-2">${field}</label>
@@ -958,11 +963,11 @@ async function renderFormFields(data) {
 async function getFieldOptions(fieldName, tableName = null) {
     try {
         const tabla = tableName || currentTable;
-        const response = await fetch(`/admin-bdd/api/${tabla}/field_options?field=${fieldName}`);
+        const response = await fetch(`/admin-bdd/api/${tabla}/field-options?field=${fieldName}`);
         const data = await response.json();
         
         if (data.success && data.options) {
-            console.log(`getFieldOptions(${fieldName}):`, data.options.slice(0, 3)); // mostrar primeras 3 opciones
+            console.log(`getFieldOptions(${fieldName}):`, data.options.slice(0, 3));
         }
         
         return data.success ? data.options : [];
@@ -979,7 +984,7 @@ function renderFilterFields(containerId) {
         html += `
             <div class="form-group">
                 <label class="block text-sm text-gray-600 mb-2">${field}</label>
-                <input type="text" name="filter_${field}" placeholder="valor para filtrar ${field}" 
+                <input type="text" name="filter_${field}" placeholder="${__('adminDB.valueToSearch')} ${field}" 
                        class="w-full border rounded p-2 focus:border-primary focus:ring-primary" />
             </div>
         `;
@@ -995,11 +1000,11 @@ function renderUpdateFields() {
     let html = '';
     tableFields.forEach(field => {
         const isId = field.toLowerCase().includes('id') && field === tableFields[0];
-        if (!isId) {  // no permitir actualizar ids
+        if (!isId) {
             html += `
                 <div class="form-group">
                     <label class="block text-sm text-gray-600 mb-2">${field}</label>
-                    <input type="text" name="update_${field}" placeholder="nuevo valor para ${field}" 
+                    <input type="text" name="update_${field}" placeholder="${__('adminDB.newValues')} ${field}" 
                            class="w-full border rounded p-2 focus:border-primary focus:ring-primary" />
                 </div>
             `;
@@ -1065,7 +1070,7 @@ async function saveRecord() {
             data[fieldName] = `${dateFields[fieldName]} ${timeFields[fieldName]}:00`;
         }
     }
-
+    
     const action = editingId ? 'update' : 'create';
 
     try {
@@ -1080,16 +1085,15 @@ async function saveRecord() {
         const result = await response.json();
         
         if (result.success) {
-            showAlert('success', editingId ? 'registro actualizado correctamente' : 'registro creado correctamente');
+            showAlert('success', editingId ? __('adminDB.recordUpdated') : __('adminDB.recordCreated'));
             closeModal();
             refreshTable();
         } else {
-            // mostrar error sin cerrar el modal
-            showAlert('error', result.error || 'error al guardar');
+            showAlert('error', result.error || __('adminDB.saveErrorGeneric'));
             console.error('error details:', result);
         }
     } catch (error) {
-        showAlert('error', 'error de conexion: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     }
 }
 
@@ -1135,12 +1139,12 @@ async function executeUpdate() {
     }
     
     if (Object.keys(filters).length === 0) {
-        showAlert('error', 'debes especificar al menos un filtro');
+        showAlert('error', __('adminDB.specifyAtLeastOneFilter'));
         return;
     }
     
     if (Object.keys(updateData).length === 0) {
-        showAlert('error', 'debes especificar al menos un campo a actualizar');
+        showAlert('error', __('adminDB.specifyAtLeastOneField'));
         return;
     }
     
@@ -1164,14 +1168,14 @@ async function executeUpdate() {
         const result = await response.json();
         
         if (result.success) {
-            showAlert('success', `${result.updated_count} registros actualizados`);
+            showAlert('success', `${result.updated_count} ${__('adminDB.recordsUpdated')}`);
             closeUpdateModal();
             refreshTable();
         } else {
-            showAlert('error', result.error || 'error al actualizar');
+            showAlert('error', result.error || __('adminDB.updateError'));
         }
     } catch (error) {
-        showAlert('error', 'error de conexion: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     }
 }
 
@@ -1192,11 +1196,11 @@ async function executeDelete() {
     }
     
     if (Object.keys(filters).length === 0) {
-        showAlert('error', 'debes especificar al menos un filtro');
+        showAlert('error', __('adminDB.specifyAtLeastOneFilter'));
         return;
     }
     
-    if (!confirm('estas absolutamente seguro? esta accion no se puede deshacer.')) {
+    if (!confirm(__('adminDB.absolutelySure'))) {
         return;
     }
     
@@ -1219,14 +1223,14 @@ async function executeDelete() {
         const result = await response.json();
         
         if (result.success) {
-            showAlert('success', `${result.deleted_count} registros eliminados`);
+            showAlert('success', `${result.deleted_count} ${__('adminDB.recordsDeleted')}`);
             closeDeleteModal();
             refreshTable();
         } else {
-            showAlert('error', result.error || 'error al eliminar');
+            showAlert('error', result.error || __('adminDB.deleteErrorGeneric'));
         }
     } catch (error) {
-        showAlert('error', 'error de conexion: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     }
 }
 
@@ -1235,7 +1239,7 @@ async function executeDelete() {
 async function renderAgendaMultipleForm() {
     const singleMode = document.getElementById('singleMode');
     const multipleMode = document.getElementById('multipleMode');
-    if (singleMode) singleMode.style.display = 'block'; // mostrar singleMode para usar formFields
+    if (singleMode) singleMode.style.display = 'block';
     if (multipleMode) multipleMode.style.display = 'none';
     
     const formFields = document.getElementById('formFields');
@@ -1248,37 +1252,36 @@ async function renderAgendaMultipleForm() {
     
     const html = `
         <div class="form-group">
-            <label>fecha inicio</label>
+            <label>${__('adminDB.startDate')}</label>
             <input type="date" name="fecha_inicio" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
-            <label>fecha fin</label>
+            <label>${__('adminDB.endDate')}</label>
             <input type="date" name="fecha_fin" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
-            <label>tipo consulta</label>
+            <label>${__('adminDB.consultationType')}</label>
             <select name="idTipoConsulta" class="w-full border rounded p-2" required>
-                <option value="random">— random —</option>
+                <option value="random">— ${__('adminDB.random')} —</option>
                 ${tipoConsulta.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
         <div class="form-group">
-            <label>usuario/profesional</label>
+            <label>${__('adminDB.userProfessional')}</label>
             <select name="idUsuario" class="w-full border rounded p-2" required>
-                <option value="random">— random —</option>
+                <option value="random">— ${__('adminDB.random')} —</option>
                 ${usuarios.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
         <div class="form-group">
-            <label>estado</label>
+            <label>${__('adminDB.state')}</label>
             <select name="idEstado" class="w-full border rounded p-2" required>
-                <option value="2" selected>paciente ausente</option>
+                <option value="2" selected>${__('adminDB.patientAbsent')}</option>
                 ${estados.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
         <div class="alert alert-info mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <i class="ri-information-line"></i> Se generarán agendas para <strong>todos los boxes</strong> en el rango de fechas especificado, 
-            con horarios de 08:00 a 18:00, duraciones random (10, 15, 30 o 60 minutos) y 85% de probabilidad de ocupación.
+            <i class="ri-information-line"></i> ${__('adminDB.probabilityInfo')}
         </div>
     `;
     
@@ -1292,27 +1295,27 @@ async function renderAgendaUpdateForm() {
     
     const filtersHTML = `
         <div class="form-group">
-            <label>fecha inicio</label>
+            <label>${__('adminDB.startDate')}</label>
             <input type="date" name="filter_fecha_inicio" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
-            <label>hora inicio (opcional)</label>
+            <label>${__('adminDB.startTime')} (${__('adminDB.optional')})</label>
             <input type="time" name="filter_hora_inicio" class="w-full border rounded p-2" />
-            <small class="text-gray-500">si no se especifica, se usa 00:00:00</small>
+            <small class="text-gray-500">${__('adminDB.ifNotSpecified')}, 00:00:00</small>
         </div>
         <div class="form-group">
-            <label>fecha fin</label>
+            <label>${__('adminDB.endDate')}</label>
             <input type="date" name="filter_fecha_fin" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
-            <label>hora fin (opcional)</label>
+            <label>${__('adminDB.endTime')} (${__('adminDB.optional')})</label>
             <input type="time" name="filter_hora_fin" class="w-full border rounded p-2" />
-            <small class="text-gray-500">si no se especifica, se usa 23:59:59</small>
+            <small class="text-gray-500">${__('adminDB.ifNotSpecified')}, 23:59:59</small>
         </div>
         <div class="form-group">
-            <label>box (opcional)</label>
+            <label>${__('adminDB.box')} (${__('adminDB.optional')})</label>
             <select name="filter_idBox" class="w-full border rounded p-2">
-                <option value="">— todos —</option>
+                <option value="">— ${__('adminDB.all')} —</option>
                 ${boxes.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
@@ -1320,16 +1323,16 @@ async function renderAgendaUpdateForm() {
     
     const fieldsHTML = `
         <div class="form-group">
-            <label>tipo consulta (opcional)</label>
+            <label>${__('adminDB.consultationType')} (${__('adminDB.optional')})</label>
             <select name="idTipoConsulta" class="w-full border rounded p-2">
-                <option value="">— no modificar —</option>
+                <option value="">— ${__('adminDB.noModify')} —</option>
                 ${tipoConsulta.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
         <div class="form-group">
-            <label>estado (opcional)</label>
+            <label>${__('adminDB.state')} (${__('adminDB.optional')})</label>
             <select name="idEstado" class="w-full border rounded p-2">
-                <option value="">— no modificar —</option>
+                <option value="">— ${__('adminDB.noModify')} —</option>
                 ${estados.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
@@ -1346,17 +1349,17 @@ async function renderAgendaDeleteForm() {
     
     const filtersHTML = `
         <div class="form-group">
-            <label>fecha inicio</label>
+            <label>${__('adminDB.startDate')}</label>
             <input type="date" name="filter_fecha_inicio" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
-            <label>fecha fin</label>
+            <label>${__('adminDB.endDate')}</label>
             <input type="date" name="filter_fecha_fin" class="w-full border rounded p-2" required />
         </div>
         <div class="form-group">
-            <label>box (opcional)</label>
+            <label>${__('adminDB.box')} (${__('adminDB.optional')})</label>
             <select name="filter_idBox" class="w-full border rounded p-2">
-                <option value="">— todos —</option>
+                <option value="">— ${__('adminDB.all')} —</option>
                 ${boxes.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
@@ -1379,8 +1382,7 @@ async function createMultipleAgendas(formData) {
     console.log('Valores extraídos:', { fechaInicio, fechaFin, idTipoConsulta, idUsuario, idEstado });
     
     if (!fechaInicio || !fechaFin) {
-        console.error('❌ Faltan campos requeridos');
-        showAlert('error', 'debes completar todos los campos requeridos');
+        showAlert('error', __('adminDB.completeAllFields'));
         return;
     }
     
@@ -1388,11 +1390,11 @@ async function createMultipleAgendas(formData) {
     console.log('📦 Obteniendo boxes disponibles...');
     const boxes = await getFieldOptions('idBox', 'agenda');
     if (boxes.length === 0) {
-        showAlert('error', 'no hay boxes disponibles');
+        showAlert('error', __('adminDB.noBoxesAvailable'));
         return;
     }
     
-    showAlert('info', `Generando agendas para ${boxes.length} boxes...`);
+    showAlert('info', `${__('adminDB.generatingSchedules')} ${boxes.length} ${__('adminDB.boxes')}...`);
     
     // CARGAR TODAS LAS AGENDAS EXISTENTES
     console.log('📊 Cargando agendas existentes...');
@@ -1515,6 +1517,27 @@ async function createMultipleAgendas(formData) {
                         } else {
                             rechazados++;
                         }
+                        
+                        // formatear fechas como "YYYY-MM-DD HH:mm:ss" (no ISO)
+                        const formatoFecha = (date) => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            const seconds = String(date.getSeconds()).padStart(2, '0');
+                            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                        };
+                        
+                        agendas.push({
+                            idAgenda: crypto.randomUUID(),
+                            idBox: box.value,
+                            horainicio: formatoFecha(horaActual),
+                            horaTermino: formatoFecha(horaTermino),
+                            idUsuario: usuarioFinal,
+                            idTipoConsulta: tipoConsultaFinal,
+                            idEstado: idEstado
+                        });
                     }
                     
                     horaActual = horaTermino;
@@ -1531,8 +1554,7 @@ async function createMultipleAgendas(formData) {
     console.log(`\n📊 RESUMEN FINAL: ${agendas.length} agendas generadas`);
     
     if (agendas.length === 0) {
-        console.warn('⚠️ No se generaron agendas. Verifica los logs anteriores.');
-        showAlert('error', 'no se generaron agendas. Es posible que todos los horarios ya estén ocupados o que no haya probabilidad suficiente de generar slots.');
+        showAlert('error', __('adminDB.noSchedulesGenerated'));
         return;
     }
     
@@ -1554,16 +1576,14 @@ async function createMultipleAgendas(formData) {
         console.log('📡 Respuesta del servidor:', result);
         
         if (result.success) {
-            showAlert('success', `${result.count || agendas.length} agendas creadas correctamente`);
+            showAlert('success', `${agendas.length} ${__('adminDB.schedulesCreated')}`);
             closeModal();
             refreshTable();
         } else {
-            console.error('❌ Error del servidor:', result.error);
-            showAlert('error', result.error || 'error al crear agendas');
+            showAlert('error', result.error || __('adminDB.scheduleCreateError'));
         }
     } catch (error) {
-        console.error('❌ Error de conexión:', error);
-        showAlert('error', 'error de conexion: ' + error.message);
+        showAlert('error', `${__('adminDB.connectionError')} ${error.message}`);
     }
 }
 
@@ -1571,7 +1591,7 @@ async function createMultipleAgendas(formData) {
 
 // inicializar cuando se carga la pagina
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('admin db javascript cargado correctamente');
+    console.log(__('adminDB.adminDbLoaded'));
     
     // cerrar modales al hacer clic fuera
     window.onclick = function(event) {

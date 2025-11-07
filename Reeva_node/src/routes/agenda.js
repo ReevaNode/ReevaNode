@@ -52,17 +52,51 @@ router.get('/agenda', async (req, res) => {
         const tipos_consulta = tiposConsultaRes.Items || [];
         const tipos_box = tiposBoxRes.Items || [];
         
-        // Normalizar tipos para la vista
-        const tipos_profesional_normalizados = (tipos_profesional || []).map(t => ({
-            id: String(t.idTipoProfesional || t.idtipoprofesional || t.id || ''),
-            nombre: t.tipoprofesional || t.tipoProfesional || t.nombre || ''
-        }));
-        
-        const tipos_consulta_normalizados = (tipos_consulta || []).map(t => ({
-            id: String(t.idTipoConsulta || t.idtipoconsulta || t.id || ''),
-            nombre: t.tipoconsulta || t.tipoConsulta || t.nombre || ''
-        }));
-        
+        const specialtyTranslationMap = {
+            'Cirugía': 'surgery',
+            'Dermatología': 'dermatology',
+            'Ginecología': 'gynecology',
+            'Odontología': 'dentistry',
+            'Oftalmología': 'ophthalmology',
+            'Pediatría': 'pediatrics',
+            'General': 'general',
+            'Médico General': 'generalPractitioner',
+            'Cirujano': 'surgeon',
+            'Ginecólogo': 'gynecologist',
+            'Odontólogo': 'dentist',
+            'Oftalmólogo': 'ophthalmologist',
+            'Dermatólogo': 'dermatologist',
+            'Pediatra': 'pediatrician'
+        };
+
+        const tipos_profesional_normalizados = (tipos_profesional || []).map(t => {
+            const nombre = t.tipoprofesional || t.tipoProfesional || t.nombre || '';
+            const translationKey = specialtyTranslationMap[nombre] || null;
+            
+            return {
+                id: String(t.idTipoProfesional || t.idtipoprofesional || t.id || ''),
+                nombre: nombre,
+                translationKey: translationKey
+            };
+        });
+
+        const consultationTranslationMap = {
+            'Control': 'followup',
+            'Ingreso': 'admission',
+            'Gestión': 'management',
+            'Alta': 'discharge'
+        };
+
+        const tipos_consulta_normalizados = (tipos_consulta || []).map(t => {
+            const nombre = t.tipoconsulta || t.tipoConsulta || t.nombre || '';
+            const translationKey = consultationTranslationMap[nombre] || null;
+            
+            return {
+                id: String(t.idTipoConsulta || t.idtipoconsulta || t.id || ''),
+                nombre: nombre,
+                translationKey: translationKey
+            };
+        });        
         // Normalizar profesionales antes de usarlo para construir eventos
         const profesionales_normalizados = profesionales.map(p => ({
             id: String(p.idUsuario || p.idusuario || p.id || ''),

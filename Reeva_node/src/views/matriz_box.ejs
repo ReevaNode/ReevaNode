@@ -1,24 +1,18 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<%= userLang || 'es' %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reeva - Matriz de Boxes</title>
+    <title data-i18n="matrixBox.title"><%= __("matrixBox.title") %></title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
     <script>tailwind.config={theme:{extend:{colors:{primary:'#9b4f88',secondary:'#6b7280'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
     
-    <!-- Remixicon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
     
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/matriz_box.css">
     <link rel="stylesheet" href="/css/Bienvenida-y-Opciones.css" />
     
@@ -33,15 +27,14 @@
 
 <%- include('header') %>
 
-<!-- Main Content -->
 <main class="container mx-auto px-4 py-4 md:py-8 space-y-4 md:space-y-6 max-w-7xl">
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6">
             <div>
-                <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2">Matriz de Boxes</h1>
+                <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2" data-i18n="matrixBox.title"><%= __("matrixBox.title") %></h1>
                 <div class="text-xs md:text-sm text-gray-500">
-                    Última actualización: <span id="last-update-time"></span>
+                    <span data-i18n="matrixBox.lastUpdate"><%= __("matrixBox.lastUpdate") %></span> <span id="last-update-time"></span>
                 </div>
             </div>
             <div class="mt-3 md:mt-0 flex items-center gap-2">
@@ -49,54 +42,54 @@
                 <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                     <button id="btn-vista-detallada" class="view-toggle-btn active px-3 py-2 rounded-md text-sm transition-colors" onclick="cambiarVista('detallada')">
                         <i class="ri-layout-grid-line"></i>
-                        <span class="hidden sm:inline ml-1">Detallada</span>
+                        <span class="hidden sm:inline ml-1" data-i18n="matrixBox.detailedView"><%= __("matrixBox.detailedView") %></span>
                     </button>
                     <button id="btn-vista-compacta" class="view-toggle-btn px-3 py-2 rounded-md text-sm transition-colors" onclick="cambiarVista('compacta')">
                         <i class="ri-layout-4-line"></i>
-                        <span class="hidden sm:inline ml-1">Compacta</span>
+                        <span class="hidden sm:inline ml-1" data-i18n="matrixBox.compactView"><%= __("matrixBox.compactView") %></span>
                     </button>
                 </div>
                 <!-- boton actualizar -->
                 <a href="/matriz-box" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                     <i class="ri-refresh-line"></i>
-                    <span class="hidden sm:inline">Actualizar</span>
+                    <span class="hidden sm:inline" data-i18n="matrixBox.refresh"><%= __("matrixBox.refresh") %></span>
                 </a>
             </div>
         </div>
-
+        
         <!-- Status Summary -->
         <div id="status-summary" class="status-summary"></div>
-
+        
         <!-- Filters -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar por número</label>
-                <input type="text" id="searchInput" placeholder="Ej: 1, 2, 3..." 
+                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="matrixBox.searchLabel"><%= __("matrixBox.searchLabel") %></label>
+                <input type="text" id="searchInput" data-i18n-placeholder="matrixBox.searchPlaceholder" placeholder="<%= __('matrixBox.searchPlaceholder') %>" 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Especialidad</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="matrixBox.specialtyLabel"><%= __("matrixBox.specialtyLabel") %></label>
                 <select id="especialidadFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                    <option value="">Todas las especialidades</option>
+                    <option value="" data-i18n="matrixBox.allSpecialties"><%= __("matrixBox.allSpecialties") %></option>
                     <% especialidades.forEach(esp => { %>
-                        <option value="<%= esp.toLowerCase() %>"><%= esp %></option>
+                        <option value="<%= esp.toLowerCase() %>" data-specialty="<%= esp %>"><%= esp %></option>
                     <% }); %>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="matrixBox.stateLabel"><%= __("matrixBox.stateLabel") %></label>
                 <select id="estadoFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                    <option value="">Todos los estados</option>
-                    <option value="libre">Libre</option>
-                    <option value="reservado">Reservado</option>
-                    <option value="en atención">En Atención</option>
-                    <option value="finalizado">Finalizado</option>
-                    <option value="inhabilitado">Inhabilitado</option>
+                    <option value="" data-i18n="matrixBox.allStates"><%= __("matrixBox.allStates") %></option>
+                    <option value="libre" data-i18n="matrixBox.states.free"><%= __("matrixBox.states.free") %></option>
+                    <option value="reservado" data-i18n="matrixBox.states.reserved"><%= __("matrixBox.states.reserved") %></option>
+                    <option value="en atención" data-i18n="matrixBox.states.inAttention"><%= __("matrixBox.states.inAttention") %></option>
+                    <option value="finalizado" data-i18n="matrixBox.states.finished"><%= __("matrixBox.states.finished") %></option>
+                    <option value="inhabilitado" data-i18n="matrixBox.states.disabled"><%= __("matrixBox.states.disabled") %></option>
                 </select>
             </div>
         </div>
     </div>
-
+    
     <!-- Boxes Grid by Specialty -->
     <div id="boxes-container">
         <% Object.keys(grouped_boxes).sort().forEach(especialidad => { %>
@@ -110,7 +103,7 @@
                     <i class="ri-arrow-down-s-line collapse-icon"></i>
                 </div>
                 
-                <!-- contenedor de boxes (colapsable) -->
+                <!-- contenedor de boxes -->
                 <div class="boxes-container">
                     <div class="boxes-grid">
                         <% grouped_boxes[especialidad].forEach(box => { 
@@ -133,74 +126,73 @@
                                             <i class="<%= estadoIcon %>"></i>
                                         </div>
                                         <div>
-                                            <div class="box-title">Box <%= box.numero || 'N/A' %></div>
+                                            <div class="box-title"><span data-i18n="matrixBox.box"><%= __("matrixBox.box") %></span> <%= box.numero || 'N/A' %></div>
                                             <div class="box-status-label <%= estadoClass === 'paciente-esperando' || estadoClass === 'paciente-ausente' ? 'reservado' : estadoClass %>">
-                                                <%= box.estado === 'Paciente Esperando' || box.estado === 'Paciente Ausente' ? 'Reservado' : box.estado %>
+                                                <%= box.estado === 'Paciente Esperando' || box.estado === 'Paciente Ausente' ? __("matrixBox.states.reserved") : box.estado %>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="ocupacion-info">
                                         <div class="ocupacion-percentage"><%= box.ocupacion_porcentaje || 0 %>%</div>
-                                        <div class="ocupacion-label">Ocupación</div>
+                                        <div class="ocupacion-label" data-i18n="matrixBox.occupancy"><%= __("matrixBox.occupancy") %></div>
                                     </div>
                                 </div>
-
+                                
                                 <!-- Médico -->
                                 <div class="medico-section">
                                     <div class="medico-header">
                                         <svg class="medico-icon" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                         </svg>
-                                        <span class="medico-label">Médico</span>
-                                </div>
-                                <div class="medico-name">
-                                    <% if (box.estado === 'Inhabilitado') { %>
-                                        No asignado
-                                    <% } else if (box.medico_nombre) { %>
-                                        <%= box.medico_nombre %>
-                                    <% } else { %>
-                                        Médico <%= especialidad %>
-                                    <% } %>
-                                </div>
-                            </div>
-
-                            <!-- Patient Section (solo si reservado o inhabilitado) -->
-                            <% if (box.estado === 'Paciente Esperando' || box.estado === 'Paciente Ausente') { %>
-                                <div class="patient-section">
-                                    <div class="patient-header">
-                                        <svg class="patient-icon" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <span class="patient-label">Estado del paciente</span>
+                                        <span class="medico-label" data-i18n="matrixBox.doctor"><%= __("matrixBox.doctor") %></span>
                                     </div>
-                                    <div class="patient-status"><%= box.estado %></div>
-                                </div>
-                            <% } else if (box.estado === 'Inhabilitado') { %>
-                                <div class="patient-section">
-                                    <div class="patient-header">
-                                        <svg class="patient-icon" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <span class="patient-label">Motivo</span>
+                                    <div class="medico-name">
+                                        <% if (box.estado === 'Inhabilitado') { %>
+                                            <span data-i18n="matrixBox.noAssigned"><%= __("matrixBox.noAssigned") %></span>
+                                        <% } else if (box.medico_nombre) { %>
+                                            <%= box.medico_nombre %>
+                                        <% } else { %>
+                                            <%= __("matrixBox.doctor") %> <%= especialidad %>
+                                        <% } %>
                                     </div>
-                                    <div class="patient-status">Mantenimiento programado</div>
                                 </div>
-                            <% } %>
-
-                            <!-- Progress Bar -->
-                            <div class="progress-section">
-                                <div class="progress-header">
-                                    <span class="progress-label">Progreso diario</span>
-                                    <span class="progress-percentage"><%= box.progreso_porcentaje || 0 %>%</span>
+                                
+                                <!-- Patient Section -->
+                                <% if (box.estado === 'Paciente Esperando' || box.estado === 'Paciente Ausente') { %>
+                                    <div class="patient-section">
+                                        <div class="patient-header">
+                                            <svg class="patient-icon" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="patient-label" data-i18n="matrixBox.patientStatus"><%= __("matrixBox.patientStatus") %></span>
+                                        </div>
+                                        <div class="patient-status"><%= box.estado %></div>
+                                    </div>
+                                <% } else if (box.estado === 'Inhabilitado') { %>
+                                    <div class="patient-section">
+                                        <div class="patient-header">
+                                            <svg class="patient-icon" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="patient-label" data-i18n="matrixBox.reason"><%= __("matrixBox.reason") %></span>
+                                        </div>
+                                        <div class="patient-status" data-i18n="matrixBox.scheduledMaintenance"><%= __("matrixBox.scheduledMaintenance") %></div>
+                                    </div>
+                                <% } %>
+                                
+                                <!-- Progress Bar -->
+                                <div class="progress-section">
+                                    <div class="progress-header">
+                                        <span class="progress-label" data-i18n="matrixBox.dailyProgress"><%= __("matrixBox.dailyProgress") %></span>
+                                        <span class="progress-percentage"><%= box.progreso_porcentaje || 0 %>%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill <%= estadoClass === 'paciente-esperando' || estadoClass === 'paciente-ausente' ? 'reservado' : estadoClass %>" 
+                                             data-progress="<%= box.progreso_porcentaje || 0 %>"></div>
+                                    </div>
                                 </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill <%= estadoClass === 'paciente-esperando' || estadoClass === 'paciente-ausente' ? 'reservado' : estadoClass %>" 
-                                         data-progress="<%= box.progreso_porcentaje || 0 %>"></div>
-                                </div>
-                            </div>
-
-                        </a>
-                    <% }); %>
+                            </a>
+                        <% }); %>
                     </div>
                 </div>
             </div>
@@ -209,27 +201,16 @@
         <!-- No results message -->
         <div id="no-filter-results" class="no-results" style="display: none;">
             <i class="ri-search-line text-4xl text-gray-400 mb-2"></i>
-            <p>No se encontraron boxes que coincidan con los filtros aplicados</p>
+            <p data-i18n="matrixBox.noResults"><%= __("matrixBox.noResults") %></p>
         </div>
     </div>
 </main>
 
-<!-- Footer -->
-<footer class="w-full py-8 mt-auto border-t border-gray-200">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center mb-4 md:mb-0">
-                <div class="w-6 h-6 flex items-center justify-center mr-2">
-                    <i class="ri-code-s-slash-line text-gray-500"></i>
-                </div>
-                <span class="text-gray-500 text-sm">SOFTEC</span>
-            </div>
-        </div>
-    </div>
-</footer>
+<%- include('footer') %>
 
-<!-- JavaScript -->
+<script>
+    window.userLang = '<%= userLang || "es" %>';
+</script>
 <script src="/js/matriz_box.js"></script>
-
 </body>
 </html>

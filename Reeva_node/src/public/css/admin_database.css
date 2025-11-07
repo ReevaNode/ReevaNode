@@ -106,6 +106,39 @@ body {
   display: none;
 }
 
+.filters-section label {
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.filters-section select,
+.filters-section input[type="text"] {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #1f2937;
+  width: 100%;
+}
+
+.filters-section select:focus,
+.filters-section input[type="text"]:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filters-section small {
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: block;
+  margin-top: 0.25rem;
+}
+
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -139,6 +172,64 @@ body {
   font-size: 0.9rem;
 }
 
+.agenda-date-filter {
+  padding: 1rem 2rem;
+  background: #f0f7ff;
+  border-bottom: 1px solid #bfdbfe;
+  margin-bottom: 0;
+}
+
+.agenda-date-filter h3 {
+  color: #1e40af;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agenda-date-filter .bg-blue-50 {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.agenda-date-filter label {
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.agenda-date-filter input[type="date"] {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #1f2937;
+  width: 100%;
+}
+
+.agenda-date-filter input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.agenda-date-filter .text-xs {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .btn {
   padding: 0.5rem 1rem;
   border: none;
@@ -146,6 +237,9 @@ body {
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-primary {
@@ -164,6 +258,15 @@ body {
 
 .btn-success:hover {
   background: #27ae60;
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #d97706;
 }
 
 .btn-danger {
@@ -524,16 +627,6 @@ body.theme-dark .btn-primary:hover {
   background: #7c3d6d;
 }
 
-body.theme-dark .btn-secondary {
-  background: #475569;
-  color: #e5e7eb;
-  border-color: #475569;
-}
-
-body.theme-dark .btn-secondary:hover {
-  background: #334155;
-}
-
 body.theme-dark .btn-warning {
   background: #f59e0b;
   color: white;
@@ -544,6 +637,16 @@ body.theme-dark .btn-warning:hover {
   background: #d97706;
 }
 
+body.theme-dark .btn-secondary {
+  background: #475569;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+body.theme-dark .btn-secondary:hover {
+  background: #334155;
+}
+
 body.theme-dark .btn-danger {
   background: #dc2626;
   color: white;
@@ -552,6 +655,65 @@ body.theme-dark .btn-danger {
 
 body.theme-dark .btn-danger:hover {
   background: #b91c1c;
+}
+
+body.theme-dark .agenda-date-filter {
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.theme-dark .agenda-date-filter h3 {
+  color: #e0e7ff;
+}
+
+body.theme-dark .agenda-date-filter .bg-blue-50 {
+  background: #1e293b;
+  border: 1px solid #475569;
+}
+
+body.theme-dark .agenda-date-filter label {
+  color: #cbd5e1;
+}
+
+body.theme-dark .agenda-date-filter input[type="date"] {
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #e5e7eb;
+}
+
+body.theme-dark .agenda-date-filter input[type="date"]:focus {
+  border-color: #9b4f88;
+  box-shadow: 0 0 0 3px rgba(155, 79, 136, 0.2);
+}
+
+body.theme-dark .agenda-date-filter .text-xs {
+  color: #94a3b8;
+}
+
+body.theme-dark .filters-section {
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.theme-dark .filters-section label {
+  color: #cbd5e1;
+}
+
+body.theme-dark .filters-section select,
+body.theme-dark .filters-section input[type="text"] {
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #e5e7eb;
+}
+
+body.theme-dark .filters-section select:focus,
+body.theme-dark .filters-section input[type="text"]:focus {
+  border-color: #9b4f88;
+  box-shadow: 0 0 0 3px rgba(155, 79, 136, 0.2);
+}
+
+body.theme-dark .filters-section small {
+  color: #94a3b8;
 }
 
 body.theme-dark table {

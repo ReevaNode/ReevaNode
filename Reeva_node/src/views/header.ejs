@@ -733,75 +733,8 @@ if (document.readyState === 'loading') {
   }
   
   // Mostrar notificacion visual
-  function showSaveNotification(type, message) {
-    const existing = document.getElementById('save-notification');
-    if (existing) {
-      existing.remove();
-    }
-    
-    const notification = document.createElement('div');
-    notification.id = 'save-notification';
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      z-index: 9999;
-      animation: slideIn 0.3s ease-out;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    `;
-    
-    if (type === 'success') {
-      notification.style.backgroundColor = '#10b981';
-      notification.style.color = 'white';
-      notification.innerHTML = '<i class="ri-check-line"></i> <span>Preferencias guardadas</span>';
-    } else {
-      notification.style.backgroundColor = '#ef4444';
-      notification.style.color = 'white';
-      notification.innerHTML = `<i class="ri-error-warning-line"></i> <span>${message || 'No se pudo guardar'}</span>`;
-    }
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.style.animation = 'slideOut 0.3s ease-in';
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-  
-  if (!document.getElementById('notification-styles')) {
-    const style = document.createElement('style');
-    style.id = 'notification-styles';
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-      @keyframes slideOut {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
+  function showSaveNotification() {}
+
   
   // Interceptar cambios de tema
   document.addEventListener('reeva:theme-change', async (event) => {
