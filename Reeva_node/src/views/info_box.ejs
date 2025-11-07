@@ -36,27 +36,10 @@
   <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/es.global.min.js"></script>
-
-  <!-- Agenda CSS -->
   <link rel="stylesheet" href="/css/agenda.css" />
 
   <style>
     body { background-color:#f5f5f5; }
-    
-    /* Calendar styling */
-    .fc-event-title {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    #calendar .fc-scrollgrid,
-    #calendar .fc-scrollgrid td,
-    #calendar .fc-scrollgrid th,
-    #calendar .fc-timegrid-slot,
-    #calendar .fc-timegrid-col,
-    #calendar .fc-daygrid-day,
-    #calendar .fc-daygrid-day-frame { background:#ffffff !important; }
     
     /* Modal animations */
     #itemsModal { transition: opacity .22s ease; }
@@ -187,59 +170,33 @@
       </div>
   </div>
 
-  <!-- Calendario con FullCalendar -->
+  <!-- Calendario -->
   <section class="bg-white rounded-lg shadow-sm mt-6 md:mt-8 p-4 md:p-6">
-    <div class="mb-4 md:mb-6">
-      <h2 class="text-xl md:text-2xl font-semibold text-gray-800">Agenda del Box</h2>
-    </div>
+    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800">Calendario</h2></div>
     
-    <!-- Banner instructivo colapsable -->
+    <!-- Banner instructivo -->
     <div id="instructionBanner" class="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg relative overflow-hidden">
-      <!-- Header siempre visible -->
       <div class="flex items-center justify-between p-4 cursor-pointer" id="bannerHeader">
         <div class="flex items-center space-x-3">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-              <i class="ri-question-line text-primary text-sm"></i>
-            </div>
-          </div>
+          <div class="flex-shrink-0"><div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center"><i class="ri-question-line text-primary text-sm"></i></div></div>
           <div>
-            <h4 class="text-sm font-medium text-gray-900">Ayuda - ¿Cómo usar el calendario?</h4>
-            <p class="text-xs text-gray-500">Haz clic para ver las instrucciones</p>
+            <h4 class="text-sm font-medium text-gray-900">¿Cómo usar el calendario?</h4>
+            <p class="text-xs text-gray-500">Haz clic para ver instrucciones</p>
           </div>
         </div>
         <button id="toggleBanner" class="text-gray-400 hover:text-gray-600 transition-all duration-200 transform hover:scale-110">
           <i id="bannerIcon" class="ri-arrow-down-s-line text-lg transition-transform duration-200"></i>
         </button>
       </div>
-      
-      <!-- Contenido colapsable -->
       <div id="bannerContent" class="px-4 pb-4 max-h-0 overflow-hidden transition-all duration-300">
         <div class="border-t border-purple-200 pt-3">
           <div class="space-y-3">
-            <div>
-              <h5 class="text-sm font-medium text-gray-900">¿Cómo crear una consulta?</h5>
-              <p class="text-sm text-gray-600">
-                <span class="mx-2">•</span>
-                <span class="font-medium text-primary">Clic simple:</span> Detecta automáticamente el bloque libre completo
-              </p>
-            </div>
-            <div>
-              <h5 class="text-sm font-medium text-gray-900">¿Cómo editar una consulta?</h5>
-              <p class="text-sm text-gray-600">
-                <span class="mx-2">•</span>
-                <span class="font-medium text-primary">Clic simple:</span> Editar o eliminar el evento
-              </p>
-            </div>
+            <div><h5 class="text-sm font-medium text-gray-900">Editar una consulta</h5><p class="text-sm text-gray-600"><span class="mx-2">•</span><span class="font-medium text-primary">Haz clic en el evento que quieres modificar</span></p></div>
           </div>
         </div>
       </div>
-      
-      <!-- Barra de progreso animada -->
-      <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-200 to-blue-200 opacity-40">
-        <div class="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse-slow"></div>
-      </div>
-    </div>    
+      <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-200 to-blue-200 opacity-40"><div class="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse-slow"></div></div>
+    </div>
     
     <div id="calendar" class="w-full min-h-[600px] md:min-h-[700px] overflow-auto"></div>
   </section>
@@ -286,177 +243,58 @@
   </div>
 </div>
 
-<!-- Modal Agregar Evento -->
-<div
-  id="eventoModal"
-  class="fixed inset-0 z-50 flex items-center justify-center
-    bg-gray-500 bg-opacity-70 backdrop-blur-sm
-    hidden overflow-auto p-4"
->
+<!-- Modal Editar -->
+<div id="editEventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
   <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-    <h3 class="text-2xl font-medium text-center mb-8">Agregar evento</h3>
-    <div id="timeRangeInfo" class="hidden mb-4 p-3 rounded bg-blue-50 text-blue-700 text-sm border border-blue-200">
-      <i class="ri-information-line"></i>
-      <span>Cargando información del horario...</span>
-    </div>
-      
-    <form
-      id="eventoForm"
-      method="post"
-      action="/add_evento/<%= box.idBox %>"
-      class="space-y-6"
-    >
-      <!-- Error inline -->
-      <div id="addError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
-      
-      <!-- Número de box (readonly) -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Número de Box</label>
-        <input
-          type="text"
-          name="box_id"
-          class="w-full border rounded p-2 bg-gray-100"
-          readonly
-          value="<%= box.numero %>"
-        />
-      </div>
-      
-      <!-- Profesional (sin especialidad) -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Profesional</label>
-        <select id="profesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-          <option value="" disabled selected>— Selecciona profesional —</option>
-          <% (profesionales_normalizados || []).forEach(prof => { %>
-            <option value="<%= prof.id %>"><%= prof.nombre %></option>
-          <% }) %>
-        </select>
-      </div>
-      
-      <!-- Hora inicio / fin -->
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
-          <input type="time" name="horainicio" min="08:00" max="19:00" class="w-full border rounded p-2" required />
-        </div>
-        <div>
-          <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
-          <input type="time" name="horafin" min="08:00" max="19:00" class="w-full border rounded p-2" required />
-        </div>
-      </div>
-      
-      <!-- Fecha -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Fecha</label>
-        <input type="date" name="fecha" class="w-full border rounded p-2" required />
-      </div>
-      
-      <!-- Tipo de consulta -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Tipo de consulta</label>
-        <select name="idTipoConsulta" class="w-full border rounded p-2" required>
-          <option value="" disabled selected>— Selecciona tipo —</option>
-          <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
-            <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
-          <% }) %>
-        </select>
-      </div>
-      
-      <!-- Observaciones -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Detalle u observaciones</label>
-        <textarea name="observaciones" rows="4" class="w-full border rounded p-2"></textarea>
-      </div>
-      
-      <!-- Botones -->
-      <div class="flex justify-between">
-        <button type="button" onclick="cancelEventoCreation()" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
-        <button type="submit" id="addEventoBtn" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Agregar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal Editar Evento -->
-<div
-  id="editEventoModal"
-  class="fixed inset-0 z-50 flex items-center justify-center
-     bg-gray-500 bg-opacity-70 backdrop-blur-sm
-     hidden overflow-auto p-4"
->
-  <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-    <h3 class="text-2xl font-medium text-center mb-8">Editar evento</h3>
-    <form
-      id="editEventoForm"
-      method="post"
-      action=""
-    >
-      <input type="hidden" name="evento_id" id="editEventoId" />
-      
-      <!-- Error inline -->
+    <h3 class="text-2xl font-medium text-center mb-8">Editar Evento</h3>
+    <form id="editEventoForm" method="post" action="" class="space-y-6">
+      <input type="hidden" id="editEventoId" name="eventoId" value="" />
+      <input type="hidden" id="editEstadoId" name="idEstado" value="" />
       <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
-      
-      <!-- Profesional (sin especialidad) -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Especialidad</label>
+        <select id="editEspecialidadSelect" class="w-full border rounded p-2" required>
+          <option value="" disabled selected>— Selecciona especialidad —</option>
+          <% (tipos_profesional_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
+        </select>
+      </div>
       <div>
         <label class="block text-sm text-gray-600 mb-2">Profesional</label>
         <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
           <option value="" disabled selected>— Selecciona profesional —</option>
-          <% (profesionales_normalizados || []).forEach(prof => { %>
-            <option value="<%= prof.id %>"><%= prof.nombre %></option>
-          <% }) %>
         </select>
       </div>
-      
-      <!-- Hora inicio / fin -->
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Tipo de Consulta</label>
+        <select id="editTipoConsulta" name="idTipoConsulta" class="w-full border rounded p-2" required>
+          <option value="" disabled selected>— Selecciona tipo —</option>
+          <% (tipos_consulta_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-2">Fecha</label>
+        <input type="date" id="editFecha" name="fecha" class="w-full border rounded p-2" required />
+      </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
-          <input type="time" name="horainicio" id="editHoraInicio" min="08:00" max="19:00" class="w-full border rounded p-2" required />
+          <input type="time" id="editHoraInicio" name="horainicio" class="w-full border rounded p-2" required />
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
-          <input type="time" name="horafin" id="editHoraFin" min="08:00" max="19:00" class="w-full border rounded p-2" required />
+          <input type="time" id="editHoraFin" name="horafin" class="w-full border rounded p-2" required />
         </div>
       </div>
-      
-      <!-- Fecha -->
       <div>
-        <label class="block text-sm text-gray-600 mb-2">Fecha</label>
-        <input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required />
+        <label class="block text-sm text-gray-600 mb-2">Observaciones</label>
+        <textarea id="editObservaciones" name="observaciones" rows="3" class="w-full border rounded p-2"></textarea>
       </div>
-      
-      <!-- Tipo de consulta -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Tipo de consulta</label>
-        <select name="idTipoConsulta" id="editTipoConsulta" class="w-full border rounded p-2" required>
-          <option value="" disabled selected>— Selecciona tipo —</option>
-          <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
-            <option value="<%= tipo.id %>"><%= tipo.nombre %></option>
-          <% }) %>
-        </select>
-      </div>
-      
-      <!-- Estado (solo para admin) -->
-      <% if (user && user.rol === 'admin') { %>
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Estado</label>
-        <select name="idEstado" id="editEstado" class="w-full border rounded p-2">
-          <% tipos_estado.forEach(te => { %>
-            <option value="<%= te.idTipoEstado %>"><%= te.estado %></option>
-          <% }) %>
-        </select>
-      </div>
-      <% } %>
-      
-      <!-- Observaciones -->
-      <div>
-        <label class="block text-sm text-gray-600 mb-2">Detalle u observaciones</label>
-        <textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea>
-      </div>
-      
-      <!-- Botones -->
-      <div class="flex justify-between">
-        <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn">Eliminar</button>
-        <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar cambios</button>
+      <div class="flex justify-between gap-3">
+        <button id="deleteEventoBtn" type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700">Eliminar</button>
+        <div class="flex gap-3">
+          <button type="button" onclick="editEventoModal.classList.add('hidden')" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
+          <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar</button>
+        </div>
       </div>
     </form>
   </div>
@@ -514,15 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-const eventoModal = document.getElementById('eventoModal');
-eventoModal.addEventListener('click', e => {
-  if (e.target === eventoModal) {
-    eventoModal.classList.add('hidden');
-  }
-});
-</script>
-
-<script>
 const mantModal = document.getElementById('mantModal');
 function openMantModal() {
   mantModal.classList.remove('hidden');
@@ -533,15 +362,55 @@ function closeMantModal() {
 mantModal.addEventListener('click', e => {
   if (e.target === mantModal) closeMantModal();
 });
+
+function toggleMantenimiento() {
+  const boxId = <%= box.idBox || box.idbox %>;
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/toggle_mantenimiento/${boxId}`;
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+
+<!-- Scripts del Modal de Eventos -->
+<script>
+  const eventoModal = document.getElementById('eventoModal');
+  eventoModal.addEventListener('click', e => {
+    if (e.target === eventoModal) eventoModal.classList.add('hidden');
+  });
 </script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const eventoModal = document.getElementById('eventoModal');
+  const mantModal   = document.getElementById('mantModal');
+  
+  window.openEventoModal = function()  { if (eventoModal) eventoModal.classList.remove('hidden'); }
+  window.closeEventoModal = function() { if (eventoModal) eventoModal.classList.add('hidden'); }
+  window.openMantModal = function()    { if (mantModal) mantModal.classList.remove('hidden'); }
+  window.closeMantModal = function()   { if (mantModal) mantModal.classList.add('hidden'); }
+  
+  if (eventoModal) {
+    eventoModal.addEventListener('click', e => {
+      if (e.target === eventoModal) window.closeEventoModal();
+    });
+  }
+  
+  if (mantModal) {
+    mantModal.addEventListener('click', e => {
+      if (e.target === mantModal) window.closeMantModal();
+    });
+  }
+});
+</script>
+
+<!-- Inicialización FullCalendar -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('calendar');
-
-  // 🔹 Usar los eventos enviados por el backend directamente (sin esperar fetch)
   const eventos = <%- eventos_json || '[]' %>;
-
+  
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridDay',
     locale: 'es',
@@ -550,6 +419,21 @@ document.addEventListener('DOMContentLoaded', function() {
     contentHeight: 600,
     aspectRatio: 1.2,
     nowIndicator: true,
+    
+    eventTimeFormat: {
+      hour: 'numeric',
+      minute: '2-digit',
+      meridiem: false,
+      hour12: false
+    },
+    
+    slotLabelFormat: {
+      hour: 'numeric',
+      minute: '2-digit',
+      meridiem: false,
+      hour12: false
+    },
+    
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
@@ -561,10 +445,8 @@ document.addEventListener('DOMContentLoaded', function() {
       week: 'Semana',
       day: 'Día'
     },
-
-    // 🔹 Carga inmediata con los eventos embebidos
+    allDayText: 'todo el día',
     events: eventos,
-
     slotMinHeight: 30,
     slotDuration: '00:05:00',
     snapDuration: '00:01:00',
@@ -575,47 +457,22 @@ document.addEventListener('DOMContentLoaded', function() {
     selectMirror: false,
     selectOverlap: false,
     unselectAuto: false,
-
+    
+    // Deshabilitado: no se pueden crear eventos desde info_box
     dateClick: function(info) {
-      console.log('=== CLICK EN CALENDARIO ===');
-      console.log('Fecha click:', info.date);
-      
-      const bloqueCompleto = detectarBloqueLibreCompleto(info.date);
-      console.log('Bloque detectado:', bloqueCompleto);
-      
-      if (bloqueCompleto) {
-        console.log('Duración del bloque:', (new Date(bloqueCompleto.end) - new Date(bloqueCompleto.start)) / 60000, 'minutos');
-        
-        const bloqueKey = `${bloqueCompleto.start}_${bloqueCompleto.end}`;
-        const currentBloqueKey = currentBloqueInfo ? `${currentBloqueInfo.start}_${currentBloqueInfo.end}` : null;
-        
-        if (!currentPlaceholder || bloqueKey !== currentBloqueKey) {
-          createCustomPlaceholder(bloqueCompleto, info.date);
-        }
-        
-        openEventoModalWithTime(bloqueCompleto.start, bloqueCompleto.end);
-        updateTimeRestrictions(bloqueCompleto);
-      }
+      console.log('Creación de eventos deshabilitada en info_box');
     },
-
+    
     select: function(selectionInfo) {
-      openEventoModalWithTime(selectionInfo.start, selectionInfo.end);
+      console.log('Creación de eventos deshabilitada en info_box');
       calendar.unselect();
     },
-
+    
     eventClick: function(info) {
-      if (info.event.classNames.includes('custom-placeholder')) {
-        const originalBlock = info.event.extendedProps.originalBlock;
-        if (originalBlock) {
-          openEventoModalWithTime(originalBlock.start, originalBlock.end);
-          updateTimeRestrictions(originalBlock);
-        }
-        return;
-      }
-      
+      // Solo permitir edición de eventos reales (no placeholders)
       openEditEventoModal(info.event);
     },
-
+    
     eventDidMount: function() {
       setTimeout(markEmptySlots, 100);
     },
@@ -628,18 +485,13 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(markEmptySlots, 100);
     }
   });
-
+  
   window.__calendar = calendar;
   calendar.render();
-
-  // El calendario se muestra altiro: asegurar visibilidad y altura estable
   calendarEl.style.visibility = 'visible';
   calendarEl.style.opacity = '1';
   calendarEl.style.minHeight = '700px';
-
-  // -------------------------
-  // FUNCIONES AUXILIARES
-  // -------------------------
+  
   function markEmptySlots() {
     document.querySelectorAll('.fc-timegrid-slot.empty-slot, .fc-timegrid-slot.empty-block').forEach(slot => {
       slot.classList.remove('empty-slot', 'empty-block');
@@ -653,14 +505,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     dayColumns.forEach((column, columnIndex) => {
       const slots = column.querySelectorAll('.fc-timegrid-slot');
-      
       const emptyBlocks = [];
       let currentBlock = [];
       
       slots.forEach((slot, index) => {
-        const hasEvent = slot.querySelector('.fc-event, .fc-event-main');
+        const hasEvent = slot.querySelector('.fc-timegrid-event-harness, .fc-timegrid-now-indicator-line');
+        
         if (!hasEvent) {
-          slot.classList.add('empty-slot');
           currentBlock.push(slot);
         } else {
           if (currentBlock.length > 0) {
@@ -671,16 +522,19 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       
       if (currentBlock.length > 0) {
-        emptyBlocks.push(currentBlock);
+        emptyBlocks.push([...currentBlock]);
       }
       
       emptyBlocks.forEach((block, blockIndex) => {
+        const blockId = `block-${columnIndex}-${blockIndex}`;
+        const blockSize = block.length;
+        
         block.forEach((slot, slotIndex) => {
           slot.classList.add('empty-block');
-          slot.setAttribute('data-block-id', `${columnIndex}-${blockIndex}`);
-          slot.setAttribute('data-block-size', block.length);
-          slot.setAttribute('data-is-first', slotIndex === 0 ? 'true' : 'false');
-          slot.setAttribute('data-is-last', slotIndex === block.length - 1 ? 'true' : 'false');
+          slot.setAttribute('data-block-id', blockId);
+          slot.setAttribute('data-block-size', blockSize);
+          if (slotIndex === 0) slot.setAttribute('data-is-first', 'true');
+          if (slotIndex === block.length - 1) slot.setAttribute('data-is-last', 'true');
         });
       });
     });
@@ -688,22 +542,42 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Script de Profesionales -->
 <script>
-  // Los selects de profesional ya están poblados directamente en el HTML
+  const profesionales = <%- JSON.stringify(profesionales_normalizados || []) %>;
+  console.log('PROFESIONALES desde servidor:', profesionales);
+  
+  function fillProfesionalSelect(selectEl, especialidadId) {
+    if (!selectEl) return;
+    selectEl.innerHTML = '<option value="" disabled selected>— Selecciona profesional —</option>';
+    profesionales.forEach(function(prof) {
+      if (!especialidadId || String(prof.especialidad) === String(especialidadId)) {
+        const option = document.createElement('option');
+        option.value = prof.id;
+        option.textContent = prof.nombre;
+        selectEl.appendChild(option);
+      }
+    });
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      const editProfesionalSelect = document.getElementById('editProfesionalSelect');
+      fillProfesionalSelect(editProfesionalSelect, null);
+    } catch (e) { console.warn('Error rellenando select de profesionales', e); }
+  });
 </script>
 
+<!-- Script de Editar Evento -->
 <script>
 const editEventoModal = document.getElementById('editEventoModal');
 const editEventoForm = document.getElementById('editEventoForm');
-
 function pad(num) {
   return num.toString().padStart(2, '0');
 }
-
 function toLocalTimeString(dateObj) {
   return pad(dateObj.getHours()) + ':' + pad(dateObj.getMinutes());
 }
-
 function openEditEventoModal(evento) {
   const err = document.getElementById('editError');
   if (err) {
@@ -711,43 +585,69 @@ function openEditEventoModal(evento) {
     err.classList.add('hidden');
   }
   
-  // Rellenar profesional directamente (sin especialidad)
+  const editEspecialidadSelect = document.getElementById('editEspecialidadSelect');
   const editProfesionalSelect = document.getElementById('editProfesionalSelect');
-  const idUsuario = evento.extendedProps.idUsuario || evento.extendedProps.usuario_id;
-  if (editProfesionalSelect && idUsuario) {
-    editProfesionalSelect.value = String(idUsuario);
+  
+  // Obtener profesional actual para saber su especialidad
+  const profesionalActual = profesionales.find(p => p.id == evento.extendedProps.usuario_id);
+  
+  // Pre-seleccionar especialidad del profesional actual (para que vea sus datos)
+  if (profesionalActual && editEspecialidadSelect) {
+    editEspecialidadSelect.value = profesionalActual.especialidad;
+    editEspecialidadSelect.dispatchEvent(new Event('change'));
+    
+    // Hacer que parezca deshabilitado visualmente
+    editEspecialidadSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+    editEspecialidadSelect.setAttribute('onclick', 'return false;');
+    editEspecialidadSelect.setAttribute('onkeydown', 'return false;');
+    
+    // Seleccionar el profesional actual DESPUÉS de filtrar por especialidad
+    setTimeout(() => {
+      editProfesionalSelect.value = profesionalActual.id;
+    }, 100);
+  } else {
+    editProfesionalSelect.value = "";
   }
   
-  // Rellenar campos básicos
   document.getElementById('editEventoId').value = evento.id;
+  document.getElementById('editEstadoId').value = evento.extendedProps.idEstado || '2';
   document.getElementById('editHoraInicio').value = toLocalTimeString(evento.start);
   document.getElementById('editHoraFin').value = toLocalTimeString(evento.end);
   document.getElementById('editFecha').value = evento.start.toISOString().slice(0,10);
   
-  // Rellenar tipo de consulta
-  const tipoConsultaSelect = document.getElementById('editTipoConsulta');
-  const idTipoConsulta = evento.extendedProps.idTipoConsulta || evento.extendedProps.tipo_id;
-  if (tipoConsultaSelect && idTipoConsulta) {
-    tipoConsultaSelect.value = String(idTipoConsulta);
+  // Pre-seleccionar tipo de consulta
+  const tipoSelect = document.getElementById('editTipoConsulta');
+  if (tipoSelect) {
+    const tipoId = (evento.extendedProps && evento.extendedProps.tipo_id != null)
+      ? String(evento.extendedProps.tipo_id)
+      : '';
+    
+    if (tipoId) {
+      tipoSelect.value = tipoId;
+    } else {
+      tipoSelect.value = '';
+    }
   }
   
-  // Rellenar estado (solo si es admin)
-  const estadoSelect = document.getElementById('editEstado');
-  if (estadoSelect) {
-    const idEstado = evento.extendedProps.idEstado || '1';
-    estadoSelect.value = String(idEstado);
-  }
-  
-  // Rellenar observaciones
   document.getElementById('editObservaciones').value = evento.extendedProps.observaciones || '';
-  
-  // Configurar action del form
   editEventoForm.action = `/editar_evento/${evento.id}`;
   editEventoModal.classList.remove('hidden');
 }
 
+function closeEditEventoModal() {
+  // Re-habilitar especialidad select y limpiar restricciones
+  const editEspecialidadSelect = document.getElementById('editEspecialidadSelect');
+  if (editEspecialidadSelect) {
+    editEspecialidadSelect.disabled = false;
+    editEspecialidadSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+    editEspecialidadSelect.removeAttribute('onclick');
+    editEspecialidadSelect.removeAttribute('onkeydown');
+  }
+  editEventoModal.classList.add('hidden');
+}
+
 editEventoModal.addEventListener('click', e => {
-  if (e.target === editEventoModal) editEventoModal.classList.add('hidden');
+  if (e.target === editEventoModal) closeEditEventoModal();
 });
 
 document.getElementById('deleteEventoBtn').onclick = async function() {
@@ -762,8 +662,7 @@ document.getElementById('deleteEventoBtn').onclick = async function() {
       });
       
       if (response.ok) {
-        // Cerrar modal y recargar página actual
-        editEventoModal.classList.add('hidden');
+        closeEditEventoModal();
         window.location.href = `/info-box/${boxId}`;
       } else {
         alert('Error al eliminar el evento');
@@ -776,6 +675,15 @@ document.getElementById('deleteEventoBtn').onclick = async function() {
 };
 </script>
 
+<script>
+  const editEspecialidadSelect = document.getElementById('editEspecialidadSelect');
+  const editProfesionalSelect = document.getElementById('editProfesionalSelect');
+  editEspecialidadSelect && editEspecialidadSelect.addEventListener('change', function() {
+    fillProfesionalSelect(editProfesionalSelect, this.value);
+  });
+</script>
+
+<!-- Script de Refresh Calendar -->
 <script>
 async function refreshCalendarEvents() {
   try {
@@ -794,47 +702,7 @@ async function refreshCalendarEvents() {
 }
 </script>
 
-<script>
-const eventoForm = document.getElementById('eventoForm');
-if (eventoForm) {
-  eventoForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const errorBox = document.getElementById('addError');
-    if (errorBox) { errorBox.classList.add('hidden'); errorBox.textContent = ''; }
-    const addBtn = document.getElementById('addEventoBtn');
-    const prevLabel = addBtn ? addBtn.textContent : '';
-    if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Agregando…'; }
-    const formData = new FormData(eventoForm);
-    const params = new URLSearchParams();
-    for (const pair of formData.entries()) params.append(pair[0], pair[1]);
-    const url = eventoForm.action;
-    try {
-      const resp = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
-      const isJson = resp.headers.get('content-type')?.includes('application/json');
-      if (isJson) {
-        const data = await resp.json();
-        if (data.ok) {
-          await refreshCalendarEvents();
-          if (addBtn) { addBtn.disabled = false; addBtn.textContent = prevLabel; }
-          eventoModal.classList.add('hidden');
-          eventoForm.reset();
-          removeCustomPlaceholder();
-          return;
-        } else {
-          if (errorBox) { errorBox.textContent = data.error || 'Error al crear el evento.'; errorBox.classList.remove('hidden'); }
-        }
-      } else {
-        window.location.reload();
-      }
-    } catch (err) {
-      if (errorBox) { errorBox.textContent = 'Error de red. Intenta nuevamente.'; errorBox.classList.remove('hidden'); }
-    } finally {
-      if (addBtn) { addBtn.disabled = false; addBtn.textContent = prevLabel; }
-    }
-  });
-}
-</script>
-
+<!-- Script de Formulario Edit Evento -->
 <script>
 editEventoForm.addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -863,7 +731,7 @@ editEventoForm.addEventListener('submit', async function(e) {
         return;
       }
       await refreshCalendarEvents();
-      editEventoModal.classList.add('hidden');
+      closeEditEventoModal();
       return;
     }
     window.location.reload();
@@ -874,6 +742,7 @@ editEventoForm.addEventListener('submit', async function(e) {
 });
 </script>
 
+<!-- Script de Validación de Horarios -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   function validateTimeRange(timeInput) {
@@ -958,480 +827,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+</script>
 
-function showSelectedBlock(fechaStart, fechaEnd) {
-  document.querySelectorAll('.fc-timegrid-slot.block-selected').forEach(slot => {
-    slot.classList.remove('block-selected');
-  });
-  
-  const slots = document.querySelectorAll('.fc-timegrid-body .fc-timegrid-slot');
-  slots.forEach(slot => {
-    const slotTime = getSlotTime(slot);
-    if (slotTime && slotTime >= fechaStart && slotTime < fechaEnd) {
-      slot.classList.add('block-selected');
-    }
-  });
-  
-  setTimeout(() => {
-    document.querySelectorAll('.fc-timegrid-slot.block-selected').forEach(slot => {
-      slot.classList.remove('block-selected');
-    });
-  }, 3000);
-}
-
-function getSlotTime(slot) {
-  const timeText = slot.closest('.fc-timegrid-col')?.querySelector('.fc-timegrid-axis-cushion')?.textContent;
-  if (!timeText) return null;
-  
-  const today = new Date();
-  const [hours, minutes] = timeText.split(':').map(Number);
-  return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours || 0, minutes || 0);
-}
-
-function detectarBloqueLibreCompleto(fechaClick) {
-  if (!window.__calendar) return null;
-  
-  const fechaClickDate = new Date(fechaClick);
-  const diaClick = fechaClickDate.toDateString();
-  
-  const eventosDelDia = window.__calendar.getEvents().filter(evento => {
-    return evento.start && evento.start.toDateString() === diaClick;
-  });
-  
-  eventosDelDia.sort((a, b) => a.start.getTime() - b.start.getTime());
-  
-  const inicioJornada = new Date(fechaClickDate);
-  inicioJornada.setHours(8, 0, 0, 0);
-  
-  const finJornada = new Date(fechaClickDate);
-  finJornada.setHours(19, 0, 0, 0);
-  
-  const bloquesOcupados = eventosDelDia.map(evento => ({
-    start: new Date(evento.start),
-    end: new Date(evento.end)
-  }));
-  
-  let inicioBloque = inicioJornada;
-  
-  for (let i = 0; i < bloquesOcupados.length; i++) {
-    const bloqueActual = bloquesOcupados[i];
-    
-    if (fechaClick >= inicioBloque && fechaClick < bloqueActual.start) {
-      return {
-        start: inicioBloque,
-        end: bloqueActual.start
-      };
-    }
-    
-    inicioBloque = bloqueActual.end;
-  }
-  
-  if (fechaClick >= inicioBloque && fechaClick <= finJornada) {
-    return {
-      start: inicioBloque,
-      end: finJornada
-    };
-  }
-  
-  if (bloquesOcupados.length === 0) {
-    return {
-      start: inicioJornada,
-      end: finJornada
-    };
-  }
-  
-  return null;
-}
-
-let currentPlaceholder = null;
-let lastSelectedStartTime = null;
-let lastSelectedEndTime = null;
-let currentBloqueInfo = null;
-
-function formatDuration(start, end) {
-  const duration = (new Date(end) - new Date(start)) / 60000;
-  const hours = Math.floor(duration / 60);
-  const minutes = duration % 60;
-  
-  if (hours > 0) {
-    return minutes > 0 ? `${hours}h ${minutes}m disponible` : `${hours}h disponible`;
-  } else {
-    return `${minutes}m disponible`;
-  }
-}
-
-function createCustomPlaceholder(bloqueInfo, fechaClick) {
-  if (!bloqueInfo) return;
-  
-  removeCustomPlaceholder();
-  
-  const calendar = window.__calendar;
-  
-  currentPlaceholder = {
-    id: 'placeholder-' + Date.now(),
-    title: `📅 Nuevo evento (${formatDuration(bloqueInfo.start, bloqueInfo.end)})`,
-    start: new Date(bloqueInfo.start),
-    end: new Date(bloqueInfo.end),
-    backgroundColor: '#3b82f6',
-    borderColor: '#1d4ed8',
-    textColor: '#ffffff',
-    classNames: ['custom-placeholder'],
-    editable: false,
-    display: 'auto',
-    overlap: true,
-    constraint: false,
-    extendedProps: {
-      isPlaceholder: true,
-      originalBlock: bloqueInfo
-    }
-  };
-  
-  calendar.addEvent(currentPlaceholder);
-  
-  setTimeout(() => {
-    const eventElement = calendar.getEventById(currentPlaceholder.id);
-    if (eventElement) {
-      eventElement.setStart(new Date(bloqueInfo.start));
-      eventElement.setEnd(new Date(bloqueInfo.end));
-      calendar.render();
-    }
-  }, 50);
-  
-  console.log('Placeholder creado ocupando todo el bloque:', {
-    start: bloqueInfo.start,
-    end: bloqueInfo.end,
-    duration: (new Date(bloqueInfo.end) - new Date(bloqueInfo.start)) / 60000 + ' minutos'
-  });
-}
-
-function removeCustomPlaceholder() {
-  if (currentPlaceholder && window.__calendar) {
-    const event = window.__calendar.getEventById(currentPlaceholder.id);
-    if (event) {
-      event.remove();
-      console.log('Placeholder removido:', currentPlaceholder.id);
-    }
-    currentPlaceholder = null;
-  }
-}
-
-function updatePlaceholderDuration(startTime, duration) {
-  if (!currentPlaceholder) {
-    console.log('No hay placeholder actual para actualizar');
-    return;
-  }
-  
-  const calendarInstance = window.__calendar;
-  const eventInstance = calendarInstance.getEventById(currentPlaceholder.id);
-  
-  if (eventInstance && startTime && duration > 0) {
-    const startDate = new Date(startTime);
-    const endDate = new Date(startDate.getTime() + (duration * 60000));
-    
-    console.log('Actualizando placeholder:', {
-      startTime: startDate.toISOString(),
-      endTime: endDate.toISOString(),
-      duration: duration + ' minutos'
-    });
-    
-    eventInstance.remove();
-    
-    const hours = Math.floor(duration / 60);
-    const minutes = duration % 60;
-    let durationText = '';
-    if (hours > 0) {
-      durationText = `${hours}h`;
-      if (minutes > 0) durationText += ` ${minutes}m`;
-    } else {
-      durationText = `${minutes}m`;
-    }
-    
-    const newTitle = `📅 Nuevo evento (${durationText} seleccionado)`;
-    
-    currentPlaceholder = {
-      id: 'placeholder-' + Date.now(),
-      title: newTitle,
-      start: startDate,
-      end: endDate,
-      backgroundColor: '#3b82f6',
-      borderColor: '#1d4ed8',
-      textColor: '#ffffff',
-      classNames: ['custom-placeholder'],
-      editable: false,
-      display: 'auto',
-      overlap: true,
-      constraint: false,
-      extendedProps: {
-        isPlaceholder: true,
-        originalBlock: currentPlaceholder.extendedProps.originalBlock
-      }
-    };
-    
-    calendarInstance.addEvent(currentPlaceholder);
-    
-    setTimeout(() => {
-      calendarInstance.render();
-    }, 10);
-    
-    console.log('Placeholder recreado exitosamente con nuevo tamaño');
-  } else {
-    console.log('Error: no se pudo actualizar placeholder', {
-      eventInstance: !!eventInstance,
-      startTime: startTime,
-      duration: duration
-    });
-  }
-}
-
-function updateTimeRestrictions(bloqueInfo) {
-  const startTimeInput = document.querySelector('input[name="horainicio"]');
-  const endTimeInput = document.querySelector('input[name="horafin"]');
-  
-  if (!startTimeInput || !endTimeInput || !bloqueInfo) return;
-  
-  currentBloqueInfo = bloqueInfo;
-  
-  const formatTimeForInput = (date) => {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-  
-  const minTime = formatTimeForInput(new Date(bloqueInfo.start));
-  const maxTime = formatTimeForInput(new Date(bloqueInfo.end));
-  
-  startTimeInput.min = minTime;
-  startTimeInput.max = maxTime;
-  endTimeInput.min = minTime;
-  endTimeInput.max = maxTime;
-  
-  const specificStartTime = formatTimeForInput(new Date(bloqueInfo.start));
-  const specificEndTime = formatTimeForInput(new Date(bloqueInfo.end));
-  
-  let useStartTime = specificStartTime;
-  let useEndTime = specificEndTime;
-  let valuesRestored = false;
-  
-  if (lastSelectedStartTime && lastSelectedEndTime && 
-      lastSelectedStartTime >= minTime && lastSelectedStartTime <= maxTime &&
-      lastSelectedEndTime >= minTime && lastSelectedEndTime <= maxTime) {
-    useStartTime = lastSelectedStartTime;
-    useEndTime = lastSelectedEndTime;
-    valuesRestored = true;
-    console.log('Restaurando valores guardados:', useStartTime, '-', useEndTime);
-  }
-  
-  if (!startTimeInput.value || valuesRestored) startTimeInput.value = useStartTime;
-  if (!endTimeInput.value || valuesRestored) endTimeInput.value = useEndTime;
-  
-  lastSelectedStartTime = startTimeInput.value;
-  lastSelectedEndTime = endTimeInput.value;
-  
-  const currentStartTime = startTimeInput.value;
-  const currentEndTime = endTimeInput.value;
-  
-  if (currentStartTime && currentEndTime) {
-    const [startHours, startMinutes] = currentStartTime.split(':').map(Number);
-    const [endHours, endMinutes] = currentEndTime.split(':').map(Number);
-    
-    const selectedDate = new Date(bloqueInfo.start);
-    selectedDate.setHours(0, 0, 0, 0);
-    
-    const actualStartDate = new Date(selectedDate);
-    actualStartDate.setHours(startHours, startMinutes);
-    
-    const actualEndDate = new Date(selectedDate);
-    actualEndDate.setHours(endHours, endMinutes);
-    
-    const currentDuration = (actualEndDate - actualStartDate) / 60000;
-    if (currentDuration > 0) {
-      setTimeout(() => {
-        updatePlaceholderDuration(actualStartDate, currentDuration);
-        console.log('Placeholder ajustado a valores del formulario:', currentStartTime, '-', currentEndTime);
-      }, 50);
-    }
-  }
-  
-  const existingStartHandler = startTimeInput._changeHandler;
-  const existingEndHandler = endTimeInput._changeHandler;
-  
-  if (existingStartHandler) {
-    startTimeInput.removeEventListener('change', existingStartHandler);
-  }
-  if (existingEndHandler) {
-    endTimeInput.removeEventListener('change', existingEndHandler);
-  }
-  
-  const startTimeHandler = function() {
-    const selectedTime = this.value;
-    const endTime = endTimeInput.value;
-    
-    lastSelectedStartTime = selectedTime;
-    lastSelectedEndTime = endTime;
-    
-    if (selectedTime && endTime) {
-      const [startHours, startMinutes] = selectedTime.split(':').map(Number);
-      const [endHours, endMinutes] = endTime.split(':').map(Number);
-      
-      const selectedDate = new Date(bloqueInfo.start);
-      selectedDate.setHours(0, 0, 0, 0);
-      
-      const startDate = new Date(selectedDate);
-      startDate.setHours(startHours, startMinutes);
-      
-      const endDate = new Date(selectedDate);
-      endDate.setHours(endHours, endMinutes);
-      
-      const duration = (endDate - startDate) / 60000;
-      
-      if (duration > 0) {
-        updatePlaceholderDuration(startDate, duration);
-        console.log('Placeholder actualizado por cambio manual de hora inicio:', duration, 'minutos');
-      }
-    }
-  };
-  
-  const endTimeHandler = function() {
-    const startTime = startTimeInput.value;
-    const selectedEndTime = this.value;
-    
-    lastSelectedStartTime = startTime;
-    lastSelectedEndTime = selectedEndTime;
-    
-    if (startTime && selectedEndTime) {
-      const [startHours, startMinutes] = startTime.split(':').map(Number);
-      const [endHours, endMinutes] = selectedEndTime.split(':').map(Number);
-      
-      const selectedDate = new Date(bloqueInfo.start);
-      selectedDate.setHours(0, 0, 0, 0);
-      
-      const startDate = new Date(selectedDate);
-      startDate.setHours(startHours, startMinutes);
-      
-      const endDate = new Date(selectedDate);
-      endDate.setHours(endHours, endMinutes);
-      
-      const duration = (endDate - startDate) / 60000;
-      
-      if (duration > 0) {
-        updatePlaceholderDuration(startDate, duration);
-        console.log('Placeholder actualizado por cambio manual de hora fin:', duration, 'minutos');
-      }
-    }
-  };
-  
-  startTimeInput.addEventListener('change', startTimeHandler);
-  endTimeInput.addEventListener('change', endTimeHandler);
-  
-  startTimeInput._changeHandler = startTimeHandler;
-  endTimeInput._changeHandler = endTimeHandler;
-  
-  console.log('Restricciones de tiempo establecidas:', {
-    min: minTime,
-    max: maxTime
-  });
-}
-
-function openEventoModalWithTime(fechaStart, fechaEnd) {
-  console.log('=== openEventoModalWithTime LLAMADA ===', fechaStart, fechaEnd);
-  
-  const err = document.getElementById('addError');
-  if (err) {
-    err.textContent = '';
-    err.classList.add('hidden');
-  }
-  
-  const tiempoStart = formatTimeForInput(fechaStart);
-  const tiempoEnd = formatTimeForInput(fechaEnd);
-  const dateStr = formatDateForInput(fechaStart);
-  
-  setSelectedTimeRango(fechaStart, fechaEnd);
-  showSelectedBlock(fechaStart, fechaEnd);
-  
-  const duracionMinutos = (fechaEnd.getTime() - fechaStart.getTime()) / (1000 * 60);
-  const horas = Math.floor(duracionMinutos / 60);
-  const minutos = duracionMinutos % 60;
-  
-  let duracionTexto = '';
-  if (horas > 0 && minutos > 0) {
-    duracionTexto = `${horas}h ${minutos}min`;
-  } else if (horas > 0) {
-    duracionTexto = `${horas}h`;
-  } else {
-    duracionTexto = `${minutos}min`;
-  }
-  
-  console.log('Valores calculados:', {
-    tiempoStart,
-    tiempoEnd,
-    duracionTexto,
-    duracionMinutos
-  });
-  
-  const horaInicioInput = document.querySelector('input[name="horainicio"]');
-  const horaFinInput = document.querySelector('input[name="horafin"]');
-  horaInicioInput.value = tiempoStart;
-  horaFinInput.value = tiempoEnd;
-  document.querySelector('input[name="fecha"]').value = dateStr;
-  
-  const infoDiv = document.getElementById('timeRangeInfo');
-  if (infoDiv) {
-    const infoSpan = infoDiv.querySelector('span');
-    if (infoSpan) {
-      const mensaje = `Horario disponible: ${tiempoStart} - ${tiempoEnd} (${duracionTexto} libres). Selecciona el rango específico que necesites.`;
-      infoSpan.textContent = mensaje;
-      console.log('Mensaje actualizado:', mensaje);
-    } else {
-      console.log('ERROR: No se encontró el span dentro de timeRangeInfo');
-    }
-    infoDiv.classList.remove('hidden');
-  } else {
-    console.log('ERROR: No se encontró el div timeRangeInfo');
-  }
-  
-  openEventoModal();
-}
-
-function openEventoModal() {
-  const eventoModal = document.getElementById('eventoModal');
-  if (eventoModal) eventoModal.classList.remove('hidden');
-}
-
-function closeEventoModal() {
-  const eventoModal = document.getElementById('eventoModal');
-  if (eventoModal) eventoModal.classList.add('hidden');
-}
-
-function formatTimeForInput(fecha) {
-  const horas = fecha.getHours().toString().padStart(2, '0');
-  const minutos = fecha.getMinutes().toString().padStart(2, '0');
-  return `${horas}:${minutos}`;
-}
-
-function formatDateForInput(fecha){
-  const año = fecha.getFullYear();
-  const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-  const dia = fecha.getDate().toString().padStart(2, '0');
-  return `${año}-${mes}-${dia}`;
-}
-
-let selectedTimeRango = null;
-
-function setSelectedTimeRango(start, end){
-  selectedTimeRango = {
-    start: formatTimeForInput(start),
-    end: formatTimeForInput(end)
-  };
-}
-
-function cancelEventoCreation() {
-  closeEventoModal();
-  removeCustomPlaceholder();
-  lastSelectedStartTime = null;
-  lastSelectedEndTime = null;
-  currentBloqueInfo = null;
-  console.log('Creación de evento cancelada - placeholder removido y valores limpiados');
-}
+<!-- Scripts de Helper Functions -->
+<script>
+// Funcionalidad de creación de eventos deshabilitada en info_box
+// Solo se permite edición y eliminación de eventos existentes
 </script>
 
 <script>
@@ -1487,65 +888,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-  const horaInicio = agendaHoraInicio.value;
-  const duracion = parseInt(agendaDuracion.value);
-  
-  const start = new Date(`${fecha}T${horaInicio}`);
-  const end = new Date(start.getTime() + duracion * 60000);
-  
-  const formatDateTime = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const h = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    return `${y}-${m}-${d} ${h}:${min}:00`;
-  };
-  
-  const data = {
-    idUsuario: agendaUsuario.value,
-    idTipoConsulta: agendaTipoConsulta.value,
-    idEstado: agendaEstado.value,
-    horainicio: formatDateTime(start),
-    horaTermino: formatDateTime(end),
-    observaciones: agendaObservaciones.value
-  };
-  
-  const isEdit = agendaId.value !== '';
-  const url = isEdit 
-    ? `/info-box/${boxId}/agenda/${agendaId.value}`
-    : `/info-box/${boxId}/agenda`;
-  const method = isEdit ? 'PUT' : 'POST';
-  
-  agendaStatus.textContent = 'guardando...';
-  agendaStatus.className = 'text-sm text-center text-gray-600';
-  
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data)
-    });
-    
-    const result = await res.json();
-    
-    if (result.ok) {
-      agendaStatus.textContent = 'guardado correctamente';
-      agendaStatus.className = 'text-sm text-center text-green-600';
-      setTimeout(() => {
-        cerrarAgendaModal();
-        location.reload();
-      }, 700);
-    } else {
-      agendaStatus.textContent = 'error al guardar';
-      agendaStatus.className = 'text-sm text-center text-red-600';
-    }
-  } catch (err) {
-    agendaStatus.textContent = 'error de red';
-    agendaStatus.className = 'text-sm text-center text-red-600';
-  }
-});
-
 deleteAgendaBtn.addEventListener('click', async () => {
   if (!confirm('¿eliminar esta agenda?')) return;
   
@@ -1696,13 +1038,6 @@ function openMantModal() {
 
 function closeMantModal() {
   document.getElementById('mantModal').classList.add('hidden');
-}
-
-function toggleMantenimiento() {
-// Mantenimiento Modal
-function toggleMantenimiento() {
-  alert('Funcionalidad de mantenimiento próximamente');
-  closeMantModal();
 }
 </script>
 
