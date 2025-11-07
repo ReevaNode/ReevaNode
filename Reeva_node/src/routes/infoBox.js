@@ -307,8 +307,10 @@ router.get('/info-box/:idBox', async (req, res) => {
                 borderColor: coloresPorEstado[estado] || '#94a3b8',
                 extendedProps: {
                     idBox: agenda.idBox,
+                    usuario_id: agenda.idUsuario, // ← AGREGADO para compatibilidad
                     idUsuario: agenda.idUsuario,
                     nombreUsuario: usuarioMap[agenda.idUsuario] || 'sin profesional',
+                    tipo_id: agenda.idTipoConsulta, // ← AGREGADO para compatibilidad
                     idTipoConsulta: agenda.idTipoConsulta,
                     nombreTipoConsulta: tipoConsultaMap[agenda.idTipoConsulta] || 'sin tipo',
                     idEstado: estado,
@@ -539,6 +541,59 @@ router.post('/info-box/:idBox/items', async (req, res) => {
     }
 });
 
+// POST /add_evento/:boxId - crear evento desde formulario tradicional
+router.post('/add_evento/:boxId', async (req, res) => {
+    try {
+        const idBox = req.params.boxId;
+        const { usuario_id, horainicio, horafin, fecha, idTipoConsulta, observaciones } = req.body;
+
+        if (!usuario_id || !horainicio || !horafin || !fecha || !idTipoConsulta) {
+            return res.status(400).json({ ok: false, error: 'Faltan campos requeridos' });
+        }
+
+        // Combinar fecha + hora en formato YYYY-MM-DD HH:MM:SS
+        const horaInicioFull = `${fecha} ${horainicio}:00`;
+        const horaFinFull = `${fecha} ${horafin}:00`;
+
+        const { v4: uuidv4 } = await import('uuid');
+        const idAgenda = uuidv4();
+        
+        const nuevaAgenda = {
+            idAgenda,
+            idBox,
+            idUsuario: usuario_id,
+            idTipoConsulta,
+            horainicio: horaInicioFull,
+            horaTermino: horaFinFull,
+            horatermino: horaFinFull,
+            observaciones: observaciones || '',
+            createdAt: new Date().toISOString()
+        };
+
+        // Primero crear el evento base
+        await db.send(new PutCommand({
+            TableName: 'agenda',
+            Item: nuevaAgenda
+        }));
+
+        // Luego actualizar con idEstado
+        await db.send(new UpdateCommand({
+            TableName: 'agenda',
+            Key: { idAgenda },
+            UpdateExpression: 'SET idEstado = :estado',
+            ExpressionAttributeValues: {
+                ':estado': '2' // Paciente ausente por defecto
+            }
+        }));
+
+        res.json({ ok: true, agenda: { ...nuevaAgenda, idEstado: '2' } });
+
+    } catch (error) {
+        console.error('Error en POST /add_evento/:boxId:', error);
+        res.status(500).json({ ok: false, error: 'Error al crear evento' });
+    }
+});
+
 // POST /info-box/:idBox/agenda - crear nueva agenda
 router.post('/info-box/:idBox/agenda', async (req, res) => {
     try {
@@ -555,7 +610,7 @@ router.post('/info-box/:idBox/agenda', async (req, res) => {
             idBox,
             idUsuario,
             idTipoConsulta,
-            idEstado: idEstado || '1',
+            idEstado: idEstado || '2', // Estado por defecto: "paciente ausente"
             horainicio,
             horaTermino,
             observaciones: observaciones || ''
@@ -571,6 +626,63 @@ router.post('/info-box/:idBox/agenda', async (req, res) => {
     } catch (error) {
         console.error('Error en POST /info-box/:idBox/agenda:', error);
         res.status(500).json({ error: 'Error al crear agenda' });
+    }
+});
+
+// POST /editar_evento/:eventoId - editar evento desde formulario tradicional
+router.post('/editar_evento/:eventoId', async (req, res) => {
+    try {
+        const { eventoId } = req.params;
+        const { usuario_id, horainicio, horafin, fecha, idTipoConsulta, idEstado, observaciones } = req.body;
+
+        // Combinar fecha + hora en formato YYYY-MM-DD HH:MM:SS
+        const horaInicioFull = fecha && horainicio ? `${fecha} ${horainicio}:00` : undefined;
+        const horaFinFull = fecha && horafin ? `${fecha} ${horafin}:00` : undefined;
+
+        const updates = [];
+        const values = {};
+
+        if (usuario_id) {
+            updates.push('idUsuario = :usuario');
+            values[':usuario'] = usuario_id;
+        }
+        if (idTipoConsulta) {
+            updates.push('idTipoConsulta = :tipo');
+            values[':tipo'] = idTipoConsulta;
+        }
+        if (idEstado) {
+            updates.push('idEstado = :estado');
+            values[':estado'] = idEstado;
+        }
+        if (horaInicioFull) {
+            updates.push('horainicio = :inicio');
+            values[':inicio'] = horaInicioFull;
+        }
+        if (horaFinFull) {
+            updates.push('horaTermino = :fin');
+            values[':fin'] = horaFinFull;
+        }
+        if (observaciones !== undefined) {
+            updates.push('observaciones = :obs');
+            values[':obs'] = observaciones;
+        }
+
+        if (updates.length === 0) {
+            return res.json({ ok: false, error: 'No hay datos para actualizar' });
+        }
+
+        await db.send(new UpdateCommand({
+            TableName: 'agenda',
+            Key: { idAgenda: eventoId },
+            UpdateExpression: 'SET ' + updates.join(', '),
+            ExpressionAttributeValues: values
+        }));
+
+        res.json({ ok: true });
+
+    } catch (error) {
+        console.error('Error en POST /editar_evento/:eventoId:', error);
+        res.status(500).json({ ok: false, error: 'Error al editar evento' });
     }
 });
 
@@ -660,6 +772,157 @@ router.delete('/eliminar_evento/:eventoId', async (req, res) => {
     } catch (error) {
         console.error('Error en DELETE /eliminar_evento:', error);
         res.status(500).json({ error: 'Error al eliminar evento' });
+    }
+});
+
+// GET /info-box/:idBox/events - obtener eventos del calendario (para refresh)
+router.get('/info-box/:idBox/events', async (req, res) => {
+    try {
+        const idBox = req.params.idBox;
+        
+        // Rango de ±1 año para el calendario
+        const ahora = new Date();
+        const unAnioAtras = new Date(ahora);
+        unAnioAtras.setFullYear(ahora.getFullYear() - 1);
+        const unAnioAdelante = new Date(ahora);
+        unAnioAdelante.setFullYear(ahora.getFullYear() + 1);
+        
+        const formatFechaRango = (fecha) => {
+            const y = fecha.getFullYear();
+            const m = String(fecha.getMonth() + 1).padStart(2, '0');
+            const d = String(fecha.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d} 00:00:00`;
+        };
+        
+        const inicioRango = formatFechaRango(unAnioAtras);
+        const finRango = formatFechaRango(unAnioAdelante);
+
+        console.log(`📅 Obteniendo eventos para Box ${idBox}, rango: ${inicioRango} a ${finRango}`);
+
+        // Usar Scan con FilterExpression para mayor compatibilidad
+        const agendasResult = await db.send(new ScanCommand({
+            TableName: 'agenda',
+            FilterExpression: 'idBox = :idBox AND horainicio BETWEEN :inicio AND :fin',
+            ExpressionAttributeValues: {
+                ':idBox': idBox,
+                ':inicio': inicioRango,
+                ':fin': finRango
+            }
+        }));
+        const agendas = agendasResult.Items || [];
+
+        console.log(`✅ ${agendas.length} agendas encontradas`);
+
+        // Obtener usuarios y tipos de consulta para los nombres
+        const usuariosResult = await db.send(new ScanCommand({ TableName: 'usuario' }));
+        const usuarios = usuariosResult.Items || [];
+        const usuarioMap = {};
+        usuarios.forEach(u => {
+            // Usar nombreProfesional que es el campo correcto
+            usuarioMap[u.idUsuario] = u.nombreProfesional || u.nombreprofesional || u.nombre || u.Nombre || 'Sin nombre';
+        });
+
+        const tiposConsultaResult = await db.send(new ScanCommand({ TableName: 'tipoconsulta' }));
+        const tiposConsulta = tiposConsultaResult.Items || [];
+        const tipoConsultaMap = {};
+        tiposConsulta.forEach(tc => {
+            tipoConsultaMap[tc.idTipoConsulta] = tc.nombre;
+        });
+
+        const tiposEstadoResult = await db.send(new ScanCommand({ TableName: 'tipoestado' }));
+        const tiposEstado = tiposEstadoResult.Items || [];
+        const tipoEstadoMap = {};
+        tiposEstado.forEach(te => {
+            tipoEstadoMap[te.idTipoEstado] = te.nombre;
+        });
+
+        // Colores por estado
+        const coloresPorEstado = {
+            '1': '#94a3b8', // libre
+            '2': '#f59e0b', // paciente ausente
+            '3': '#3b82f6', // paciente esperando
+            '4': '#10b981', // en atencion
+            '5': '#ef4444', // inhabilitado
+            '6': '#6b7280'  // finalizado
+        };
+
+        // Formatear eventos para FullCalendar
+        const eventos = agendas.map(agenda => {
+            const usuario = usuarios.find(u => u.idUsuario === agenda.idUsuario);
+            const estado = agenda.idEstado || '1';
+            
+            return {
+                id: agenda.idAgenda,
+                title: usuarioMap[agenda.idUsuario] || 'sin profesional',
+                start: agenda.horainicio,
+                end: agenda.horaTermino,
+                backgroundColor: coloresPorEstado[estado] || '#94a3b8',
+                borderColor: coloresPorEstado[estado] || '#94a3b8',
+                extendedProps: {
+                    idBox: agenda.idBox,
+                    usuario_id: agenda.idUsuario, // ← AGREGADO
+                    idUsuario: agenda.idUsuario,
+                    nombreUsuario: usuarioMap[agenda.idUsuario] || 'sin profesional',
+                    tipo_id: agenda.idTipoConsulta, // ← AGREGADO
+                    idTipoConsulta: agenda.idTipoConsulta,
+                    nombreTipoConsulta: tipoConsultaMap[agenda.idTipoConsulta] || 'sin tipo',
+                    idEstado: estado,
+                    nombreEstado: tipoEstadoMap[estado] || 'desconocido',
+                    observaciones: agenda.observaciones || '',
+                    idTipoProfesional: usuario?.idTipoProfesional || ''
+                }
+            };
+        });
+
+        res.json(eventos);
+
+    } catch (error) {
+        console.error('Error en GET /info-box/:idBox/events:', error);
+        res.status(500).json({ error: 'Error al obtener eventos' });
+    }
+});
+
+// POST /toggle_mantenimiento/:boxId -> alternar estado de mantenimiento del box
+router.post('/toggle_mantenimiento/:boxId', async (req, res) => {
+    try {
+        const boxId = req.params.boxId;
+        console.log('POST /toggle_mantenimiento boxId=', boxId, 'user=', req.session && req.session.user ? req.session.user.id : null);
+        
+        if (!boxId) {
+            req.flash && req.flash('error', 'boxId faltante');
+            return res.redirect('/infobox');
+        }
+        
+        const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
+        const boxesRes = await db.send(boxesCmd);
+        const boxes = boxesRes.Items || [];
+        const box = boxes.find(b => String(b.idBox || b.idbox) === String(boxId));
+        
+        if (!box) {
+            req.flash && req.flash('error', 'Box no encontrado');
+            return res.redirect('/infobox');
+        }
+        
+        const current = box.idEstadoBox || box.idestadobox || box.idEstado || box.idestado || '1';
+        const nuevo = String(current) === '4' ? '1' : '4';
+        
+        console.log('Updating box', box.idBox || box.idbox, 'nuevo estado=', nuevo);
+        
+        await db.send(new UpdateCommand({
+            TableName: config.dynamodb.tablas.box,
+            Key: { idBox: box.idBox || box.idbox },
+            UpdateExpression: 'SET idEstadoBox = :e',
+            ExpressionAttributeValues: { ':e': nuevo }
+        }));
+        
+        console.log('UpdateCommand enviado para box', box.idBox || box.idbox);
+        
+        const redirectBoxId = box.idbox || box.idBox;
+        return res.redirect(`/info-box/${redirectBoxId}`);
+    } catch (err) {
+        console.error('Error toggle mantenimiento', err);
+        req.flash && req.flash('error', 'Error actualizando box');
+        return res.redirect('/infobox');
     }
 });
 
