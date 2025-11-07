@@ -50,9 +50,21 @@
           <option value="" <%= box ? 'disabled' : 'selected' %> data-i18n="agenda.selectBoxPlaceholder">
             <%= __("agenda.selectBoxPlaceholder") %>
           </option>
-          <% boxes.forEach(b => { const value = b.numero || b.idbox || b.idBox || ''; %>
-            <option value="<%= value %>" <%= (box && String(value) === String(box.numero || box.idbox || box.idBox)) ? 'selected' : '' %>>
-              Box <%= b.numero %> - <%= b.idtipobox.tipobox %>
+          <% boxes.forEach(b => { 
+            const value = b.numero || b.idbox || b.idBox || '';
+            const especialidadNombre = b.idtipobox.tipobox;
+            
+            // Buscar la traducción de la especialidad
+            const tipoProf = tipos_profesional_normalizados.find(tp => 
+              tp.nombre.toLowerCase() === especialidadNombre.toLowerCase()
+            );
+            const especialidadTraducida = tipoProf && tipoProf.translationKey 
+              ? __('specialties.' + tipoProf.translationKey)
+              : especialidadNombre;
+          %>
+            <option value="<%= value %>" 
+                    <%= (box && String(value) === String(box.numero || box.idbox || box.idBox)) ? 'selected' : '' %>>
+              Box <%= b.numero %> - <%= especialidadTraducida %>
             </option>
           <% }) %>
         </select>
@@ -94,10 +106,19 @@
             <input type="text" name="box_id" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= box.numero %>"/>
           </div>
           <div>
-            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel"><%= __("agenda.specialtyLabel") %></label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel">
+              <%= __("agenda.specialtyLabel") %>
+            </label>
             <select id="especialidadSelect" class="w-full border rounded p-2" required>
-              <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder"><%= __("agenda.selectSpecialtyPlaceholder") %></option>
-              <% (tipos_profesional_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
+              <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder">
+                <%= __("agenda.selectSpecialtyPlaceholder") %>
+              </option>
+              <% (tipos_profesional_normalizados || []).forEach(tipo => { %>
+                <option value="<%= tipo.id %>" 
+                        data-i18n="<%= tipo.translationKey ? 'specialties.' + tipo.translationKey : '' %>">
+                  <%= tipo.translationKey ? __('specialties.' + tipo.translationKey) : tipo.nombre %>
+                </option>
+              <% }) %>
             </select>
           </div>
           <div>
@@ -170,10 +191,19 @@
           <input type="hidden" name="evento_id" id="editEventoId" />
           <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
           <div>
-            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel"><%= __("agenda.specialtyLabel") %></label>
+            <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel">
+              <%= __("agenda.specialtyLabel") %>
+            </label>
             <select id="editEspecialidadSelect" class="w-full border rounded p-2" required>
-              <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder"><%= __("agenda.selectSpecialtyPlaceholder") %></option>
-              <% (tipos_profesional_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
+              <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder">
+                <%= __("agenda.selectSpecialtyPlaceholder") %>
+              </option>
+              <% (tipos_profesional_normalizados || []).forEach(tipo => { %>
+                <option value="<%= tipo.id %>"
+                        data-i18n="<%= tipo.translationKey ? 'specialties.' + tipo.translationKey : '' %>">
+                  <%= tipo.translationKey ? __('specialties.' + tipo.translationKey) : tipo.nombre %>
+                </option>
+              <% }) %>
             </select>
           </div>
           <div>
@@ -187,7 +217,28 @@
             <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.endTimeLabel"><%= __("agenda.endTimeLabel") %></label><input type="time" name="horafin" id="editHoraFin" class="w-full border rounded p-2" required /></div>
           </div>
           <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label><input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required /></div>
-          <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.consultationTypeLabel"><%= __("agenda.consultationTypeLabel") %></label><select name="idTipoConsulta" id="editTipoConsulta" class="w-full border rounded p-2" required><option value="" disabled selected data-i18n="agenda.selectConsultationPlaceholder"><%= __("agenda.selectConsultationPlaceholder") %></option><% (tipos_consulta_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %></select></div>
+          <div>
+            <label class="block text-sm text-gray-600 mb-2"
+                   data-i18n="agenda.consultationTypeLabel">
+              <%= __("agenda.consultationTypeLabel") %>
+            </label>
+
+            <select name="idTipoConsulta"
+                    id="editTipoConsulta"
+                    class="w-full border rounded p-2"
+                    required>
+
+              <option value="" disabled selected data-i18n="agenda.selectConsultationPlaceholder">
+                <%= __("agenda.selectConsultationPlaceholder") %>
+              </option>
+
+              <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
+                <option value="<%= tipo.id %>">
+                  <%= tipo.translationKey ? __('consultationTypes.' + tipo.translationKey) : tipo.nombre %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
           <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label><textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea></div>
           <div class="flex justify-between">
             <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn" data-i18n="agenda.deleteBtn"><%= __("agenda.deleteBtn") %></button>
@@ -1302,6 +1353,87 @@ document.addEventListener('DOMContentLoaded', function() {
     bannerIcon.style.transform = 'rotate(0deg)';
     localStorage.setItem(bannerKey, 'false');
   }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const userLang = '<%= userLang || "es" %>';
+  const boxSelect = document.getElementById('box_number');
+  
+  if (!boxSelect) {
+    return;
+  }
+  
+  const specialtyTranslations = {
+    'en': {
+      'Cirugía': 'Surgery',
+      'Dermatología': 'Dermatology',
+      'Ginecología': 'Gynecology',
+      'Odontología': 'Dentistry',
+      'Oftalmología': 'Ophthalmology',
+      'Pediatría': 'Pediatrics',
+      'General': 'General',
+      'Médico General': 'General Practitioner',
+      'Cirujano': 'Surgeon',
+      'Ginecólogo': 'Gynecologist',
+      'Odontólogo': 'Dentist',
+      'Oftalmólogo': 'Ophthalmologist',
+      'Dermatólogo': 'Dermatologist',
+      'Pediatra': 'Pediatrician'
+    },
+    'es': {
+      'Surgery': 'Cirugía',
+      'Dermatology': 'Dermatología',
+      'Gynecology': 'Ginecología',
+      'Dentistry': 'Odontología',
+      'Ophthalmology': 'Oftalmología',
+      'Pediatrics': 'Pediatría',
+      'General': 'General',
+      'General Practitioner': 'Médico General',
+      'Surgeon': 'Cirujano',
+      'Gynecologist': 'Ginecólogo',
+      'Dentist': 'Odontólogo',
+      'Ophthalmologist': 'Oftalmólogo',
+      'Dermatologist': 'Dermatólogo',
+      'Pediatrician': 'Pediatra'
+    }
+  };
+  
+  function translateSpecialty(specialtyName) {
+    if (!specialtyName) return '';
+    
+    if (userLang === 'es') {
+      return specialtyTranslations.es[specialtyName] || specialtyName;
+    }
+    
+    if (userLang === 'en') {
+      return specialtyTranslations.en[specialtyName] || specialtyName;
+    }
+    
+    return specialtyName;
+  }
+  
+  let translatedCount = 0;
+  Array.from(boxSelect.options).forEach((option, index) => {
+    if (index === 0 || !option.value) {
+      return;
+    }
+    
+    const currentText = option.textContent.trim();
+    console.log(`Procesando opción ${index}:`, currentText);
+    
+    const match = currentText.match(/^Box\s+(\d+)\s*-\s*(.+)$/i);
+    
+    if (match) {
+      const boxNumber = match[1];
+      const originalSpecialty = match[2].trim();
+      const translatedSpecialty = translateSpecialty(originalSpecialty);
+
+      option.textContent = `Box ${boxNumber} - ${translatedSpecialty}`;
+  
+      translatedCount++;
+    }
+  });    
 });
 </script>
 </body>

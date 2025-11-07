@@ -8,7 +8,26 @@ const texts = {
         reserved: 'Reservado:',
         inAttention: 'En Atención:',
         finished: 'Finalizado:',
-        disabled: 'Inhabilitado:'
+        disabled: 'Inhabilitado:',
+        // Estados
+        libre: 'Libre',
+        reservado: 'Reservado',
+        enAtencion: 'En Atención',
+        finalizado: 'Finalizado',
+        inhabilitado: 'Inhabilitado',
+        pacienteEsperando: 'Paciente Esperando',
+        pacienteAusente: 'Paciente Ausente',
+        // Especialidades
+        cirugia: 'Cirugía',
+        dermatologia: 'Dermatología',
+        ginecologia: 'Ginecología',
+        odontologia: 'Odontología',
+        oftalmologia: 'Oftalmología',
+        pediatria: 'Pediatría',
+        general: 'General',
+        sinEspecialidad: 'Sin Especialidad',
+        // Prefijos
+        doctor: 'Doctor'
     },
     en: {
         total: 'Total:',
@@ -16,11 +35,63 @@ const texts = {
         reserved: 'Reserved:',
         inAttention: 'In Care:',
         finished: 'Completed:',
-        disabled: 'Disabled:'
+        disabled: 'Disabled:',
+        // Estados
+        libre: 'Available',
+        reservado: 'Reserved',
+        enAtencion: 'In Care',
+        finalizado: 'Completed',
+        inhabilitado: 'Disabled',
+        pacienteEsperando: 'Patient Waiting',
+        pacienteAusente: 'Patient Absent',
+        // Especialidades
+        cirugia: 'Surgery',
+        dermatologia: 'Dermatology',
+        ginecologia: 'Gynecology',
+        odontologia: 'Dentistry',
+        oftalmologia: 'Ophthalmology',
+        pediatria: 'Pediatrics',
+        general: 'General',
+        sinEspecialidad: 'No Specialty',
+        // Prefijos
+        doctor: 'Doctor'
     }
 };
 
 const t = texts[userLang] || texts.es;
+
+const specialtyMap = {
+    'Cirugía': 'cirugia',
+    'Dermatología': 'dermatologia',
+    'Ginecología': 'ginecologia',
+    'Odontología': 'odontologia',
+    'Oftalmología': 'oftalmologia',
+    'Pediatría': 'pediatria',
+    'General': 'general',
+    'Sin Especialidad': 'sinEspecialidad'
+};
+
+const stateMap = {
+    'Libre': 'libre',
+    'Reservado': 'reservado',
+    'En Atención': 'enAtencion',
+    'Finalizado': 'finalizado',
+    'Inhabilitado': 'inhabilitado',
+    'Paciente Esperando': 'pacienteEsperando',
+    'Paciente Ausente': 'pacienteAusente'
+};
+
+// Funcion para traducir especialidad
+function translateSpecialty(specialty) {
+    const key = specialtyMap[specialty];
+    return key ? t[key] : specialty;
+}
+
+// Funcion para traducir estado
+function translateState(state) {
+    const key = stateMap[state];
+    return key ? t[key] : state;
+}
 
 // actualizar hora de ultima actualizacion
 function updateTime() {
@@ -37,6 +108,62 @@ function initializeProgressBars() {
     document.querySelectorAll('.progress-fill[data-progress]').forEach(el => {
         const val = parseFloat(el.getAttribute('data-progress')) || 0;
         el.style.width = val + '%';
+    });
+}
+
+// Traducir titulos de especialidades
+function translateSpecialtyTitles() {
+    document.querySelectorAll('.especialidad-title').forEach(titleEl => {
+        const text = titleEl.textContent.trim();
+        const match = text.match(/^(.+?)\s*\((\d+)\)$/);
+        if (match) {
+            const specialtyName = match[1].trim();
+            const count = match[2];
+            const icon = titleEl.querySelector('i');
+            const iconClass = icon ? icon.className : 'ri-stethoscope-line';
+            titleEl.innerHTML = `<i class="${iconClass} mr-2"></i>${translateSpecialty(specialtyName)} (${count})`;
+        }
+    });
+}
+
+// Traducir estados en las tarjetas
+function translateCardStates() {
+    document.querySelectorAll('.box-status-label').forEach(labelEl => {
+        const originalState = labelEl.textContent.trim();
+        labelEl.textContent = translateState(originalState);
+    });
+    
+    // Traducir estados en la seccion de pacientes
+    document.querySelectorAll('.patient-status').forEach(statusEl => {
+        const originalState = statusEl.textContent.trim();
+        statusEl.textContent = translateState(originalState);
+    });
+}
+
+// Traducir opciones del select de especialidades
+function translateSpecialtySelect() {
+    const select = document.getElementById('especialidadFilter');
+    if (!select) return;
+    
+    const options = select.querySelectorAll('option[data-specialty]');
+    
+    options.forEach(option => {
+        const originalSpecialty = option.getAttribute('data-specialty');
+        option.textContent = translateSpecialty(originalSpecialty);
+    });
+}
+
+function translateDoctorNames() {
+    document.querySelectorAll('.medico-name').forEach(nameEl => {
+        const text = nameEl.textContent.trim();
+        
+        const match = text.match(/^(Doctor|Médico)\s+(.+)$/);
+        
+        if (match) {
+            const specialtyName = match[2];
+            const translatedSpecialty = translateSpecialty(specialtyName);
+            nameEl.textContent = `${t.doctor} ${translatedSpecialty}`;
+        }
     });
 }
 
@@ -217,12 +344,20 @@ function filterBoxes() {
     }
 }
 
+window.cambiarVista = cambiarVista;
+window.toggleEspecialidad = toggleEspecialidad;
+window.filterByStatus = filterByStatus;
+
 // init cuando carga la pagina
 document.addEventListener('DOMContentLoaded', function() {
     console.log('matriz box js cargado');
     
     updateTime();
     initializeProgressBars();
+    translateSpecialtyTitles();
+    translateCardStates();
+    translateSpecialtySelect();
+    translateDoctorNames(); // NUEVA LÍNEA AGREGADA
     updateStatusSummary();
     
     // restaurar vista guardada
@@ -245,4 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (estadoFilter) {
         estadoFilter.addEventListener('change', filterBoxes);
     }
+    
+    document.addEventListener('reeva:language-change', function() {
+        setTimeout(() => {
+            location.reload(); 
+        }, 200);
+    });
 });
