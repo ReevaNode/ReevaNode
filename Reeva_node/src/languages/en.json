@@ -237,6 +237,16 @@
     "period": "Period",
     "mostUsedBox": "Most used box",
     "timeOccupied": "of time occupied",
+    "periods": {
+      "today": "Today",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year",
+      "last24hours": "Last 24 hours",
+      "last7days": "Last 7 days",
+      "last30days": "Last 30 days",
+      "last12months": "Last 12 months"
+    },
     "boxesBySpecialty": "Number of Boxes by specialty",
     "professional": "Professional",
     "allDoctors": "-- All doctors --",
@@ -246,6 +256,8 @@
     "search": "Search",
     "scheduledHours": "Scheduled hours:",
     "completedHours": "Completed hours:",
+    "scheduled": "Scheduled",
+    "completed": "Completed",
     "monthlyTrendBySpecialty": "Monthly trend by specialty",
     "closedSchedulesPerMonth": "Number of closed schedules per month",
     "specialty": "Specialty",
@@ -263,19 +275,14 @@
     "schedulesOnMostActiveDay": "Percentage of schedules on the most active day.",
     "completedSchedulesFiltered": "Completed schedules in the filtered period.",
     "downloadExcelReport": "Download Excel Report",
-    "report": {
-      "modalTitle": "Configure Report",
-      "format": "Format",
-      "dateFrom": "From",
-      "dateTo": "To",
-      "specialties": "Specialties",
-      "allSpecialties": "All specialties",
-      "reportContent": "Report content",
-      "generalStats": "General statistics",
-      "occupancyCharts": "Occupancy charts",
-      "boxDetails": "Box details",
-      "cancel": "Cancel",
-      "download": "Download Report"
+    "weekdays": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
     },
     "months": {
       "january": "January",
@@ -290,7 +297,32 @@
       "october": "October",
       "november": "November",
       "december": "December"
-    }
+    },
+    "report": {
+      "modalTitle": "Configure Report",
+      "format": "Format",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "specialties": "Specialties",
+      "allSpecialties": "All specialties",
+      "reportContent": "Report content",
+      "generalStats": "General statistics",
+      "occupancyCharts": "Occupancy charts",
+      "boxDetails": "Box details",
+      "cancel": "Cancel",
+      "download": "Download Report"
+    },
+    "chart": {
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "boxes": "Boxes",
+      "schedules": "schedules",
+      "hours": "hours"
+    },
+  "allSpecialties": "Todas",
+  "occupied": "Ocupado",
+  "available": "Disponible",
+  "disabled": "Inhabilitado"
   },
   "adminDB": {
     "title": "DB Admin - REEVA System",

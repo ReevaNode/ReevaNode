@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<%= userLang %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= pageTitle || 'Dashboard Hospital' %></title>
-
+  <title><%= pageTitle || __('dashboard.title') %></title>
   <!-- Tailwind + configuración de color primario -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -18,7 +17,161 @@
       }
     }
   </script>
-
+  <style>
+    body:not(.translations-ready) [data-box-period],
+    body:not(.translations-ready) [data-specialty-period],
+    body:not(.translations-ready) #best-box-period,
+    body:not(.translations-ready) #best-specialty-period,
+    body:not(.translations-ready) #prof_code option[value=""],
+    body:not(.translations-ready) #box_number option[value=""],
+    body:not(.translations-ready) #weekly-year option[value=""],
+    body:not(.translations-ready) #weekly-month option[value=""],
+    body:not(.translations-ready) #especialidad option[value="Todas"],
+    body:not(.translations-ready) #specialty-trend-select option[value="Todas"],
+    body:not(.translations-ready) [id^="donut-"] + p {
+      opacity: 0;
+    }
+    
+    body.translations-ready [data-box-period],
+    body.translations-ready [data-specialty-period],
+    body.translations-ready #best-box-period,
+    body.translations-ready #best-specialty-period,
+    body.translations-ready #prof_code option[value=""],
+    body.translations-ready #box_number option[value=""],
+    body.translations-ready #weekly-year option[value=""],
+    body.translations-ready #weekly-month option[value=""],
+    body.translations-ready #especialidad option[value="Todas"],
+    body.translations-ready #specialty-trend-select option[value="Todas"],
+    body.translations-ready [id^="donut-"] + p {
+      opacity: 1;
+      transition: opacity 0.15s ease-in;
+    }
+  </style>
+  <script>
+    (function() {
+      'use strict';
+      
+      function getTranslation(key) {
+        const lang = localStorage.getItem('reeva-language') || 'es';
+        
+        const translations = {
+          es: {
+            'chart.boxes': 'Boxes',
+            'chart.schedules': 'agendas',
+            'chart.scheduled': 'Agendadas',
+            'chart.completed': 'Realizadas',
+            'chart.hours': 'horas',
+            'weekdays.monday': 'Lunes',
+            'weekdays.tuesday': 'Martes',
+            'weekdays.wednesday': 'Miércoles',
+            'weekdays.thursday': 'Jueves',
+            'weekdays.friday': 'Viernes',
+            'weekdays.saturday': 'Sábado',
+            'weekdays.sunday': 'Domingo',
+            'periods.today': 'Hoy',
+            'periods.week': 'Semana',
+            'periods.month': 'Mes',
+            'periods.year': 'Año',
+            'dashboard.noDataPeriod': 'Sin datos en este período',
+            'dashboard.noSchedules': 'No hay agendamientos registrados.',
+            'dashboard.schedulesCount': 'agendas',
+            'dashboard.ofPeriod': 'del período',
+            'dashboard.timeOccupied': 'del tiempo ocupado',
+            'dashboard.period': 'Período',
+            'dashboard.all': 'Todos',
+            'dashboard.allDoctors': '-- Todos los doctores --',
+            'dashboard.selectBox': '-- Seleccione un box --',
+            'dashboard.noDataSelectedPeriod': 'Sin datos para el período seleccionado.',
+            'dashboard.allSpecialties': 'Todas',
+            'dashboard.occupied': 'Ocupado',
+            'dashboard.available': 'Disponible',
+            'dashboard.disabled': 'Inhabilitado',
+            'dashboard.notOccupied': 'No ocupado',
+            'dashboard.notAvailable': 'No disponible',
+            'dashboard.notDisabled': 'No inhabilitado',
+            'months.january': 'Enero',
+            'months.february': 'Febrero',
+            'months.march': 'Marzo',
+            'months.april': 'Abril',
+            'months.may': 'Mayo',
+            'months.june': 'Junio',
+            'months.july': 'Julio',
+            'months.august': 'Agosto',
+            'months.september': 'Septiembre',
+            'months.october': 'Octubre',
+            'months.november': 'Noviembre',
+            'months.december': 'Diciembre'
+          },
+          en: {
+            'chart.boxes': 'Boxes',
+            'chart.schedules': 'schedules',
+            'chart.scheduled': 'Scheduled',
+            'chart.completed': 'Completed',
+            'chart.hours': 'hours',
+            'weekdays.monday': 'Monday',
+            'weekdays.tuesday': 'Tuesday',
+            'weekdays.wednesday': 'Wednesday',
+            'weekdays.thursday': 'Thursday',
+            'weekdays.friday': 'Friday',
+            'weekdays.saturday': 'Saturday',
+            'weekdays.sunday': 'Sunday',
+            'periods.today': 'Today',
+            'periods.week': 'Week',
+            'periods.month': 'Month',
+            'periods.year': 'Year',
+            'dashboard.noDataPeriod': 'No data in this period',
+            'dashboard.noSchedules': 'No appointments registered.',
+            'dashboard.schedulesCount': 'schedules',
+            'dashboard.ofPeriod': 'of the period',
+            'dashboard.timeOccupied': 'of time occupied',
+            'dashboard.period': 'Period',
+            'dashboard.all': 'All',
+            'dashboard.allDoctors': '-- All doctors --',
+            'dashboard.selectBox': '-- Select a box --',
+            'dashboard.noDataSelectedPeriod': 'No data for the selected period.',
+            'dashboard.allSpecialties': 'All',
+            'dashboard.occupied': 'Occupied',
+            'dashboard.available': 'Available',
+            'dashboard.disabled': 'Disabled',
+            'dashboard.notOccupied': 'Not occupied',
+            'dashboard.notAvailable': 'Not available',
+            'dashboard.notDisabled': 'Not disabled',
+            'months.january': 'January',
+            'months.february': 'February',
+            'months.march': 'March',
+            'months.april': 'April',
+            'months.may': 'May',
+            'months.june': 'June',
+            'months.july': 'July',
+            'months.august': 'August',
+            'months.september': 'September',
+            'months.october': 'October',
+            'months.november': 'November',
+            'months.december': 'December'
+          }
+        };
+        
+        return translations[lang]?.[key] || key;
+      }
+      
+      function getWeekdayLabels() {
+        return [
+          getTranslation('weekdays.monday'),
+          getTranslation('weekdays.tuesday'),
+          getTranslation('weekdays.wednesday'),
+          getTranslation('weekdays.thursday'),
+          getTranslation('weekdays.friday'),
+          getTranslation('weekdays.saturday'),
+          getTranslation('weekdays.sunday')
+        ];
+      }
+      
+      window.dashboardI18n = {
+        translate: getTranslation,
+        getWeekdayLabels: getWeekdayLabels
+      };
+    })();
+  </script>
   <!-- Iconos y librerías de gráficos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
@@ -31,16 +184,16 @@
 </head>
 <body class="font-sans min-h-screen flex flex-col">
   <%- include('header', { activePage: 'dashboard' }) %>
-
   <main class="container mx-auto px-4 py-6 md:py-10 space-y-6 md:space-y-10 max-w-7xl w-full">
     <input type="hidden" id="box-period-value" value="<%= selectedBoxPeriodValue %>">
     <input type="hidden" id="specialty-period-value" value="<%= selectedSpecialtyPeriodValue %>">
+    
     <!-- KPIs principales -->
     <section class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
       <article class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-sm">
         <div class="flex justify-between items-center gap-4 md:gap-6">
           <div>
-            <p class="text-xs md:text-sm text-gray-500">Total Boxes Ocupados</p>
+            <p class="text-xs md:text-sm text-gray-500" data-i18n="dashboard.occupiedBoxes"><%= __('dashboard.occupiedBoxes') %></p>
             <p class="text-4xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-none mt-1 md:mt-2 occupied-count"><%= occupiedValue %></p>
           </div>
           <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -48,11 +201,10 @@
           </div>
         </div>
       </article>
-
       <article class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-sm">
         <div class="flex justify-between items-center gap-4 md:gap-6">
           <div>
-            <p class="text-xs md:text-sm text-gray-500">Boxes Disponibles</p>
+            <p class="text-xs md:text-sm text-gray-500" data-i18n="dashboard.availableBoxes"><%= __('dashboard.availableBoxes') %></p>
             <p class="text-4xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-none mt-1 md:mt-2 available-count"><%= availableValue %></p>
           </div>
           <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-green-100 text-green-600">
@@ -61,13 +213,13 @@
         </div>
       </article>
     </section>
-
+    
     <!-- Donuts de estado -->
     <section class="bg-white rounded-2xl md:rounded-3xl shadow-sm p-6 md:p-10">
-      <h2 class="text-2xl md:text-4xl font-semibold mb-6 md:mb-8">Estado de Boxes</h2>
+      <h2 class="text-2xl md:text-4xl font-semibold mb-6 md:mb-8" data-i18n="dashboard.boxStatus"><%= __('dashboard.boxStatus') %></h2>
       <div class="flex flex-wrap justify-center gap-6 md:gap-10">
         <% if (!hasLabelColors) { %>
-          <p class="text-gray-500">Sin datos para mostrar.</p>
+          <p class="text-gray-500" data-i18n="dashboard.noData"><%= __('dashboard.noData') %></p>
         <% } else { %>
           <% for (const item of labelColorsView) { %>
             <div class="text-center">
@@ -78,20 +230,20 @@
         <% } %>
       </div>
     </section>
-
+    
     <!-- Modal de reporte -->
     <div id="reportModal" class="fixed inset-0 bg-gray-500 bg-opacity-50 hidden items-center justify-center z-50">
       <div class="bg-white rounded-lg w-full max-w-xl mx-4">
         <div class="p-6">
           <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-semibold text-gray-800">Configurar Reporte</h3>
+            <h3 class="text-xl font-semibold text-gray-800" data-i18n="dashboard.report.modalTitle"><%= __('dashboard.report.modalTitle') %></h3>
             <button id="closeReportModal" class="text-gray-500 hover:text-gray-700">
               <i class="ri-close-line text-xl"></i>
             </button>
           </div>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Formato</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="dashboard.report.format"><%= __('dashboard.report.format') %></label>
               <div class="grid grid-cols-3 gap-3">
                 <button class="border border-gray-300 rounded-button p-3 flex flex-col items-center hover:border-primary hover:text-primary format-btn" data-format="pdf">
                   <i class="ri-file-pdf-line text-2xl mb-1"></i>
@@ -109,24 +261,24 @@
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs text-gray-500 mb-1">Desde</label>
+                <label class="block text-xs text-gray-500 mb-1" data-i18n="dashboard.report.dateFrom"><%= __('dashboard.report.dateFrom') %></label>
                 <input type="date" class="w-full border border-gray-300 rounded-button px-3 py-2 text-sm">
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">Hasta</label>
+                <label class="block text-xs text-gray-500 mb-1" data-i18n="dashboard.report.dateTo"><%= __('dashboard.report.dateTo') %></label>
                 <input type="date" class="w-full border border-gray-300 rounded-button px-3 py-2 text-sm">
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Especialidades</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="dashboard.report.specialties"><%= __('dashboard.report.specialties') %></label>
               <div class="border border-gray-300 rounded-button p-3 max-h-32 overflow-y-auto space-y-2">
                 <label class="flex items-center">
                   <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
-                  <span class="ml-2 text-sm">Todas las especialidades</span>
+                  <span class="ml-2 text-sm" data-i18n="dashboard.report.allSpecialties"><%= __('dashboard.report.allSpecialties') %></span>
                 </label>
                 <label class="flex items-center">
                   <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300">
-                  <span class="ml-2 text-sm">Oftalmología</span>
+                  <span class="ml-2 text-sm" data-i18n="specialties.ophthalmology"><%= __('specialties.ophthalmology') %></span>
                 </label>
                 <label class="flex items-center">
                   <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300">
@@ -139,55 +291,54 @@
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Contenido del reporte</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="dashboard.report.reportContent"><%= __('dashboard.report.reportContent') %></label>
               <div class="space-y-2">
                 <label class="flex items-center">
                   <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
-                  <span class="ml-2 text-sm">Estadísticas generales</span>
+                  <span class="ml-2 text-sm" data-i18n="dashboard.report.generalStats"><%= __('dashboard.report.generalStats') %></span>
                 </label>
                 <label class="flex items-center">
                   <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
-                  <span class="ml-2 text-sm">Gráficos de ocupación</span>
+                  <span class="ml-2 text-sm" data-i18n="dashboard.report.occupancyCharts"><%= __('dashboard.report.occupancyCharts') %></span>
                 </label>
                 <label class="flex items-center">
                   <input type="checkbox" class="form-checkbox text-primary rounded border-gray-300" checked>
-                  <span class="ml-2 text-sm">Detalle de boxes</span>
+                  <span class="ml-2 text-sm" data-i18n="dashboard.report.boxDetails"><%= __('dashboard.report.boxDetails') %></span>
                 </label>
               </div>
             </div>
           </div>
           <div class="mt-6 flex justify-end space-x-3">
-            <button id="cancelReportBtn" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 whitespace-nowrap">Cancelar</button>
+            <button id="cancelReportBtn" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 whitespace-nowrap" data-i18n="dashboard.report.cancel"><%= __('dashboard.report.cancel') %></button>
             <button id="confirmReportBtn" class="bg-primary text-white px-6 py-2 rounded-button hover:bg-primary/90 whitespace-nowrap flex items-center">
               <i class="ri-download-line mr-2"></i>
-              Descargar Reporte
+              <span data-i18n="dashboard.report.download"><%= __('dashboard.report.download') %></span>
             </button>
           </div>
         </div>
       </div>
     </div>
-
+    
     <!-- KPIs secundarios -->
     <% 
       const bestSpecialtyHasData = hasBestSpecialtyUsage;
-      const bestSpecialtyNameText = bestSpecialtyHasData ? (bestSpecialtyUsageData.nombre ?? bestSpecialtyUsageData.label ?? 'Especialidad') : 'Sin datos en este período';
+      const bestSpecialtyNameText = bestSpecialtyHasData ? (bestSpecialtyUsageData.nombre ?? bestSpecialtyUsageData.label ?? 'Especialidad') : __('dashboard.noDataPeriod');
       const bestSpecialtyMetaText = bestSpecialtyHasData
-        ? `${bestSpecialtyUsageData.conteo ?? 0} agendas • ${bestSpecialtyUsageData.porcentaje ?? 0}% del período`
-        : 'No hay agendamientos registrados.';
-      const bestSpecialtyPeriodText = selectedSpecialtyPeriodDescription || 'Sin período seleccionado';
-
+        ? `${bestSpecialtyUsageData.conteo ?? 0} ${__('dashboard.schedulesCount')} • ${bestSpecialtyUsageData.porcentaje ?? 0}% ${__('dashboard.ofPeriod')}`
+        : __('dashboard.noSchedules');
+      const bestSpecialtyPeriodText = selectedSpecialtyPeriodDescription || __('dashboard.period');
       const bestBoxHasData = hasBestBoxUsage;
-      const bestBoxNameText = bestBoxHasData ? `Box #${bestBoxUsageData.numero ?? '—'}` : 'Sin datos en este período';
+      const bestBoxNameText = bestBoxHasData ? `Box #${bestBoxUsageData.numero ?? '—'}` : __('dashboard.noDataPeriod');
       const bestBoxMetaText = bestBoxHasData
-        ? `${bestBoxUsageData.porcentaje ?? 0}% del tiempo ocupado`
-        : 'No hay agendamientos registrados.';
-      const bestBoxPeriodText = selectedBoxPeriodDescription || 'Sin período seleccionado';
+        ? `${bestBoxUsageData.porcentaje ?? 0}% ${__('dashboard.timeOccupied')}`
+        : __('dashboard.noSchedules');
+      const bestBoxPeriodText = selectedBoxPeriodDescription || __('dashboard.period');
     %>
     <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <article class="bg-white border rounded-lg p-5 shadow-sm flex flex-col gap-4">
         <div class="flex justify-between items-start gap-4">
           <div class="flex-1 min-w-0">
-            <p class="text-xs md:text-sm text-gray-500 mb-1">Especialidad más ocupada</p>
+            <p class="text-xs md:text-sm text-gray-500 mb-1" data-i18n="dashboard.mostOccupiedSpecialty"><%= __('dashboard.mostOccupiedSpecialty') %></p>
             <p class="text-lg md:text-2xl font-semibold leading-tight <%= bestSpecialtyHasData ? 'text-gray-900' : 'text-gray-400' %>" id="best-specialty-name"><%= bestSpecialtyNameText %></p>
             <div class="mt-1 text-xs <%= bestSpecialtyHasData ? 'text-gray-500' : 'text-gray-400' %>" id="best-specialty-meta">
               <%= bestSpecialtyMetaText %>
@@ -197,7 +348,6 @@
             <i class="ri-eye-line ri-lg"></i>
           </div>
         </div>
-
         <div class="flex flex-wrap items-center gap-2">
           <% specialtyUsageOptions.forEach((option) => { %>
             <button type="button"
@@ -208,16 +358,15 @@
             </button>
           <% }) %>
         </div>
-
         <div class="text-xs text-gray-400" id="best-specialty-period">
-          Período: <%= bestSpecialtyPeriodText %>
+          <span data-i18n="dashboard.period"><%= __('dashboard.period') %></span>: <%= bestSpecialtyPeriodText %>
         </div>
       </article>
-
+      
       <article class="bg-white border rounded-lg p-5 shadow-sm flex flex-col gap-4">
         <div class="flex justify-between items-start gap-4">
           <div class="flex-1 min-w-0">
-            <p class="text-xs md:text-sm text-gray-500 mb-1">Box más utilizado</p>
+            <p class="text-xs md:text-sm text-gray-500 mb-1" data-i18n="dashboard.mostUsedBox"><%= __('dashboard.mostUsedBox') %></p>
             <p class="text-lg md:text-2xl font-semibold leading-tight <%= bestBoxHasData ? 'text-gray-900' : 'text-gray-400' %>" id="best-box-name"><%= bestBoxNameText %></p>
             <div class="mt-1 text-xs <%= bestBoxHasData ? 'text-gray-500' : 'text-gray-400' %>" id="best-box-meta"><%= bestBoxMetaText %></div>
           </div>
@@ -225,7 +374,6 @@
             <i class="ri-star-line ri-lg"></i>
           </div>
         </div>
-
         <div class="flex flex-wrap items-center gap-2">
           <% boxUsageOptions.forEach((option) => { %>
             <button type="button"
@@ -236,27 +384,26 @@
             </button>
           <% }) %>
         </div>
-
         <div class="text-xs text-gray-400" id="best-box-period">
-          Período: <%= bestBoxPeriodText %>
+          <span data-i18n="dashboard.period"><%= __('dashboard.period') %></span>: <%= bestBoxPeriodText %>
         </div>
       </article>
     </section>
-
+    
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <article class="bg-white rounded shadow-sm p-6">
-        <h2 class="text-xl font-semibold mb-4">Número de Box por especialidad</h2>
+        <h2 class="text-xl font-semibold mb-4" data-i18n="dashboard.boxesBySpecialty"><%= __('dashboard.boxesBySpecialty') %></h2>
         <div id="horizontal-bar-chart" style="height: 240px;"></div>
         <script id="etiquetas-especialidad" type="application/json"><%- JSON.stringify(etiquetasEspecialidadList) %></script>
         <script id="valores-especialidad" type="application/json"><%- JSON.stringify(valoresEspecialidadList) %></script>
       </article>
-
+      
       <article class="bg-white rounded shadow-sm p-6">
         <form id="form-horas" method="get" action="/dashboard" class="space-y-6">
           <div>
-            <label for="prof_code" class="block text-sm font-medium mb-1">Profesional</label>
+            <label for="prof_code" class="block text-sm font-medium mb-1" data-i18n="dashboard.professional"><%= __('dashboard.professional') %></label>
             <select id="prof_code" name="prof_code" class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white">
-              <option value="">-- Todos los doctores --</option>
+              <option value="" data-i18n="dashboard.allDoctors"><%= __('dashboard.allDoctors') %></option>
               <% doctoresList.forEach((doc) => { const value = doc.idusuario ?? doc.idUsuario ?? ''; %>
                 <option value="<%= value %>" <%= value && value.toString() === profSeleccionado ? 'selected' : '' %>>
                   <%= doc.nombreprofesional || doc.nombre || 'Profesional' %>
@@ -265,9 +412,9 @@
             </select>
           </div>
           <div>
-            <label for="box_number" class="block text-sm font-medium mb-1">Box</label>
+            <label for="box_number" class="block text-sm font-medium mb-1" data-i18n="dashboard.box"><%= __('dashboard.box') %></label>
             <select id="box_number" name="box_number" class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white">
-              <option value="">-- Seleccione un box --</option>
+              <option value="" data-i18n="dashboard.selectBox"><%= __('dashboard.selectBox') %></option>
               <% boxesList.forEach((b) => { const numero = b.numero ?? b.idBox ?? ''; %>
                 <option value="<%= numero %>" <%= numero && numero.toString() === boxSeleccionado ? 'selected' : '' %>>
                   Box <%= numero %>
@@ -276,32 +423,31 @@
             </select>
           </div>
           <div>
-            <label for="fecha" class="block text-sm font-medium mb-1">Fecha</label>
+            <label for="fecha" class="block text-sm font-medium mb-1" data-i18n="dashboard.date"><%= __('dashboard.date') %></label>
             <input id="fecha" name="fecha" type="date" value="<%= fechaSeleccionada %>" class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white" />
           </div>
           <div class="pt-2 flex justify-end">
-            <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90 transition">Buscar</button>
+            <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90 transition" data-i18n="dashboard.search"><%= __('dashboard.search') %></button>
           </div>
         </form>
-
         <div class="mt-8">
           <canvas id="bar-chart" height="120"></canvas>
           <div class="mt-4 space-y-1 text-sm text-gray-700">
-            <p><strong>Horas agendadas:</strong> <span id="txt-horas-agendadas"><%= horasAgendadasText %></span></p>
-            <p><strong>Horas realizadas:</strong> <span id="txt-horas-realizadas"><%= horasRealizadasText %></span></p>
+            <p><strong data-i18n="dashboard.scheduledHours"><%= __('dashboard.scheduledHours') %></strong> <span id="txt-horas-agendadas"><%= horasAgendadasText %></span></p>
+            <p><strong data-i18n="dashboard.completedHours"><%= __('dashboard.completedHours') %></strong> <span id="txt-horas-realizadas"><%= horasRealizadasText %></span></p>
           </div>
         </div>
       </article>
     </section>
-
+    
     <section class="bg-white rounded shadow-sm p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h2 class="text-xl font-semibold">Tendencia mensual por especialidad</h2>
-          <p class="text-sm text-gray-500">Cantidad de agendas cerradas por mes</p>
+          <h2 class="text-xl font-semibold" data-i18n="dashboard.monthlyTrendBySpecialty"><%= __('dashboard.monthlyTrendBySpecialty') %></h2>
+          <p class="text-sm text-gray-500" data-i18n="dashboard.closedSchedulesPerMonth"><%= __('dashboard.closedSchedulesPerMonth') %></p>
         </div>
         <div class="flex items-center gap-3">
-          <label for="specialty-trend-select" class="text-sm font-medium text-gray-600">Especialidad</label>
+          <label for="specialty-trend-select" class="text-sm font-medium text-gray-600" data-i18n="dashboard.specialty"><%= __('dashboard.specialty') %></label>
           <select id="specialty-trend-select" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
             <% specialtyTrendOptions.forEach((label) => { %>
               <option value="<%= label %>" <%= label === specialtyTrendDefault ? 'selected' : '' %>><%= label %></option>
@@ -316,16 +462,16 @@
       <script id="specialty-trend-series" type="application/json"><%- JSON.stringify(specialtyTrendSeries) %></script>
       <script id="specialty-trend-default" type="application/json"><%- JSON.stringify(specialtyTrendDefault) %></script>
     </section>
-
+    
     <section class="bg-white rounded shadow-sm p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h2 class="text-xl font-semibold">Agendas finalizadas por día de la semana</h2>
-          <p class="text-sm text-gray-500">Últimos 7 días, solo agendas finalizadas</p>
+          <h2 class="text-xl font-semibold" data-i18n="dashboard.completedSchedulesByWeekday"><%= __('dashboard.completedSchedulesByWeekday') %></h2>
+          <p class="text-sm text-gray-500" data-i18n="dashboard.last7Days"><%= __('dashboard.last7Days') %></p>
         </div>
         <form id="form-dias" method="get" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
           <div class="flex flex-col">
-            <label for="especialidad" class="text-sm font-medium text-gray-600 mb-1">Especialidad</label>
+            <label for="especialidad" class="text-sm font-medium text-gray-600 mb-1" data-i18n="dashboard.specialty"><%= __('dashboard.specialty') %></label>
             <select name="especialidad" id="especialidad" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
               <% const weeklyOptionsList = Array.isArray(weeklySpecialtyOptions) && weeklySpecialtyOptions.length ? weeklySpecialtyOptions : Object.keys(weeklySpecialtySeries || {}); %>
               <% weeklyOptionsList.forEach((esp) => { %>
@@ -334,33 +480,33 @@
             </select>
           </div>
           <div class="flex flex-col">
-            <label for="weekly-year" class="text-sm font-medium text-gray-600 mb-1">Año</label>
+            <label for="weekly-year" class="text-sm font-medium text-gray-600 mb-1" data-i18n="dashboard.year"><%= __('dashboard.year') %></label>
             <select name="weekly_year" id="weekly-year" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
-              <option value="" <%= !weeklySelectedYear ? 'selected' : '' %>>Todos</option>
+              <option value="" <%= !weeklySelectedYear ? 'selected' : '' %> data-i18n="dashboard.all"><%= __('dashboard.all') %></option>
               <% (weeklyAvailableYears || []).forEach((year) => { %>
                 <option value="<%= year %>" <%= weeklySelectedYear === year ? 'selected' : '' %>><%= year %></option>
               <% }) %>
             </select>
           </div>
           <div class="flex flex-col">
-            <label for="weekly-month" class="text-sm font-medium text-gray-600 mb-1">Mes</label>
+            <label for="weekly-month" class="text-sm font-medium text-gray-600 mb-1" data-i18n="dashboard.month"><%= __('dashboard.month') %></label>
             <select name="weekly_month" id="weekly-month" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-primary focus:ring-primary bg-white">
-              <option value="" <%= !weeklySelectedMonth ? 'selected' : '' %>>Todos</option>
-              <% const spanishMonths = [null, 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']; %>
+              <option value="" <%= !weeklySelectedMonth ? 'selected' : '' %> data-i18n="dashboard.all"><%= __('dashboard.all') %></option>
+              <% const monthNames = [null, __('dashboard.months.january'), __('dashboard.months.february'), __('dashboard.months.march'), __('dashboard.months.april'), __('dashboard.months.may'), __('dashboard.months.june'), __('dashboard.months.july'), __('dashboard.months.august'), __('dashboard.months.september'), __('dashboard.months.october'), __('dashboard.months.november'), __('dashboard.months.december')]; %>
               <% (weeklyAvailableMonths || []).forEach((monthNumber) => { %>
-                <option value="<%= monthNumber %>" <%= weeklySelectedMonth === monthNumber ? 'selected' : '' %>><%= spanishMonths[monthNumber] %></option>
+                <option value="<%= monthNumber %>" <%= weeklySelectedMonth === monthNumber ? 'selected' : '' %>><%= monthNames[monthNumber] %></option>
               <% }) %>
             </select>
           </div>
           <div class="flex flex-col">
-            <label for="weekly-period" class="text-sm font-medium text-gray-600 mb-1">Período</label>
-            <div class="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50">Distribución semanal</div>
+            <label for="weekly-period" class="text-sm font-medium text-gray-600 mb-1" data-i18n="dashboard.period"><%= __('dashboard.period') %></label>
+            <div class="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50" data-i18n="dashboard.weeklyDistribution"><%= __('dashboard.weeklyDistribution') %></div>
           </div>
           <div class="flex flex-col md:items-end justify-end">
             <input type="hidden" name="fecha" value="<%= fechaSeleccionada %>">
             <input type="hidden" name="prof_code" value="<%= profSeleccionado %>">
             <input type="hidden" name="box_number" value="<%= boxSeleccionado %>">
-            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition text-sm font-medium w-full md:w-auto">Filtrar</button>
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition text-sm font-medium w-full md:w-auto" data-i18n="dashboard.filter"><%= __('dashboard.filter') %></button>
           </div>
         </form>
       </div>
@@ -369,19 +515,19 @@
       </div>
       <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
         <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Día más activo</p>
+          <p class="text-xs uppercase tracking-wide text-gray-500" data-i18n="dashboard.mostActiveDay"><%= __('dashboard.mostActiveDay') %></p>
           <p id="weekly-top-day" class="text-lg font-semibold text-gray-800 mt-1">—</p>
-          <p id="weekly-top-day-detail" class="text-xs text-gray-500 mt-1">Sin datos para el período seleccionado.</p>
+          <p id="weekly-top-day-detail" class="text-xs text-gray-500 mt-1" data-i18n="dashboard.noDataSelectedPeriod"><%= __('dashboard.noDataSelectedPeriod') %></p>
         </div>
         <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Concentración</p>
+          <p class="text-xs uppercase tracking-wide text-gray-500" data-i18n="dashboard.concentration"><%= __('dashboard.concentration') %></p>
           <p id="weekly-top-percentage" class="text-lg font-semibold text-gray-800 mt-1">0%</p>
-          <p class="text-xs text-gray-500 mt-1">Porcentaje de agendas en el día más activo.</p>
+          <p class="text-xs text-gray-500 mt-1" data-i18n="dashboard.schedulesOnMostActiveDay"><%= __('dashboard.schedulesOnMostActiveDay') %></p>
         </div>
         <div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Total período</p>
+          <p class="text-xs uppercase tracking-wide text-gray-500" data-i18n="dashboard.totalPeriod"><%= __('dashboard.totalPeriod') %></p>
           <p id="weekly-total-count" class="text-lg font-semibold text-gray-800 mt-1">0</p>
-          <p class="text-xs text-gray-500 mt-1">Agendas finalizadas en el período filtrado.</p>
+          <p class="text-xs text-gray-500 mt-1" data-i18n="dashboard.completedSchedulesFiltered"><%= __('dashboard.completedSchedulesFiltered') %></p>
         </div>
       </div>
       <script id="weekly-labels" type="application/json"><%- JSON.stringify(weeklySpecialtyLabels) %></script>
@@ -396,11 +542,11 @@
       <script id="weekly-selected-year" type="application/json"><%- JSON.stringify(weeklySelectedYear) %></script>
       <script id="weekly-selected-month" type="application/json"><%- JSON.stringify(weeklySelectedMonth) %></script>
     </section>
-
+    
     <div class="pt-4 flex justify-center">
       <a href="/reporte" class="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90 transition inline-flex items-center">
         <i class="ri-file-excel-2-line mr-2"></i>
-        Descargar Reporte Excel
+        <span data-i18n="dashboard.downloadExcelReport"><%= __('dashboard.downloadExcelReport') %></span>
       </a>
     </div>
   </main>
@@ -423,17 +569,43 @@
         if (!chartEl) return;
         const chart = echarts.init(chartEl);
         chart.setOption({
-          tooltip: {
-            trigger: 'item',
-            formatter: function(params) {
-              const coloredCount = estadoCounts[keyName] || 0;
-              const grayCount = Math.max(totalBoxes - coloredCount, 0);
-              const isColored = params.dataIndex === 0;
-              const label = isColored ? keyName : `No ${keyName.toLowerCase()}`;
-              const value = isColored ? coloredCount : grayCount;
-              return label + ': ' + value + ' boxes';
-            }
-          },
+            tooltip: {
+              trigger: 'item',
+              formatter: function(params) {
+                const coloredCount = estadoCounts[keyName] || 0;
+                const grayCount = Math.max(totalBoxes - coloredCount, 0);
+                const isColored = params.dataIndex === 0;
+                
+                let translatedLabel;
+                if (isColored) {
+                  
+                  if (keyName === 'Ocupado') {
+                    translatedLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.occupied') : 'Ocupado';
+                  } else if (keyName === 'Disponible') {
+                    translatedLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.available') : 'Disponible';
+                  } else if (keyName === 'Inhabilitado') {
+                    translatedLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.disabled') : 'Inhabilitado';
+                  } else {
+                    translatedLabel = keyName;
+                  }
+                } else {
+                  
+                  if (keyName === 'Ocupado') {
+                    translatedLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.notOccupied') : 'No ocupado';
+                  } else if (keyName === 'Disponible') {
+                    translatedLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.notAvailable') : 'No disponible';
+                  } else if (keyName === 'Inhabilitado') {
+                    translatedLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.notDisabled') : 'No inhabilitado';
+                  } else {
+                    translatedLabel = `No ${keyName.toLowerCase()}`;
+                  }
+                }
+                
+                const value = isColored ? coloredCount : grayCount;
+                const boxesText = window.dashboardI18n ? window.dashboardI18n.translate('chart.boxes') : 'boxes';
+                return translatedLabel + ': ' + value + ' ' + boxesText;
+              }
+            },
           series: [{
             type: 'pie',
             radius: ['65%', '85%'],
@@ -462,7 +634,10 @@
     const barChart = new Chart(barCtx, {
       type: 'bar',
       data: {
-        labels: ['Agendadas', 'Realizadas'],
+        labels: [
+          window.dashboardI18n ? window.dashboardI18n.translate('chart.scheduled') : 'Agendadas',
+          window.dashboardI18n ? window.dashboardI18n.translate('chart.completed') : 'Realizadas'
+        ],
         datasets: [{
           data: [ag, re],
           backgroundColor: ['#38b2ac', '#4299e1'],
@@ -484,12 +659,16 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (context) => (Number(context.parsed.y).toFixed(2)) + ' horas'
-            }
+              label: (context) => {
+                const horasText = window.dashboardI18n ? window.dashboardI18n.translate('chart.hours') : 'horas';
+                return (Number(context.parsed.y).toFixed(2)) + ' ' + horasText;
+              }
+            }          
           }
         }
       }
     });
+    window.barChart = barChart;
 
     const etiquetasEsp = JSON.parse(document.getElementById('etiquetas-especialidad').textContent || '[]');
     const valoresEsp = JSON.parse(document.getElementById('valores-especialidad').textContent || '[]');
@@ -529,7 +708,12 @@
         axisPointer: { type: 'shadow' },
         backgroundColor: 'rgba(255,255,255,0.9)',
         borderColor: '#e5e7eb',
-        textStyle: { color: '#1f2937' }
+        textStyle: { color: '#1f2937' },
+        formatter: function(params) {
+          if (!params || !params[0]) return '';
+          const boxesText = window.dashboardI18n ? window.dashboardI18n.translate('chart.boxes') : 'Boxes';
+          return params[0].name + '<br/>' + boxesText + ': ' + params[0].value;
+        }
       }
     });
     window.addEventListener('resize', () => horizontalBar.resize());
@@ -566,12 +750,20 @@
 
     const updateBestSpecialtyCard = (info = null, periodDescription = '') => {
       const hasData = info && typeof info === 'object';
-      const nameText = hasData ? (info.nombre ?? info.label ?? 'Especialidad') : 'Sin datos en este período';
+      const nameText = hasData 
+        ? (info.nombre ?? info.label ?? 'Especialidad') 
+        : (window.dashboardI18n ? window.dashboardI18n.translate('dashboard.noDataPeriod') : 'Sin datos en este período');
+      
       const count = Number(info?.conteo ?? info?.total ?? 0);
       const percentage = Number(info?.porcentaje ?? 0);
+      
+      const schedulesText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.schedulesCount') : 'agendas';
+      const ofPeriodText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.ofPeriod') : 'del período';
+      const noSchedulesText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.noSchedules') : 'No hay agendamientos registrados.';
+      
       const metaText = hasData
-        ? `${count} agendas • ${percentage}% del período`
-        : 'No hay agendamientos registrados.';
+        ? `${count} ${schedulesText} • ${percentage}% ${ofPeriodText}`
+        : noSchedulesText;
 
       if (bestSpecialtyNameEl) {
         bestSpecialtyNameEl.textContent = nameText;
@@ -584,8 +776,9 @@
         bestSpecialtyMetaEl.classList.toggle('text-gray-500', hasData);
       }
       if (bestSpecialtyPeriodEl) {
+        const periodLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.period') : 'Período';
         const description = periodDescription || 'Sin período seleccionado';
-        bestSpecialtyPeriodEl.textContent = `Período: ${description}`;
+        bestSpecialtyPeriodEl.textContent = `${periodLabel}: ${description}`;
       }
     };
 
@@ -593,8 +786,13 @@
       const hasData = info && typeof info === 'object';
       const numero = info?.numero ?? info?.boxId ?? null;
       const percentage = Number(info?.porcentaje ?? 0);
-      const nameText = hasData && numero != null ? `Box #${numero}` : 'Sin datos en este período';
-      const metaText = hasData ? `${percentage}% del tiempo ocupado` : 'No hay agendamientos registrados.';
+      
+      const noDataText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.noDataPeriod') : 'Sin datos en este período';
+      const timeOccupiedText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.timeOccupied') : 'del tiempo ocupado';
+      const noSchedulesText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.noSchedules') : 'No hay agendamientos registrados.';
+      
+      const nameText = hasData && numero != null ? `Box #${numero}` : noDataText;
+      const metaText = hasData ? `${percentage}% ${timeOccupiedText}` : noSchedulesText;
 
       if (bestBoxNameEl) {
         bestBoxNameEl.textContent = nameText;
@@ -607,8 +805,9 @@
         bestBoxMetaEl.classList.toggle('text-gray-500', hasData);
       }
       if (bestBoxPeriodEl) {
+        const periodLabel = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.period') : 'Período';
         const description = periodDescription || 'Sin período seleccionado';
-        bestBoxPeriodEl.textContent = `Período: ${description}`;
+        bestBoxPeriodEl.textContent = `${periodLabel}: ${description}`;
       }
     };
 
@@ -639,19 +838,19 @@
       'Diciembre',
     ];
 
-    const populateYearOptions = (selectEl, years, selectedYear) => {
-      if (!selectEl) return;
-      selectEl.innerHTML = '';
-      const defaultOption = document.createElement('option');
-      defaultOption.value = '';
-      defaultOption.textContent = 'Todos';
-      if (!selectedYear) defaultOption.selected = true;
-      selectEl.appendChild(defaultOption);
-      (Array.isArray(years) ? years : []).forEach((year) => {
-        const option = document.createElement('option');
-        option.value = String(year);
-        option.textContent = String(year);
-        if (selectedYear && Number(selectedYear) === Number(year)) {
+const populateYearOptions = (selectEl, years, selectedYear) => {
+  if (!selectEl) return;
+  selectEl.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.all') : 'Todos';
+  if (!selectedYear) defaultOption.selected = true;
+  selectEl.appendChild(defaultOption);
+  (Array.isArray(years) ? years : []).forEach((year) => {
+    const option = document.createElement('option');
+    option.value = String(year);
+    option.textContent = String(year);
+    if (selectedYear && Number(selectedYear) === Number(year)) {
       option.selected = true;
     }
     selectEl.appendChild(option);
@@ -670,13 +869,34 @@
       selectEl.innerHTML = '';
       const defaultOption = document.createElement('option');
       defaultOption.value = '';
-      defaultOption.textContent = 'Todos';
+      defaultOption.textContent = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.all') : 'Todos';
       if (!selectedMonth) defaultOption.selected = true;
       selectEl.appendChild(defaultOption);
+      
+      const monthTranslations = [
+        null,
+        'months.january',
+        'months.february',
+        'months.march',
+        'months.april',
+        'months.may',
+        'months.june',
+        'months.july',
+        'months.august',
+        'months.september',
+        'months.october',
+        'months.november',
+        'months.december'
+      ];
+      
       (Array.isArray(months) ? months : []).forEach((monthNumber) => {
         const option = document.createElement('option');
         option.value = String(monthNumber);
-        option.textContent = WEEK_MONTH_NAMES[monthNumber] || `Mes ${monthNumber}`;
+        // Traducir nombres de meses
+        const translationKey = monthTranslations[monthNumber];
+        option.textContent = window.dashboardI18n && translationKey 
+          ? window.dashboardI18n.translate(translationKey)
+          : (WEEK_MONTH_NAMES[monthNumber] || `Mes ${monthNumber}`);
         if (selectedMonth && Number(selectedMonth) === Number(monthNumber)) {
           option.selected = true;
         }
@@ -699,6 +919,7 @@
           const container = document.getElementById('weekly-trend-chart');
           if (container) {
             weeklyChartInstance = echarts.init(container);
+            window.weeklyChartInstance = weeklyChartInstance;
           }
         }
         return weeklyChartInstance;
@@ -726,12 +947,13 @@
               const item = params[0];
               if (!item) return '';
               const value = Number(item.value || 0);
-              return `${item.axisValueLabel}<br/>${value} agendas`;
-            },
+              const schedulesText = window.dashboardI18n ? window.dashboardI18n.translate('chart.schedules') : 'agendas';
+              return `${item.axisValueLabel}<br/>${value} ${schedulesText}`;
+            },          
           },
           xAxis: {
             type: 'category',
-            data: weeklyTrendLabels,
+            data: window.dashboardI18n ? window.dashboardI18n.getWeekdayLabels() : weeklyTrendLabels,
             axisTick: { alignWithLabel: true },
             axisLabel: { color: '#64748b' },
             axisLine: { lineStyle: { color: '#e2e8f0' } },
@@ -771,15 +993,20 @@
 
       const updateWeeklySummary = (label) => {
         const info = weeklySummary[label] || {};
+        const noDataText = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.noDataSelectedPeriod') : 'Sin datos';
+        
         if (weeklyTopDayEl) {
-          weeklyTopDayEl.textContent = info.topDayLabel || 'Sin datos';
+          weeklyTopDayEl.textContent = info.topDayLabel || noDataText;
         }
         if (weeklyTopDayDetailEl) {
           if (info.topDayLabel) {
-            const agendasText = info.topDayCount === 1 ? 'agenda' : 'agendas';
-            weeklyTopDayDetailEl.textContent = `${info.topDayCount || 0} ${agendasText} registradas en ${info.topDayLabel}.`;
+            const count = info.topDayCount || 0;
+            const schedulesText = count === 1 
+              ? (window.dashboardI18n ? window.dashboardI18n.translate('chart.schedules').slice(0, -1) : 'agenda')
+              : (window.dashboardI18n ? window.dashboardI18n.translate('chart.schedules') : 'agendas');
+            weeklyTopDayDetailEl.textContent = `${count} ${schedulesText} registradas en ${info.topDayLabel}.`;
           } else {
-            weeklyTopDayDetailEl.textContent = 'Sin datos para el período seleccionado.';
+            weeklyTopDayDetailEl.textContent = window.dashboardI18n ? window.dashboardI18n.translate('dashboard.noDataSelectedPeriod') : 'Sin datos para el período seleccionado.';
           }
         }
         if (weeklyTopPercentageEl) {
@@ -797,6 +1024,8 @@
           weeklyTrendSelectEl.value = selected;
         }
       };
+
+      window.applyWeeklyData = applyWeeklyData;
 
       function buildParams() {
         const prof = document.getElementById('prof_code')?.value || '';
@@ -870,6 +1099,10 @@
             monthsForYear,
             data.weekly_selected_month ?? ''
           );
+
+          if (window.dashboardI18n && window.dashboardI18n.translateSelects) {
+            window.dashboardI18n.translateSelects();
+          }
 
           const defaultLabel =
             data.weekly_default ||
@@ -1109,7 +1342,8 @@
                 const item = params[0];
                 if (!item) return '';
                 const value = Number(item.value || 0);
-                return `${item.axisValue}<br/>${value} agendas`;
+                const schedulesText = window.dashboardI18n ? window.dashboardI18n.translate('chart.schedules') : 'agendas';
+                return `${item.axisValue}<br/>${value} ${schedulesText}`;
               },
             },
             xAxis: {
@@ -1260,7 +1494,6 @@
       });
     });
   </script>
-
   <script>
     const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
     const socket = new WebSocket(`${wsProto}://${window.location.host}/ws/box/`);
@@ -1290,6 +1523,306 @@
     socket.onclose = function() {
       console.warn('WebSocket cerrado inesperadamente');
     };
+  </script>
+  <script>
+  (function() {
+    'use strict';
+    
+    function getTranslation(key) {
+      const lang = localStorage.getItem('reeva-language') || 'es';
+      
+      const translations = {
+        es: {
+          'chart.boxes': 'Boxes',
+          'chart.schedules': 'agendas',
+          'chart.scheduled': 'Agendadas',
+          'chart.completed': 'Realizadas',
+          'chart.hours': 'horas',
+          'weekdays.monday': 'Lunes',
+          'weekdays.tuesday': 'Martes',
+          'weekdays.wednesday': 'Miércoles',
+          'weekdays.thursday': 'Jueves',
+          'weekdays.friday': 'Viernes',
+          'weekdays.saturday': 'Sábado',
+          'weekdays.sunday': 'Domingo',
+          'periods.today': 'Hoy',
+          'periods.week': 'Semana',
+          'periods.month': 'Mes',
+          'periods.year': 'Año',
+          'dashboard.noDataPeriod': 'Sin datos en este período',
+          'dashboard.noSchedules': 'No hay agendamientos registrados.',
+          'dashboard.schedulesCount': 'agendas',
+          'dashboard.ofPeriod': 'del período',
+          'dashboard.timeOccupied': 'del tiempo ocupado',
+          'dashboard.period': 'Período',
+          'dashboard.all': 'Todos',
+          'dashboard.allDoctors': '-- Todos los doctores --',
+          'dashboard.selectBox': '-- Seleccione un box --',
+          'dashboard.noDataSelectedPeriod': 'Sin datos para el período seleccionado.',
+          'dashboard.allSpecialties': 'Todas',
+          'dashboard.occupied': 'Ocupado',
+          'dashboard.available': 'Disponible',
+          'dashboard.disabled': 'Inhabilitado',
+          'dashboard.notOccupied': 'No ocupado',
+          'dashboard.notAvailable': 'No disponible',
+          'dashboard.notDisabled': 'No inhabilitado',
+          'months.january': 'Enero',
+          'months.february': 'Febrero',
+          'months.march': 'Marzo',
+          'months.april': 'Abril',
+          'months.may': 'Mayo',
+          'months.june': 'Junio',
+          'months.july': 'Julio',
+          'months.august': 'Agosto',
+          'months.september': 'Septiembre',
+          'months.october': 'Octubre',
+          'months.november': 'Noviembre',
+          'months.december': 'Diciembre'
+        },
+        en: {
+          'chart.boxes': 'Boxes',
+          'chart.schedules': 'schedules',
+          'chart.scheduled': 'Scheduled',
+          'chart.completed': 'Completed',
+          'chart.hours': 'hours',
+          'weekdays.monday': 'Monday',
+          'weekdays.tuesday': 'Tuesday',
+          'weekdays.wednesday': 'Wednesday',
+          'weekdays.thursday': 'Thursday',
+          'weekdays.friday': 'Friday',
+          'weekdays.saturday': 'Saturday',
+          'weekdays.sunday': 'Sunday',
+          'periods.today': 'Today',
+          'periods.week': 'Week',
+          'periods.month': 'Month',
+          'periods.year': 'Year',
+          'dashboard.noDataPeriod': 'No data in this period',
+          'dashboard.noSchedules': 'No appointments registered.',
+          'dashboard.schedulesCount': 'schedules',
+          'dashboard.ofPeriod': 'of the period',
+          'dashboard.timeOccupied': 'of time occupied',
+          'dashboard.period': 'Period',
+          'dashboard.all': 'All',
+          'dashboard.allDoctors': '-- All doctors --',
+          'dashboard.selectBox': '-- Select a box --',
+          'dashboard.noDataSelectedPeriod': 'No data for the selected period.',
+          'dashboard.allSpecialties': 'All',
+          'dashboard.occupied': 'Occupied',
+          'dashboard.available': 'Available',
+          'dashboard.disabled': 'Disabled',
+          'dashboard.notOccupied': 'Not occupied',
+          'dashboard.notAvailable': 'Not available',
+          'dashboard.notDisabled': 'Not disabled',
+          'months.january': 'January',
+          'months.february': 'February',
+          'months.march': 'March',
+          'months.april': 'April',
+          'months.may': 'May',
+          'months.june': 'June',
+          'months.july': 'July',
+          'months.august': 'August',
+          'months.september': 'September',
+          'months.october': 'October',
+          'months.november': 'November',
+          'months.december': 'December'
+        }
+      };
+      
+      return translations[lang]?.[key] || key;
+    }
+    
+    function getWeekdayLabels() {
+      return [
+        getTranslation('weekdays.monday'),
+        getTranslation('weekdays.tuesday'),
+        getTranslation('weekdays.wednesday'),
+        getTranslation('weekdays.thursday'),
+        getTranslation('weekdays.friday'),
+        getTranslation('weekdays.saturday'),
+        getTranslation('weekdays.sunday')
+      ];
+    }
+    
+    function updatePeriodButtons() {
+      const periodTranslations = {
+        'day': getTranslation('periods.today'),
+        'week': getTranslation('periods.week'),
+        'month': getTranslation('periods.month'),
+        'year': getTranslation('periods.year')
+      };
+      
+      document.querySelectorAll('[data-box-period]').forEach(button => {
+        const period = button.getAttribute('data-box-period');
+        if (periodTranslations[period]) {
+          button.textContent = periodTranslations[period];
+        }
+      });
+      
+      document.querySelectorAll('[data-specialty-period]').forEach(button => {
+        const period = button.getAttribute('data-specialty-period');
+        if (periodTranslations[period]) {
+          button.textContent = periodTranslations[period];
+        }
+      });
+    }
+    
+    function updatePeriodDescriptions() {
+      const lang = localStorage.getItem('reeva-language') || 'es';
+      
+      const periodDescriptions = {
+        es: {
+          'day': 'Últimas 24 horas',
+          'week': 'Últimos 7 días',
+          'month': 'Últimos 30 días',
+          'year': 'Últimos 12 meses'
+        },
+        en: {
+          'day': 'Last 24 hours',
+          'week': 'Last 7 days',
+          'month': 'Last 30 days',
+          'year': 'Last 12 months'
+        }
+      };
+      
+      const boxPeriodEl = document.getElementById('best-box-period');
+      if (boxPeriodEl) {
+        const boxPeriodValue = document.getElementById('box-period-value')?.value || 'week';
+        const periodLabel = getTranslation('dashboard.period');
+        const description = periodDescriptions[lang][boxPeriodValue] || '';
+        boxPeriodEl.textContent = `${periodLabel}: ${description}`;
+      }
+      
+      const specialtyPeriodEl = document.getElementById('best-specialty-period');
+      if (specialtyPeriodEl) {
+        const specialtyPeriodValue = document.getElementById('specialty-period-value')?.value || 'week';
+        const periodLabel = getTranslation('dashboard.period');
+        const description = periodDescriptions[lang][specialtyPeriodValue] || '';
+        specialtyPeriodEl.textContent = `${periodLabel}: ${description}`;
+      }
+    }
+    
+    function translateSelects() {
+      const yearSelect = document.getElementById('weekly-year');
+      if (yearSelect) {
+        const firstOption = yearSelect.querySelector('option[value=""]');
+        if (firstOption) {
+          firstOption.textContent = getTranslation('dashboard.all');
+        }
+      }
+      
+      const monthSelect = document.getElementById('weekly-month');
+      if (monthSelect) {
+        const firstOption = monthSelect.querySelector('option[value=""]');
+        if (firstOption) {
+          firstOption.textContent = getTranslation('dashboard.all');
+        }
+      }
+      
+      const profSelect = document.getElementById('prof_code');
+      if (profSelect) {
+        const firstOption = profSelect.querySelector('option[value=""]');
+        if (firstOption) {
+          firstOption.textContent = getTranslation('dashboard.allDoctors');
+        }
+      }
+      
+      const boxSelect = document.getElementById('box_number');
+      if (boxSelect) {
+        const firstOption = boxSelect.querySelector('option[value=""]');
+        if (firstOption) {
+          firstOption.textContent = getTranslation('dashboard.selectBox');
+        }
+      }
+    }
+
+    function updateBarChartLabels() {
+      if (window.barChart) {
+        window.barChart.data.labels = [
+          getTranslation('chart.scheduled'),
+          getTranslation('chart.completed')
+        ];
+        window.barChart.update('none');
+      }
+    }
+
+    function updateWeeklyChartLabels() {
+      if (window.applyWeeklyData) {
+        const currentSpecialty = document.getElementById('especialidad')?.value || 'Todas';
+        window.applyWeeklyData(currentSpecialty);
+      }
+    }
+
+    function updateDonutLabels() {
+      const donutLabels = document.querySelectorAll('[id^="donut-"] + p');
+      const labelMap = {
+        'Ocupado': 'dashboard.occupied',
+        'Disponible': 'dashboard.available',
+        'Inhabilitado': 'dashboard.disabled',
+        'Occupied': 'dashboard.occupied',
+        'Available': 'dashboard.available',
+        'Disabled': 'dashboard.disabled'
+      };
+      
+      donutLabels.forEach(label => {
+        const currentText = label.textContent.trim();
+        const translationKey = labelMap[currentText];
+        if (translationKey) {
+          label.textContent = getTranslation(translationKey);
+        }
+      });
+    }
+
+    function updateSpecialtySelectors() {
+      const specialtyTrendSelect = document.getElementById('specialty-trend-select');
+      if (specialtyTrendSelect) {
+        Array.from(specialtyTrendSelect.options).forEach(option => {
+          if (option.value === 'Todas' || option.value === 'All') {
+            option.textContent = getTranslation('dashboard.allSpecialties');
+          }
+        });
+      }
+
+      const weeklySpecialtySelect = document.getElementById('especialidad');
+      if (weeklySpecialtySelect) {
+        Array.from(weeklySpecialtySelect.options).forEach(option => {
+          if (option.value === 'Todas' || option.value === 'All') {
+            option.textContent = getTranslation('dashboard.allSpecialties');
+          }
+        });
+      }
+    }
+    
+    window.dashboardI18n = {
+      translate: getTranslation,
+      getWeekdayLabels: getWeekdayLabels,
+      updatePeriodButtons: updatePeriodButtons,
+      updatePeriodDescriptions: updatePeriodDescriptions,
+      translateSelects: translateSelects,
+      updateBarChartLabels: updateBarChartLabels,
+      updateWeeklyChartLabels: updateWeeklyChartLabels,
+      updateDonutLabels: updateDonutLabels,
+      updateSpecialtySelectors: updateSpecialtySelectors
+    };
+
+    updatePeriodButtons();
+    updatePeriodDescriptions();
+    translateSelects();
+    updateBarChartLabels();
+    updateDonutLabels();
+    updateSpecialtySelectors();
+
+    document.body.classList.add('translations-ready');
+
+    document.addEventListener('reeva:language-change', function() {
+      updatePeriodButtons();
+      updatePeriodDescriptions();
+      translateSelects();
+      updateBarChartLabels();
+      updateWeeklyChartLabels();
+      updateDonutLabels();
+      updateSpecialtySelectors();
+    });
+  })();
   </script>
 </body>
 </html>

@@ -237,6 +237,16 @@
     "period": "Período",
     "mostUsedBox": "Box más utilizado",
     "timeOccupied": "del tiempo ocupado",
+    "periods": {
+      "today": "Hoy",
+      "week": "Semana",
+      "month": "Mes",
+      "year": "Año",
+      "last24hours": "Últimas 24 horas",
+      "last7days": "Últimos 7 días",
+      "last30days": "Últimos 30 días",
+      "last12months": "Últimos 12 meses"
+    },
     "boxesBySpecialty": "Número de Box por especialidad",
     "professional": "Profesional",
     "allDoctors": "-- Todos los doctores --",
@@ -246,6 +256,8 @@
     "search": "Buscar",
     "scheduledHours": "Horas agendadas:",
     "completedHours": "Horas realizadas:",
+    "scheduled": "Agendadas",
+    "completed": "Realizadas",
     "monthlyTrendBySpecialty": "Tendencia mensual por especialidad",
     "closedSchedulesPerMonth": "Cantidad de agendas cerradas por mes",
     "specialty": "Especialidad",
@@ -263,6 +275,29 @@
     "schedulesOnMostActiveDay": "Porcentaje de agendas en el día más activo.",
     "completedSchedulesFiltered": "Agendas finalizadas en el período filtrado.",
     "downloadExcelReport": "Descargar Reporte Excel",
+    "weekdays": {
+      "monday": "Lunes",
+      "tuesday": "Martes",
+      "wednesday": "Miércoles",
+      "thursday": "Jueves",
+      "friday": "Viernes",
+      "saturday": "Sábado",
+      "sunday": "Domingo"
+    },
+    "months": {
+      "january": "Enero",
+      "february": "Febrero",
+      "march": "Marzo",
+      "april": "Abril",
+      "may": "Mayo",
+      "june": "Junio",
+      "july": "Julio",
+      "august": "Agosto",
+      "september": "Septiembre",
+      "october": "Octubre",
+      "november": "Noviembre",
+      "december": "Diciembre"
+    },
     "report": {
       "modalTitle": "Configurar Reporte",
       "format": "Formato",
@@ -277,20 +312,17 @@
       "cancel": "Cancelar",
       "download": "Descargar Reporte"
     },
-    "months": {
-      "january": "Enero",
-      "february": "Febrero",
-      "march": "Marzo",
-      "april": "Abril",
-      "may": "Mayo",
-      "june": "Junio",
-      "july": "Julio",
-      "august": "Agosto",
-      "september": "Septiembre",
-      "october": "October",
-      "november": "Noviembre",
-      "december": "Diciembre"
-    }
+    "chart": {
+      "scheduled": "Agendadas",
+      "completed": "Realizadas",
+      "boxes": "Boxes",
+      "schedules": "agendas",
+      "hours": "horas"
+    },
+  "allSpecialties": "All",
+  "occupied": "Occupied",
+  "available": "Available",
+  "disabled": "Disabled"
   },
   "adminDB": {
     "title": "Admin BD - Sistema REEVA",
