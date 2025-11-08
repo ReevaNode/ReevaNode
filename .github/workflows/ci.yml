@@ -4,9 +4,12 @@ on:
   push:
     paths:
       - 'Reeva_node/**'
+      - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'Reeva_node/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
 
 jobs:
   node-ci:
@@ -31,4 +34,3 @@ jobs:
       - name: Lint/Build placeholder
         run: |
           node -e "require('fs').accessSync('src/server.js')"
-
