@@ -5,6 +5,7 @@ import { ScanCommand, GetCommand, PutCommand, UpdateCommand, DeleteCommand } fro
 import db from '../../db.js';
 import Logger from '../utils/logger.js';
 import { randomUUID } from 'crypto';
+import { broadcastBoxUpdate } from '../services/websocketService.js';
 
 const router = Router();
 const logger = new Logger('ADMIN_BDD');
@@ -475,6 +476,18 @@ router.post('/admin-bdd/api/agenda/create-multiple', requireAdmin, async (req, r
     }
     
     logger.info(`${insertados} agendas creadas`);
+    
+    // emitir websocket por cada box afectado
+    const boxesAfectados = [...new Set(agendas.map(a => a.idBox))];
+    boxesAfectados.forEach(boxId => {
+      broadcastBoxUpdate({
+        box_id: String(boxId),
+        new_state: 2,
+        new_state_text: 'Reservado',
+        action: 'bulk_create'
+      });
+    });
+    
     res.json({ success: true, count: insertados });
     
   } catch (error) {

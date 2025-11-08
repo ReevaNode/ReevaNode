@@ -1436,5 +1436,41 @@ document.addEventListener('DOMContentLoaded', function() {
   });    
 });
 </script>
+
+<!-- websocket client -->
+<script>
+(function() {
+  const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${wsProto}://${window.location.host}`);
+  
+  ws.onopen = () => {
+    console.log('✓ agenda websocket conectado');
+  };
+  
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log('✓ agenda websocket mensaje recibido:', data);
+      console.log(`✓ cambio en box ${data.box_id}: ${data.new_state_text} (action: ${data.action})`);
+      
+      // recargar si hay cambios (el usuario verá los cambios en el calendario)
+      console.log('✓ recargando calendario en 500ms...');
+      setTimeout(() => window.location.reload(), 500);
+    } catch (err) {
+      console.error('❌ error parseando mensaje websocket:', err);
+    }
+  };
+  
+  ws.onerror = (err) => {
+    console.error('❌ error websocket:', err);
+  };
+  
+  ws.onclose = () => {
+    console.log('⚠ websocket desconectado, reconectando en 3s...');
+    setTimeout(() => window.location.reload(), 3000);
+  };
+})();
+</script>
+
 </body>
 </html>

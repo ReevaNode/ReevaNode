@@ -55,11 +55,12 @@ router.get('/info-box/:idBox', async (req, res) => {
             itemsResult,
             agendasResult
         ] = await Promise.all([
-            // Box específico
+            // Box específico - ConsistentRead para obtener el estado más reciente
             db.send(new ScanCommand({ 
                 TableName: 'box',
                 FilterExpression: 'idBox = :idBox',
-                ExpressionAttributeValues: { ':idBox': idBox } // usar como string
+                ExpressionAttributeValues: { ':idBox': idBox }, // usar como string
+                ConsistentRead: true // Leer el valor más reciente, no el cache
             })),
             // Tipos de box
             db.send(new ScanCommand({ TableName: 'tipobox' })),
@@ -163,7 +164,9 @@ router.get('/info-box/:idBox', async (req, res) => {
         // Enriquecer información del box
         box.especialidad = tipoBoxMap[box.idTipoBox] || 'Sin Especialidad';
         box.estadoBox = estadoBoxMap[box.idEstadoBox] || 'Desconocido';
-        box.disabled = box.idEstadoBox === 4; // 4 = inhabilitado
+        box.disabled = box.idEstadoBox === 4 || box.idEstadoBox === '4'; // 4 = inhabilitado
+        
+        console.log(`📦 Box ${idBox} - idEstadoBox: ${box.idEstadoBox} (tipo: ${typeof box.idEstadoBox}) - disabled: ${box.disabled}`);
 
         // Calcular ocupación del día
         let segmentosOcupados = [];

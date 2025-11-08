@@ -212,5 +212,223 @@
     window.userLang = '<%= userLang || "es" %>';
 </script>
 <script src="/js/matriz_box.js"></script>
+
+<script>
+// actualizar timestamp de última actualización
+function updateLastUpdateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('<%= userLang || "es" %>', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
+    const timeElement = document.getElementById('last-update-time');
+    if (timeElement) {
+        timeElement.textContent = timeString;
+    }
+}
+
+// actualizar al cargar la página
+updateLastUpdateTime();
+
+// websocket para actualizaciones en tiempo real
+(function() {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = `${protocol}://${window.location.host}`;
+    
+    let socket;
+    let reconnectTimeout;
+    
+    function conectarWebSocket() {
+        socket = new WebSocket(wsUrl);
+        
+        socket.onopen = () => {
+            console.log('✓ websocket conectado');
+        };
+        
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('✓ websocket mensaje recibido:', data);
+                
+                const boxId = data.box_id;
+                const boxNumero = data.box_numero || boxId; // intentar con numero primero
+                const newState = data.new_state;
+                const newStateText = data.new_state_text;
+                
+                // buscar tarjeta del box (primero por numero, luego por id)
+                let boxCard = document.querySelector(`.box-card[data-numero="${boxNumero}"]`);
+                
+                // si no lo encuentra por numero, intentar con todos los boxes
+                if (!boxCard) {
+                    console.warn(`⚠ no se encontró con data-numero="${boxNumero}", buscando en todas las tarjetas...`);
+                    const allCards = document.querySelectorAll('.box-card');
+                    allCards.forEach(card => {
+                        const cardNumero = card.getAttribute('data-numero');
+                        console.log(`   - tarjeta encontrada con data-numero="${cardNumero}"`);
+                    });
+                }
+                
+                
+                if (boxCard) {
+                    console.log(`✓ actualizando box ${boxId} a estado: ${newStateText} (id: ${newState})`);
+                    
+                    // actualizar atributo data-estado
+                    boxCard.setAttribute('data-estado', newStateText.toLowerCase());
+                    
+                    // remover clases anteriores de estado
+                    boxCard.classList.remove('libre', 'en-atencion', 'paciente-esperando', 'paciente-ausente', 'finalizado', 'inhabilitado', 'reservado');
+                    
+                    // determinar nueva clase CSS basada en el estado
+                    const stateTextLower = newStateText.toLowerCase();
+                    let newStateClass = 'libre';
+                    
+                    if (stateTextLower.includes('libre')) {
+                        newStateClass = 'libre';
+                    } else if (stateTextLower.includes('reservado')) {
+                        newStateClass = 'reservado';
+                    } else if (stateTextLower.includes('atención') || stateTextLower.includes('atencion')) {
+                        newStateClass = 'en-atencion';
+                    } else if (stateTextLower.includes('inhabilitado') || stateTextLower.includes('mantenimiento')) {
+                        newStateClass = 'inhabilitado';
+                    } else if (stateTextLower.includes('esperando')) {
+                        newStateClass = 'paciente-esperando';
+                    } else if (stateTextLower.includes('ausente')) {
+                        newStateClass = 'paciente-ausente';
+                    } else if (stateTextLower.includes('finalizado')) {
+                        newStateClass = 'finalizado';
+                    }
+                    
+                    boxCard.classList.add(newStateClass);
+                    console.log(`✓ clase CSS actualizada a: ${newStateClass}`);
+                    
+                    // 1. Actualizar ícono de estado
+                    const statusIcon = boxCard.querySelector('.status-icon');
+                    if (statusIcon) {
+                        statusIcon.className = `status-icon ${newStateClass}`;
+                        const iconElement = statusIcon.querySelector('i');
+                        if (iconElement) {
+                            // mapear íconos según estado
+                            let iconClass = 'ri-question-line';
+                            if (newStateClass === 'libre') iconClass = 'ri-checkbox-circle-line';
+                            else if (newStateClass === 'reservado' || newStateClass === 'paciente-esperando') iconClass = 'ri-time-line';
+                            else if (newStateClass === 'en-atencion') iconClass = 'ri-user-heart-line';
+                            else if (newStateClass === 'finalizado') iconClass = 'ri-check-double-line';
+                            else if (newStateClass === 'inhabilitado') iconClass = 'ri-forbid-line';
+                            else if (newStateClass === 'paciente-ausente') iconClass = 'ri-user-unfollow-line';
+                            
+                            iconElement.className = iconClass;
+                            console.log(`✓ ícono actualizado a: ${iconClass}`);
+                        }
+                    }
+                    
+                    // 2. Actualizar texto del estado (label)
+                    const statusLabel = boxCard.querySelector('.box-status-label');
+                    if (statusLabel) {
+                        statusLabel.className = `box-status-label ${newStateClass === 'paciente-esperando' || newStateClass === 'paciente-ausente' ? 'reservado' : newStateClass}`;
+                        statusLabel.textContent = newStateText;
+                        console.log(`✓ label de estado actualizado a: ${newStateText}`);
+                    }
+                    
+                    // 3. Actualizar nombre del médico
+                    const medicoName = boxCard.querySelector('.medico-name');
+                    if (medicoName) {
+                        if (newStateClass === 'inhabilitado') {
+                            medicoName.textContent = 'No asignado';
+                        } else if (data.medico_nombre) {
+                            // Actualizar con el médico de la agenda activa
+                            medicoName.textContent = data.medico_nombre;
+                            console.log(`✓ médico actualizado a: ${data.medico_nombre}`);
+                        } else {
+                            // Si no hay médico, mostrar mensaje genérico
+                            medicoName.textContent = 'Doctor';
+                        }
+                    }
+                    
+                    // 4. Actualizar o crear sección de paciente/mantenimiento
+                    let patientSection = boxCard.querySelector('.patient-section');
+                    
+                    // Primero, remover cualquier sección existente
+                    if (patientSection) {
+                        patientSection.remove();
+                    }
+                    
+                    // Crear nueva sección según el estado
+                    if (newStateClass === 'inhabilitado') {
+                        // Mostrar sección de mantenimiento
+                        const medicoSection = boxCard.querySelector('.medico-section');
+                        if (medicoSection) {
+                            const maintenanceHTML = `
+                                <div class="patient-section">
+                                    <div class="patient-header">
+                                        <svg class="patient-icon" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="patient-label">Razón</span>
+                                    </div>
+                                    <div class="patient-status">Mantenimiento programado</div>
+                                </div>
+                            `;
+                            medicoSection.insertAdjacentHTML('afterend', maintenanceHTML);
+                            console.log(`✓ sección de mantenimiento agregada`);
+                        }
+                    } else if (newStateClass === 'paciente-esperando' || newStateClass === 'paciente-ausente') {
+                        // Mostrar sección de estado del paciente
+                        const medicoSection = boxCard.querySelector('.medico-section');
+                        if (medicoSection) {
+                            const patientHTML = `
+                                <div class="patient-section">
+                                    <div class="patient-header">
+                                        <svg class="patient-icon" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="patient-label">Estado del paciente</span>
+                                    </div>
+                                    <div class="patient-status">${newStateText}</div>
+                                </div>
+                            `;
+                            medicoSection.insertAdjacentHTML('afterend', patientHTML);
+                            console.log(`✓ sección de paciente agregada`);
+                        }
+                    }
+                    // Si es libre, en atención o finalizado, NO mostrar sección adicional
+                    
+                    // 5. Actualizar barra de progreso
+                    const progressFill = boxCard.querySelector('.progress-fill');
+                    if (progressFill) {
+                        progressFill.className = `progress-fill ${newStateClass === 'paciente-esperando' || newStateClass === 'paciente-ausente' ? 'reservado' : newStateClass}`;
+                    }
+                    
+                    // actualizar timestamp de última actualización
+                    updateLastUpdateTime();
+                    console.log(`✅ tarjeta del box ${boxNumero} completamente actualizada`);
+                } else {
+                    console.error(`❌ no se encontró box-card con data-numero="${boxNumero}" (box_id="${boxId}")`);
+                }
+            } catch (error) {
+                console.error('❌ error procesando mensaje websocket:', error);
+            }
+        };
+        
+        socket.onclose = () => {
+            console.log('websocket desconectado, reconectando en 3s...');
+            reconnectTimeout = setTimeout(conectarWebSocket, 3000);
+        };
+        
+        socket.onerror = (error) => {
+            console.error('error en websocket:', error);
+        };
+    }
+    
+    conectarWebSocket();
+    
+    // cleanup al salir de la pagina
+    window.addEventListener('beforeunload', () => {
+        if (socket) socket.close();
+        if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    });
+})();
+</script>
+
 </body>
 </html>

@@ -489,6 +489,54 @@
 const boxId = <%= box.idBox %>;
 const eventos = <%- eventos_json %>;
 
+// ===== FUNCIONES DE MANTENIMIENTO MODAL =====
+// Deben estar en el scope global para ser accesibles desde onclick
+function openMantModal() {
+  document.getElementById('mantModal').classList.remove('hidden');
+}
+
+function closeMantModal() {
+  document.getElementById('mantModal').classList.add('hidden');
+}
+
+function toggleMantenimiento() {
+  console.log('✓ Iniciando toggle mantenimiento para box:', boxId);
+  console.log('✓ URL completa:', `/toggle_mantenimiento/${boxId}`);
+  
+  fetch(`/toggle_mantenimiento/${boxId}`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    credentials: 'same-origin'
+  })
+  .then(res => {
+    console.log('✓ Respuesta recibida - status:', res.status);
+    return res.json();
+  })
+  .then(data => {
+    console.log('✓ Datos recibidos:', data);
+    if (data.ok) {
+      console.log('✅ Toggle exitoso');
+      console.log('⏳ Cerrando modal y esperando actualización por WebSocket...');
+      closeMantModal();
+      // NO recargamos aquí - dejamos que el WebSocket recargue la página cuando reciba el mensaje
+      // Esto asegura que DynamoDB ya se haya actualizado antes de recargar
+    } else {
+      console.error('❌ Error del servidor:', data.error);
+      alert('Error al cambiar estado del box: ' + (data.error || 'Error desconocido'));
+      closeMantModal();
+    }
+  })
+  .catch(err => {
+    console.error('❌ Error toggle mantenimiento:', err);
+    alert('Error al cambiar estado del box');
+    closeMantModal();
+  });
+}
+// ===== FIN FUNCIONES DE MANTENIMIENTO =====
+
 // ECharts - Gráfico de ocupación
 document.addEventListener('DOMContentLoaded', () => {
   const chart = echarts.init(document.getElementById('estadoChart'));
@@ -1690,21 +1738,47 @@ function guardarItems(){
 
 saveItemsBtn.addEventListener('click', guardarItems);
 
-// Mantenimiento Modal
-function openMantModal() {
-  document.getElementById('mantModal').classList.remove('hidden');
-}
+</script>
 
-function closeMantModal() {
-  document.getElementById('mantModal').classList.add('hidden');
-}
-
-function toggleMantenimiento() {
-// Mantenimiento Modal
-function toggleMantenimiento() {
-  alert('Funcionalidad de mantenimiento próximamente');
-  closeMantModal();
-}
+<!-- websocket client -->
+<script>
+(function() {
+  const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${wsProto}://${window.location.host}`);
+  
+  ws.onopen = () => {
+    console.log('✓ info_box websocket conectado');
+  };
+  
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log('✓ info_box websocket mensaje recibido:', data);
+      
+      const currentBoxId = '<%= box.idBox || box.idbox %>';
+      console.log(`✓ comparando box_id: "${data.box_id}" con currentBoxId: "${currentBoxId}"`);
+      
+      // si el cambio es de este box, recargar
+      if (String(data.box_id) === String(currentBoxId)) {
+        console.log('✓ cambio detectado en este box, recargando página en 500ms...');
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        console.log(`⚠ cambio es de otro box (${data.box_id}), no recargando`);
+      }
+    } catch (err) {
+      console.error('❌ error parseando mensaje websocket:', err);
+    }
+  };
+  
+  ws.onerror = (err) => {
+    console.error('❌ error websocket:', err);
+  };
+  
+  ws.onclose = () => {
+    console.log('⚠ websocket desconectado, reconectando en 3s...');
+    setTimeout(() => window.location.reload(), 3000);
+  };
+})();
 </script>
 
 </body>

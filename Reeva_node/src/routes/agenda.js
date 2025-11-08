@@ -3,9 +3,26 @@ import db from '../../db.js';
 import {ScanCommand, QueryCommand , PutCommand, DeleteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { config } from '../config/index.js';
 import Logger from '../utils/logger.js';
+import { broadcastBoxUpdate } from '../services/websocketService.js';
 
 const router = Router();
 const logger = new Logger('AGENDA');
+
+// helper para obtener info del box
+async function getBoxInfo(boxId) {
+    const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
+    const boxesRes = await db.send(boxesCmd);
+    const boxes = boxesRes.Items || [];
+    const box = boxes.find(b => String(b.idBox || b.idbox) === String(boxId));
+    
+    if (!box) return null;
+    
+    return {
+        id: box.idBox || box.idbox,
+        numero: box.numero || box.idBox || box.idbox,
+        box: box
+    };
+}
 
 // GET /agenda
 router.get('/agenda', async (req, res) => {
@@ -313,6 +330,16 @@ router.post('/add_evento/:boxId', async (req, res) => {
         await db.send(new PutCommand({ TableName: config.dynamodb.tablas.agenda, Item: item }));
         console.log('PutCommand item saved:', item);
         
+        // emitir websocket
+        const boxInfo = await getBoxInfo(boxId);
+        broadcastBoxUpdate({
+            box_id: String(boxId),
+            box_numero: boxInfo ? String(boxInfo.numero) : String(boxId),
+            new_state: 2, // reservado
+            new_state_text: 'Reservado',
+            action: 'create'
+        });
+        
         if (req.headers['x-requested-with'] === 'XMLHttpRequest') return res.json({ ok: true });
         return res.redirect('/agenda');
     } catch (err) {
@@ -400,6 +427,18 @@ router.post('/editar_evento/:eventoId', async (req, res) => {
         }));
         
         console.log('UpdateCommand aplicado para eventoId=', eventoId, 'updates=', updateExpr, 'values=', exprAttrValues);
+        
+        // emitir websocket (necesitamos el box_id, lo sacamos del body si existe)
+        if (body.box_id) {
+            const boxInfo = await getBoxInfo(body.box_id);
+            broadcastBoxUpdate({
+                box_id: String(body.box_id),
+                box_numero: boxInfo ? String(boxInfo.numero) : String(body.box_id),
+                new_state: 2,
+                new_state_text: 'Reservado',
+                action: 'update'
+            });
+        }
         
         if (req.headers['x-requested-with'] === 'XMLHttpRequest') return res.json({ ok: true });
         return res.redirect('/agenda');
@@ -563,6 +602,18 @@ router.get('/eliminar_evento/:eventoId', async (req, res) => {
             Key: { idAgenda: eventoId } 
         }));
         
+        // emitir websocket
+        if (boxToRedirect) {
+            const boxInfo = await getBoxInfo(boxToRedirect);
+            broadcastBoxUpdate({
+                box_id: String(boxToRedirect),
+                box_numero: boxInfo ? String(boxInfo.numero) : String(boxToRedirect),
+                new_state: 1, // libre
+                new_state_text: 'Libre',
+                action: 'delete'
+            });
+        }
+        
         if (boxToRedirect) return res.redirect(`/agenda?box_number=${encodeURIComponent(boxToRedirect)}`);
         return res.redirect('/agenda');
     } catch (err) {
@@ -576,7 +627,12 @@ router.get('/eliminar_evento/:eventoId', async (req, res) => {
 router.post('/toggle_mantenimiento/:boxId', async (req, res) => {
     try {
         const boxId = req.params.boxId;
-        console.log('POST /toggle_mantenimiento boxId=', boxId, 'user=', req.session && req.session.user ? req.session.user.id : null);
+        console.log('========================================');
+        console.log('🔄 POST /toggle_mantenimiento LLAMADO');
+        console.log('   boxId:', boxId);
+        console.log('   user:', req.session && req.session.user ? req.session.user.id : null);
+        console.log('   authenticated:', !!req.session?.user);
+        console.log('========================================');
         
         if (!boxId) {
             req.flash && req.flash('error', 'boxId faltante');
@@ -593,26 +649,159 @@ router.post('/toggle_mantenimiento/:boxId', async (req, res) => {
             return res.redirect('/agenda');
         }
         
-        const current = box.idEstadoBox || box.idestadobox || box.idEstado || box.idestado || '1';
-        const nuevo = String(current) === '4' ? '1' : '4';
+        const current = box.idEstadoBox || box.idestadobox || box.idEstado || box.idestado || 1;
+        const nuevo = (String(current) === '4' || current === 4) ? 1 : 4;
         
-        console.log('Updating box', box.idBox || box.idbox, 'nuevo estado=', nuevo);
+        console.log('Box actual idEstadoBox:', current, '(tipo:', typeof current, ') - nuevo estado:', nuevo);
         
         await db.send(new UpdateCommand({
             TableName: config.dynamodb.tablas.box,
             Key: { idBox: box.idBox || box.idbox },
             UpdateExpression: 'SET idEstadoBox = :e',
-            ExpressionAttributeValues: { ':e': nuevo }
+            ExpressionAttributeValues: { ':e': nuevo } // guardar como número
         }));
         
         console.log('UpdateCommand enviado para box', box.idBox || box.idbox);
         
-        const redirectBox = box.idbox || box.idBox || box.numero || box.id || '';
-        return res.redirect(`/agenda?box_number=${encodeURIComponent(redirectBox)}`);
+        // Determinar el estado real del box (especialmente al habilitar)
+        let estadoReal = {
+            state: nuevo,
+            text: (nuevo === 4 || nuevo === '4') ? 'Inhabilitado' : 'Libre',
+            medico: null
+        };
+        
+        // Si estamos habilitando el box (nuevo === 1), consultar agendas para estado real
+        if (nuevo === 1 || nuevo === '1') {
+            try {
+                const agendasCmd = new ScanCommand({ TableName: config.dynamodb.tablas.agenda });
+                const agendasRes = await db.send(agendasCmd);
+                const agendas = agendasRes.Items || [];
+                
+                console.log('📋 Total de agendas encontradas:', agendas.length);
+                
+                // Cargar usuarios para obtener nombres de médicos
+                const usuariosCmd = new ScanCommand({ TableName: config.dynamodb.tablas.usuario });
+                const usuariosRes = await db.send(usuariosCmd);
+                const usuarios = usuariosRes.Items || [];
+                
+                console.log('👥 Total de usuarios encontrados:', usuarios.length);
+                
+                const usuarioMap = {};
+                usuarios.forEach(u => {
+                    const uid = u.idUsuario || u.idusuario;
+                    usuarioMap[uid] = u.nombre || u.Nombre || 'Sin nombre';
+                });
+                
+                // Buscar agenda activa o la más reciente del día
+                const ahora = new Date();
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const finHoy = new Date();
+                finHoy.setHours(23, 59, 59, 999);
+                
+                // Filtrar agendas de este box del día de hoy
+                const agendasHoy = agendas.filter(agenda => {
+                    const agendaBoxId = agenda.idBox || agenda.idbox;
+                    if (String(agendaBoxId) !== String(boxId)) return false;
+                    
+                    const inicio = new Date(agenda.horainicio || agenda.horaInicio);
+                    return inicio >= hoy && inicio <= finHoy;
+                });
+                
+                // Ordenar por hora de inicio descendente (más reciente primero)
+                agendasHoy.sort((a, b) => {
+                    const inicioA = new Date(a.horainicio || a.horaInicio);
+                    const inicioB = new Date(b.horainicio || b.horaInicio);
+                    return inicioB - inicioA;
+                });
+                
+                // Tomar la agenda más reciente (puede estar activa, finalizada, o próxima)
+                const agendaActual = agendasHoy[0];
+                
+                if (agendaActual) {
+                    const estadoId = agendaActual.idEstado || agendaActual.idestado || 1;
+                    const usuarioId = agendaActual.idUsuario || agendaActual.idusuario;
+                    const medicoNombre = usuarioMap[usuarioId] || null;
+                    
+                    console.log('📅 Agenda del día encontrada para box', boxId);
+                    console.log('   - Estado agenda:', estadoId, '(tipo:', typeof estadoId, ')');
+                    console.log('   - Médico:', medicoNombre);
+                    console.log('   - Hora inicio:', agendaActual.horainicio);
+                    
+                    // Mapear estado de agenda (comparar tanto string como número)
+                    const estadoNum = parseInt(estadoId) || 1;
+                    switch (estadoNum) {
+                        case 1:
+                            estadoReal = { state: 1, text: 'Libre', medico: medicoNombre };
+                            break;
+                        case 2:
+                            estadoReal = { state: 2, text: 'Paciente Ausente', medico: medicoNombre };
+                            break;
+                        case 3:
+                            estadoReal = { state: 3, text: 'Paciente Esperando', medico: medicoNombre };
+                            break;
+                        case 4:
+                            estadoReal = { state: 4, text: 'En Atención', medico: medicoNombre };
+                            break;
+                        case 6:
+                            estadoReal = { state: 6, text: 'Finalizado', medico: medicoNombre };
+                            break;
+                        default:
+                            estadoReal = { state: 1, text: 'Libre', medico: medicoNombre };
+                    }
+                } else {
+                    console.log('No hay agenda activa para box', boxId, '- estado: Libre');
+                    estadoReal = { state: 1, text: 'Libre', medico: null };
+                }
+            } catch (err) {
+                console.error('Error consultando agendas para estado real:', err);
+                estadoReal = { state: 1, text: 'Libre', medico: null };
+            }
+        }
+        
+        console.log('Estado real determinado:', estadoReal);
+        
+        // emitir websocket con el estado real
+        broadcastBoxUpdate({
+            box_id: String(box.idBox || box.idbox),
+            box_numero: String(box.numero || box.idBox || box.idbox),
+            new_state: estadoReal.state,
+            new_state_text: estadoReal.text,
+            medico_nombre: estadoReal.medico,
+            action: 'toggle_maintenance'
+        });
+        
+        console.log('✅ Toggle mantenimiento completado exitosamente');
+        
+        // Si es una llamada AJAX (fetch), devolver JSON
+        // Si es una llamada normal, hacer redirect
+        const isAjax = req.headers['content-type']?.includes('application/json') || 
+                       req.headers['accept']?.includes('application/json');
+        
+        if (isAjax) {
+            return res.json({ 
+                ok: true, 
+                message: 'Estado actualizado',
+                nuevo_estado: nuevo,
+                estado_texto: estadoReal.text,
+                medico_nombre: estadoReal.medico
+            });
+        } else {
+            const redirectBox = box.idbox || box.idBox || box.numero || box.id || '';
+            return res.redirect(`/agenda?box_number=${encodeURIComponent(redirectBox)}`);
+        }
     } catch (err) {
         console.error('Error toggle mantenimiento', err);
-        req.flash && req.flash('error', 'Error actualizando box');
-        return res.redirect('/agenda');
+        
+        const isAjax = req.headers['content-type']?.includes('application/json') || 
+                       req.headers['accept']?.includes('application/json');
+        
+        if (isAjax) {
+            return res.status(500).json({ ok: false, error: 'Error actualizando box' });
+        } else {
+            req.flash && req.flash('error', 'Error actualizando box');
+            return res.redirect('/agenda');
+        }
     }
 });
 
