@@ -439,16 +439,25 @@ router.post('/admin-bdd/api/:tabla/delete', requireAdmin, async (req, res) => {
 // crear multiples agendas
 router.post('/admin-bdd/api/agenda/create-multiple', requireAdmin, async (req, res) => {
   try {
+    logger.info('📥 POST /admin-bdd/api/agenda/create-multiple recibido');
+    
     let { agendas } = req.body;
     
+    logger.info(`📊 Agendas recibidas: ${agendas ? agendas.length : 0}`);
+    
     if (!Array.isArray(agendas) || agendas.length === 0) {
+      logger.warn('⚠️ Array de agendas vacío o inválido');
       return res.json({ success: false, error: 'array de agendas vacio' });
     }
+    
+    logger.info(`✅ Primeras 3 agendas: ${JSON.stringify(agendas.slice(0, 3))}`);
     
     // obtener usuarios para asignar random
     const usuariosCmd = new ScanCommand({ TableName: 'usuario' });
     const usuariosResult = await db.send(usuariosCmd);
     const usuarios = usuariosResult.Items || [];
+    
+    logger.info(`👥 ${usuarios.length} usuarios disponibles para asignación random`);
     
     // procesar agendas y asignar usuarios random si es necesario
     agendas = agendas.map(agenda => {
@@ -463,8 +472,12 @@ router.post('/admin-bdd/api/agenda/create-multiple', requireAdmin, async (req, r
     const batchSize = 25;
     let insertados = 0;
     
+    logger.info(`🔄 Iniciando inserción en lotes de ${batchSize}...`);
+    
     for (let i = 0; i < agendas.length; i += batchSize) {
       const batch = agendas.slice(i, i + batchSize);
+      
+      logger.info(`📦 Procesando lote ${Math.floor(i / batchSize) + 1}: ${batch.length} agendas`);
       
       for (const agenda of batch) {
         await db.send(new PutCommand({
@@ -475,10 +488,12 @@ router.post('/admin-bdd/api/agenda/create-multiple', requireAdmin, async (req, r
       }
     }
     
-    logger.info(`${insertados} agendas creadas`);
+    logger.info(`✅ ${insertados} agendas insertadas exitosamente`);
     
     // emitir websocket por cada box afectado
     const boxesAfectados = [...new Set(agendas.map(a => a.idBox))];
+    logger.info(`📡 Emitiendo WebSocket para ${boxesAfectados.length} boxes afectados`);
+    
     boxesAfectados.forEach(boxId => {
       broadcastBoxUpdate({
         box_id: String(boxId),
@@ -491,7 +506,7 @@ router.post('/admin-bdd/api/agenda/create-multiple', requireAdmin, async (req, r
     res.json({ success: true, count: insertados });
     
   } catch (error) {
-    logger.error('error al crear multiples agendas', { error: error.message });
+    logger.error('❌ error al crear multiples agendas', { error: error.message, stack: error.stack });
     res.json({ success: false, error: error.message });
   }
 });

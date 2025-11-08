@@ -1029,7 +1029,15 @@ async function saveRecord() {
     
     if (currentTable === 'agenda' && fechaInicio && fechaFin) {
         // crear multiples agendas
-        await createMultipleAgendas(formData);
+        console.log('🚀 Iniciando creación múltiple de agendas...');
+        console.log('Fecha inicio:', fechaInicio);
+        console.log('Fecha fin:', fechaFin);
+        try {
+            await createMultipleAgendas(formData);
+        } catch (error) {
+            console.error('❌ Error en createMultipleAgendas:', error);
+            showAlert('error', 'Error al crear agendas: ' + error.message);
+        }
         return;
     }
     
@@ -1362,11 +1370,16 @@ async function renderAgendaDeleteForm() {
 }
 
 async function createMultipleAgendas(formData) {
+    console.log('📋 createMultipleAgendas iniciada');
+    console.log('FormData recibida:', Object.fromEntries(formData));
+    
     const fechaInicio = formData.get('fecha_inicio');
     const fechaFin = formData.get('fecha_fin');
     let idTipoConsulta = formData.get('idTipoConsulta');
     let idUsuario = formData.get('idUsuario');
     const idEstado = formData.get('idEstado') || '2';
+    
+    console.log('Valores extraídos:', { fechaInicio, fechaFin, idTipoConsulta, idUsuario, idEstado });
     
     if (!fechaInicio || !fechaFin) {
         showAlert('error', __('adminDB.completeAllFields'));
@@ -1374,6 +1387,7 @@ async function createMultipleAgendas(formData) {
     }
     
     // obtener todos los boxes disponibles
+    console.log('📦 Obteniendo boxes disponibles...');
     const boxes = await getFieldOptions('idBox', 'agenda');
     if (boxes.length === 0) {
         showAlert('error', __('adminDB.noBoxesAvailable'));
@@ -1381,6 +1395,43 @@ async function createMultipleAgendas(formData) {
     }
     
     showAlert('info', `${__('adminDB.generatingSchedules')} ${boxes.length} ${__('adminDB.boxes')}...`);
+    
+    // CARGAR TODAS LAS AGENDAS EXISTENTES
+    console.log('📊 Cargando agendas existentes...');
+    let agendasExistentes = [];
+    try {
+        const response = await fetch(`/admin-bdd/api/agenda/list?limit=10000`);
+        const data = await response.json();
+        if (data.success) {
+            agendasExistentes = data.data || [];
+        }
+    } catch (error) {
+        console.error('Error cargando agendas:', error);
+    }
+    
+    console.log(`📊 Agendas existentes totales: ${agendasExistentes.length}`);
+    
+    // Crear un mapa de agendas por box para verificar conflictos rápidamente
+    const agendasPorBox = {};
+    boxes.forEach(box => {
+        const agendasDelBox = agendasExistentes
+            .filter(a => String(a.idBox) === String(box.value))
+            .map(a => ({
+                inicio: new Date(a.horainicio),
+                fin: new Date(a.horaTermino)
+            }));
+        agendasPorBox[box.value] = agendasDelBox;
+        console.log(`📦 Box ${box.value}: ${agendasDelBox.length} agendas existentes`);
+    });
+    
+    // Función para verificar si hay conflicto de horario
+    const tieneConflicto = (idBox, inicio, fin) => {
+        const agendasBox = agendasPorBox[idBox] || [];
+        return agendasBox.some(agenda => {
+            // Hay conflicto si los rangos se superponen
+            return (inicio < agenda.fin && fin > agenda.inicio);
+        });
+    };
     
     // generar horarios siguiendo la logica de poblar_datos.py
     const agendas = [];
@@ -1393,32 +1444,78 @@ async function createMultipleAgendas(formData) {
     
     // iterar por cada box
     for (const box of boxes) {
+        console.log(`\n🔄 Procesando box ${box.value}...`);
+        
         // iterar por cada dia en el rango
         for (let d = new Date(dateInicio); d <= dateFin; d.setDate(d.getDate() + 1)) {
             const fechaActual = d.toISOString().split('T')[0];
+            console.log(`  📅 Procesando fecha: ${fechaActual}`);
+            
             let horaActual = new Date(`${fechaActual}T${String(horaInicioDia).padStart(2,'0')}:00:00`);
             const horaLimite = new Date(`${fechaActual}T${String(horaFinDia).padStart(2,'0')}:00:00`);
+            
+            let intentos = 0;
+            let creados = 0;
+            let rechazados = 0;
             
             // generar slots para este dia y este box
             while (horaActual < horaLimite) {
                 // 85% de probabilidad de crear slot (como en python)
                 if (Math.random() < 0.85) {
+                    intentos++;
                     const duracion = duracionesPosibles[Math.floor(Math.random() * duracionesPosibles.length)];
                     const horaTermino = new Date(horaActual.getTime() + duracion * 60000);
                     
                     if (horaTermino <= horaLimite) {
-                        // seleccionar valores random si es necesario
-                        let tipoConsultaFinal = idTipoConsulta;
-                        let usuarioFinal = idUsuario;
+                        // VERIFICAR QUE NO HAYA CONFLICTO DE HORARIO
+                        const hayConflicto = tieneConflicto(box.value, horaActual, horaTermino);
                         
-                        if (idTipoConsulta === 'random') {
-                            // tipos: 1=ingreso, 2=control, 3=alta, 4=gestion
-                            tipoConsultaFinal = String(Math.floor(Math.random() * 4) + 1);
-                        }
-                        
-                        if (idUsuario === 'random') {
-                            // obtener usuarios y seleccionar uno random (lo haremos en backend)
-                            usuarioFinal = 'random';
+                        if (!hayConflicto) {
+                            creados++;
+                            // seleccionar valores random si es necesario
+                            let tipoConsultaFinal = idTipoConsulta;
+                            let usuarioFinal = idUsuario;
+                            
+                            if (idTipoConsulta === 'random') {
+                                // tipos: 1=ingreso, 2=control, 3=alta, 4=gestion
+                                tipoConsultaFinal = String(Math.floor(Math.random() * 4) + 1);
+                            }
+                            
+                            if (idUsuario === 'random') {
+                                // obtener usuarios y seleccionar uno random (lo haremos en backend)
+                                usuarioFinal = 'random';
+                            }
+                            
+                            // formatear fechas como "YYYY-MM-DD HH:mm:ss" (no ISO)
+                            const formatoFecha = (date) => {
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const hours = String(date.getHours()).padStart(2, '0');
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                const seconds = String(date.getSeconds()).padStart(2, '0');
+                                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                            };
+                            
+                            const nuevaAgenda = {
+                                idAgenda: crypto.randomUUID(),
+                                idBox: box.value,
+                                horainicio: formatoFecha(horaActual),
+                                horaTermino: formatoFecha(horaTermino),
+                                idUsuario: usuarioFinal,
+                                idTipoConsulta: tipoConsultaFinal,
+                                idEstado: idEstado
+                            };
+                            
+                            agendas.push(nuevaAgenda);
+                            
+                            // Agregar al mapa local para evitar conflictos con las nuevas agendas
+                            agendasPorBox[box.value].push({
+                                inicio: new Date(horaActual),
+                                fin: new Date(horaTermino)
+                            });
+                        } else {
+                            rechazados++;
                         }
                         
                         // formatear fechas como "YYYY-MM-DD HH:mm:ss" (no ISO)
@@ -1449,8 +1546,12 @@ async function createMultipleAgendas(formData) {
                     horaActual = new Date(horaActual.getTime() + 30 * 60000);
                 }
             }
+            
+            console.log(`    ✅ Intentos: ${intentos}, Creados: ${creados}, Rechazados por conflicto: ${rechazados}`);
         }
     }
+    
+    console.log(`\n📊 RESUMEN FINAL: ${agendas.length} agendas generadas`);
     
     if (agendas.length === 0) {
         showAlert('error', __('adminDB.noSchedulesGenerated'));
@@ -1458,6 +1559,9 @@ async function createMultipleAgendas(formData) {
     }
     
     try {
+        console.log('📡 Enviando agendas al servidor...');
+        console.log('📦 Payload:', { agendas: agendas.slice(0, 3), total: agendas.length }); // muestra las primeras 3
+        
         const response = await fetch(`/admin-bdd/api/agenda/create-multiple`, {
             method: 'POST',
             headers: {
@@ -1466,7 +1570,10 @@ async function createMultipleAgendas(formData) {
             body: JSON.stringify({ agendas })
         });
         
+        console.log('📡 Respuesta HTTP status:', response.status, response.statusText);
+        
         const result = await response.json();
+        console.log('📡 Respuesta del servidor:', result);
         
         if (result.success) {
             showAlert('success', `${agendas.length} ${__('adminDB.schedulesCreated')}`);
