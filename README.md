@@ -470,3 +470,41 @@ bash deploy-seed.sh
 cd ..
 ```
 
+## CI/CD con GitHub Actions (Integración DevOps AWS)
+
+Este repositorio incluye workflows para automatizar despliegues en AWS:
+
+- `/.github/workflows/deploy-serverless.yml`: despliega los módulos Serverless
+  - `Reeva_node/serverless-dynamo` (tablas DynamoDB + seeds)
+  - `aws-cognito-jwt-login` (Cognito + Lambda/HTTP API)
+- `/.github/workflows/deploy-ecs.yml`: construye la imagen Docker de `Reeva_node`, la sube a ECR y actualiza un servicio ECS Fargate existente.
+
+### Requisitos de Secrets en GitHub
+
+Configura los siguientes secrets en tu repositorio (Settings → Secrets and variables → Actions):
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION` (ej. `us-east-1`)
+- `STAGE` (ej. `dev`) — para los despliegues Serverless
+- `ECR_REPOSITORY` (ej. `reeva-node`) — para la imagen Docker
+- `ECS_CLUSTER` (nombre del cluster ECS) — para despliegue a ECS
+- `ECS_SERVICE` (nombre del servicio ECS) — para despliegue a ECS
+
+Nota: El servicio ECS y su Task Execution Role deben existir previamente y tener permisos para extraer imágenes de ECR y escribir logs en CloudWatch.
+
+### Cómo se ejecutan
+
+- Serverless: se ejecuta en `push` a `main` cuando cambian archivos en `Reeva_node/serverless-dynamo/**` o `aws-cognito-jwt-login/**`.
+- ECS: se ejecuta en `push` a `main` cuando cambian archivos en `Reeva_node/**`.
+- Ambos workflows permiten `workflow_dispatch` (manual) desde la pestaña Actions.
+
+### Docker (opcional)
+
+Se agregó `Reeva_node/Dockerfile` y `Reeva_node/.dockerignore` para empaquetar la app Node.js en un contenedor listo para ECS:
+
+```bash
+docker build -t reeva-node:local -f Reeva_node/Dockerfile Reeva_node
+docker run -p 3000:3000 --env-file Reeva_node/.env reeva-node:local
+```
+

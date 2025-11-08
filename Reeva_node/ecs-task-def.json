@@ -1,0 +1,30 @@
+{
+  "family": "reeva-node-task",
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "requiresCompatibilities": ["FARGATE"],
+  "containerDefinitions": [
+    {
+      "name": "reeva-node",
+      "image": "012345678901.dkr.ecr.us-east-1.amazonaws.com/reeva-node:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 3000, "hostPort": 3000, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/reeva-node",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+

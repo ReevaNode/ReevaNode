@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+npm-cache
+
+# Env and secrets
+.env
+.env.*
+
+# VCS
+.git
+.gitignore
+.DS_Store
+
+# Logs / misc
+logs
+*.log
+
+# Unrelated project directories at repo root (build context is Reeva_node/)
+Chaos
+serverless-dynamo
+aws-cognito-jwt-login
+
