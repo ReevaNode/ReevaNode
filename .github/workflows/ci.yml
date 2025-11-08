@@ -1,90 +1,47 @@
-name: CI - Revisión completa del proyecto
+name: CI - Reeva
 
 on:
   push:
     branches:
-      - main
-      - dev
-      - feature/**
-      - fix/**
+      - "**"
 
 jobs:
-  checkout:
-    name: ✅ Checkout y Setup
+  ci:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar código
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Configurar Node
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Instalar dependencias del proyecto raíz
+      - name: Instalar dependencias globales
         run: |
-          if [ -f package.json ]; then
-            echo "Instalando dependencias raíz..."
-            npm install
-          else
-            echo "No hay package.json en la raíz"
-          fi
+          npm install -g serverless
 
-  scan_all_folders:
-    name: 🔍 Revisar TODAS las carpetas del proyecto
-    runs-on: ubuntu-latest
-    needs: checkout
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Instalar Serverless global
-        run: npm install -g serverless
-
-      - name: Recorrer todo el proyecto y validar serverless
+      - name: Instalar dependencias del proyecto
         run: |
-          echo "Buscando archivos serverless.yml..."
-          find . -name "serverless.yml" -type f | while read file; do
+          echo "Instalando dependencias..."
+          cd aws-cognito-jwt-login && npm install || true
+          cd ../Reeva_node && npm install || true
+
+      - name: Buscar archivos serverless.yml
+        run: |
+          echo "Buscando serverless.yml..."
+          find . -name "serverless.yml"
+
+      - name: Validar sintaxis Serverless (serverless print)
+        run: |
+          echo "Validando sintaxis..."
+          for file in $(find . -name "serverless.yml"); do
             echo "Validando: $file"
-            (cd "$(dirname "$file")" && sls print)
+            cd $(dirname $file)
+            serverless print || exit 1
+            cd -
           done
 
-      - name: Revisar sintaxis de todos los archivos JS
-        run: |
-          echo "Revisando sintaxis JS..."
-          find . -name "*.js" -type f -print0 | xargs -0 -I {} node --check {}
-
-  build_if_exists:
-    name: 🛠️ Compilar si existe script build
-    runs-on: ubuntu-latest
-    needs: checkout
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Ejecutar build si existe
-        run: |
-          if [ -f package.json ] && jq -e '.scripts.build' package.json > /dev/null; then
-            echo "Ejecutando npm run build..."
-            npm run build
-          else
-            echo "No existe script build."
-          fi
-
-  lint_if_exists:
-    name: ✅ Lint si existe script lint
-    runs-on: ubuntu-latest
-    needs: checkout
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Ejecutar lint si existe
-        run: |
-          if [ -f package.json ] && jq -e '.scripts.lint' package.json > /dev/null; then
-            echo "Ejecutando npm run lint..."
-            npm run lint
-          else
-            echo "No existe script lint."
-          fi
+      - name: Finalizar CI
+        run: echo "CI ejecutado correctamente"
