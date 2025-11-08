@@ -1155,35 +1155,35 @@ saveItemsBtn.addEventListener('click', guardarItems);
   const ws = new WebSocket(`${wsProto}://${window.location.host}`);
   
   ws.onopen = () => {
-    console.log('✓ info_box websocket conectado');
+    console.log('info_box websocket conectado');
   };
   
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
-      console.log('✓ info_box websocket mensaje recibido:', data);
+      console.log('info_box websocket mensaje recibido:', data);
       
       const currentBoxId = '<%= box.idBox || box.idbox %>';
-      console.log(`✓ comparando box_id: "${data.box_id}" con currentBoxId: "${currentBoxId}"`);
+      console.log(`comparando box_id: "${data.box_id}" con currentBoxId: "${currentBoxId}"`);
       
       // si el cambio es de este box, recargar
       if (String(data.box_id) === String(currentBoxId)) {
-        console.log('✓ cambio detectado en este box, recargando página en 500ms...');
+        console.log('cambio detectado en este box, recargando página en 500ms...');
         setTimeout(() => window.location.reload(), 500);
       } else {
-        console.log(`⚠ cambio es de otro box (${data.box_id}), no recargando`);
+        console.log(`cambio es de otro box (${data.box_id}), no recargando`);
       }
     } catch (err) {
-      console.error('❌ error parseando mensaje websocket:', err);
+      console.error('error parseando mensaje websocket:', err);
     }
   };
   
   ws.onerror = (err) => {
-    console.error('❌ error websocket:', err);
+    console.error('error websocket:', err);
   };
   
   ws.onclose = () => {
-    console.log('⚠ websocket desconectado, reconectando en 3s...');
+    console.log('websocket desconectado, reconectando en 3s...');
     setTimeout(() => window.location.reload(), 3000);
   };
 })();
