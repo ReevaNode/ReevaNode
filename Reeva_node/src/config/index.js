@@ -6,8 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// cargar .env desde src/.env
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// cargar .env desde src/.env SOLO en desarrollo
+// En producción (Docker), las variables vienen de docker-compose.yml
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+}
 
 export const config = {
   // AWS
@@ -53,7 +56,8 @@ export const config = {
     jwtSecret: process.env.JWT_SECRET,
     sessionSecret: process.env.SESSION_SECRET,
     sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE || '300000', 10), // 5 min default
-    sessionSecure: process.env.NODE_ENV === 'production',
+    // Permitir cookies sin HTTPS en desarrollo/Docker con HTTP
+    sessionSecure: process.env.SESSION_SECURE === 'true' || false,
     sessionSameSite: process.env.SESSION_SAME_SITE || 'lax',
   },
 

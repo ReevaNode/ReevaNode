@@ -104,6 +104,15 @@ app.use("/languages", express.static(path.join(__dirname, "languages")));
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
+// ===== Health check endpoint (para Docker y monitoreo) =====
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.use("/", authRouter);
 app.use("/", requireAuth, bienvenidaRouter);
 app.use("/", requireAuth, dashboardRouter);

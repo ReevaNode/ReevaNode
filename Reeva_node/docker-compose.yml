@@ -1,0 +1,104 @@
+# ============================================
+# DOCKER COMPOSE - REEVA HOSPITAL MANAGEMENT
+# ============================================
+
+services:
+  # Servicio principal de la aplicación
+  reeva-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reeva-hospital
+    ports:
+      - "3001:3001"
+    environment:
+      # Node environment
+      NODE_ENV: production
+      PORT: 3001
+      
+      # Session security (false para permitir cookies en HTTP)
+      SESSION_SECURE: "false"
+      
+      # AWS Configuration (reemplazar con tus valores)
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+      
+      # AWS Cognito (usando nombres del .env de src)
+      COGNITO_USER_POOL_ID: ${USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${USER_POOL_CLIENT_ID}
+      COGNITO_REGION: ${AWS_REGION:-us-east-1}
+      USER_POOL_ID: ${USER_POOL_ID}
+      USER_POOL_CLIENT_ID: ${USER_POOL_CLIENT_ID}
+      USER_TABLE: ${USER_TABLE}
+      
+      # DynamoDB Tables (usando nombres del .env de src)
+      DYNAMODB_BOX_TABLE: ${BOX_TABLE:-box}
+      DYNAMODB_AGENDA_TABLE: ${AGENDA_TABLE:-agenda}
+      DYNAMODB_USUARIO_TABLE: ${USUARIO_TABLE:-usuario}
+      DYNAMODB_TIPOBOX_TABLE: ${TIPO_BOX_TABLE:-tipobox}
+      DYNAMODB_ESTADOBOX_TABLE: ${ESTADO_BOX_TABLE:-estadobox}
+      DYNAMODB_TIPOESTADO_TABLE: ${TIPO_ESTADO_TABLE:-tipoestado}
+      DYNAMODB_TIPOITEM_TABLE: ${TIPO_ITEM_TABLE:-tipoitem}
+      DYNAMODB_ITEMS_TABLE: ${ITEMS_TABLE:-items}
+      
+      # Tablas adicionales de tu .env
+      PERSONALIZACION_TABLE: ${PERSONALIZACION_TABLE:-personalizacion}
+      REGISTRO_AGENDA_TABLE: ${REGISTRO_AGENDA_TABLE:-registroagenda}
+      TIPO_CONSULTA_TABLE: ${TIPO_CONSULTA_TABLE:-tipoconsulta}
+      TIPO_PROFESIONAL_TABLE: ${TIPO_PROFESIONAL_TABLE:-tipoprofesional}
+      TIPO_USUARIO_TABLE: ${TIPO_USUARIO_TABLE:-tipousuario}
+      PARAMETERS_TABLE: ${PARAMETERS_TABLE}
+      
+      # Auth API
+      AUTH_API_BASE: ${AUTH_API_BASE}
+      
+      # SNS
+      SNS_TOPIC_ARN: ${SNS_TOPIC_ARN}
+      ENABLE_SNS_NOTIFICATIONS: ${ENABLE_SNS_NOTIFICATIONS:-false}
+      
+      # Stage
+      STAGE: ${STAGE:-dev}
+      
+      # Session Secret (generar uno seguro en producción)
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production-use-strong-secret}
+      JWT_SECRET: ${JWT_SECRET}
+      
+      # Logging y configuración
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SESSION_MAX_AGE: ${SESSION_MAX_AGE:-300000}
+      SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
+      
+      # Rate limiting
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      
+      # Feature Flags
+      AUTO_PROVISION_USERS: ${AUTO_PROVISION_USERS:-true}
+      
+    volumes:
+      # Logs persistence
+      - ./logs:/app/logs
+      # Si necesitas persistir resultados de chaos
+      - ./results:/app/results
+      
+    restart: unless-stopped
+    
+    networks:
+      - reeva-network
+    
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  reeva-network:
+    driver: bridge
+
+volumes:
+  logs:
+  results:

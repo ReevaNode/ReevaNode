@@ -4,70 +4,144 @@ import {ScanCommand, QueryCommand , PutCommand, DeleteCommand, UpdateCommand } f
 import { config } from '../config/index.js';
 import Logger from '../utils/logger.js';
 import { broadcastBoxUpdate } from '../services/websocketService.js';
+import { retryWithBackoff, CircuitBreaker, SimpleCache } from '../utils/resilience.js';
 
 const router = Router();
 const logger = new Logger('AGENDA');
 
-// helper para obtener info del box
+// inicializar Circuit Breaker y Cache para agenda
+const agendaCircuitBreaker = new CircuitBreaker({
+  failureThreshold: 5,    // más tolerante para operaciones críticas
+  successThreshold: 2,
+  timeout: 30000
+});
+
+const agendaCache = new SimpleCache({
+  ttl: 10000,    // 10 segundos - actualización frecuente
+  maxSize: 50
+});
+
+// helper para obtener info del box CON RESILIENCIA
 async function getBoxInfo(boxId) {
-    const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
-    const boxesRes = await db.send(boxesCmd);
-    const boxes = boxesRes.Items || [];
-    const box = boxes.find(b => String(b.idBox || b.idbox) === String(boxId));
-    
-    if (!box) return null;
-    
-    return {
-        id: box.idBox || box.idbox,
-        numero: box.numero || box.idBox || box.idbox,
-        box: box
-    };
+    return await retryWithBackoff(
+        async () => {
+            const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
+            const boxesRes = await db.send(boxesCmd);
+            const boxes = boxesRes.Items || [];
+            const box = boxes.find(b => String(b.idBox || b.idbox) === String(boxId));
+            
+            if (!box) return null;
+            
+            return {
+                id: box.idBox || box.idbox,
+                numero: box.numero || box.idBox || box.idbox,
+                box: box
+            };
+        },
+        {
+            maxRetries: 3,
+            initialDelay: 100,
+            maxDelay: 1000,
+            factor: 2
+        }
+    );
 }
 
 // GET /agenda
 router.get('/agenda', async (req, res) => {
     const inicio = Date.now();
+    const boxNumber = req.query.box_number || '1';
+    const cacheKey = `agenda_${boxNumber}`;
+    
     try {
-        const boxNumber = req.query.box_number;
-        
-        if (!boxNumber) {
-            return res.redirect('/agenda?box_number=1');
+        // 1. Intentar obtener desde cache
+        const cachedData = agendaCache.get(cacheKey);
+        if (cachedData) {
+            logger.info(`Usando datos del cache para agenda box ${boxNumber}`);
+            return res.render('agenda', {
+                ...cachedData,
+                user: req.session.user,
+                activePage: 'agenda',
+                fromCache: true
+            });
         }
+
+        // 2. Consultar con resiliencia
+        logger.info(`Cache miss - consultando agenda box ${boxNumber} con resiliencia`);
         
-        // 1) Cargar todos los boxes
-        const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
-        const boxesRes = await db.send(boxesCmd);
-        let boxes = boxesRes.Items || [];
+        const fetchAgendaData = async () => {
+            return await retryWithBackoff(
+                async () => {
+                    // Cargar todos los boxes
+                    const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
+                    const boxesRes = await db.send(boxesCmd);
+                    let boxes = boxesRes.Items || [];
+                    
+                    // Ordenar boxes por numero
+                    boxes = boxes.slice().sort((a, b) => {
+                        const na = Number(a.numero || a.idBox || a.idbox || a.id || 0);
+                        const nb = Number(b.numero || b.idBox || b.idbox || b.id || 0);
+                        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+                        const sa = String(a.numero || a.idBox || a.idbox || a.id || '');
+                        const sb = String(b.numero || b.idBox || b.idbox || b.id || '');
+                        return sa.localeCompare(sb);
+                    });
+                    
+                    // Seleccionar box
+                    let box = boxes.find(b => 
+                        String(b.numero) === String(boxNumber) || 
+                        String(b.idBox) === String(boxNumber)
+                    ) || boxes[0] || null;
+                    
+                    // Traer datos en paralelo
+                    const [tiposProfRes, profesRes, tiposConsultaRes, tiposBoxRes] = await Promise.all([
+                        db.send(new ScanCommand({ TableName: config.dynamodb.tablas.tipoProfesional })),
+                        db.send(new ScanCommand({ TableName: config.dynamodb.tablas.usuario })),
+                        db.send(new ScanCommand({ TableName: config.dynamodb.tablas.tipoConsulta })),
+                        db.send(new ScanCommand({ TableName: config.dynamodb.tablas.tipoBox })),
+                    ]);
+                    
+                    return {
+                        boxes,
+                        box,
+                        tipos_profesional: tiposProfRes.Items || [],
+                        profesionales: profesRes.Items || [],
+                        tipos_consulta: tiposConsultaRes.Items || [],
+                        tipos_box: tiposBoxRes.Items || []
+                    };
+                },
+                {
+                    maxRetries: 3,
+                    initialDelay: 100,
+                    maxDelay: 2000,
+                    factor: 2,
+                    onRetry: (attempt, delay, error) => {
+                        logger.warn(`Agenda retry ${attempt}/3 después de ${delay}ms: ${error.message}`);
+                    }
+                }
+            );
+        };
+
+        const fallbackAgendaData = async () => {
+            logger.error('⚠️ Usando fallback para agenda');
+            return {
+                boxes: [],
+                box: null,
+                tipos_profesional: [],
+                profesionales: [],
+                tipos_consulta: [],
+                tipos_box: []
+            };
+        };
+
+        const data = await agendaCircuitBreaker.execute(fetchAgendaData, fallbackAgendaData);
         
-        // Ordenar boxes por numero
-        boxes = boxes.slice().sort((a, b) => {
-            const na = Number(a.numero || a.idBox || a.idbox || a.id || 0);
-            const nb = Number(b.numero || b.idBox || b.idbox || b.id || 0);
-            if (!isNaN(na) && !isNaN(nb)) return na - nb;
-            const sa = String(a.numero || a.idBox || a.idbox || a.id || '');
-            const sb = String(b.numero || b.idBox || b.idbox || b.id || '');
-            return sa.localeCompare(sb);
-        });
-        
-        // 2) Seleccionar box por query param o el primero
-        let box = null;
-        if (boxNumber) {
-            box = boxes.find(b => String(b.numero) === String(boxNumber) || String(b.idBox) === String(boxNumber)) || null;
-        }
-        if (!box) box = boxes.length ? boxes[0] : null;
-        
-        // 3) Traer tipos de profesional, profesionales, tipos de consulta y tipos de box
-        const [tiposProfRes, profesRes, tiposConsultaRes, tiposBoxRes] = await Promise.all([
-            db.send(new ScanCommand({ TableName: config.dynamodb.tablas.tipoProfesional })),
-            db.send(new ScanCommand({ TableName: config.dynamodb.tablas.usuario })),
-            db.send(new ScanCommand({ TableName: config.dynamodb.tablas.tipoConsulta })),
-            db.send(new ScanCommand({ TableName: config.dynamodb.tablas.tipoBox })),
-        ]);
-        
-        const tipos_profesional = tiposProfRes.Items || [];
-        const profesionales = profesRes.Items || [];
-        const tipos_consulta = tiposConsultaRes.Items || [];
-        const tipos_box = tiposBoxRes.Items || [];
+        const boxes = data.boxes;
+        let box = data.box;  // Cambiado a 'let' para permitir reasignación
+        const tipos_profesional = data.tipos_profesional;
+        const profesionales = data.profesionales;
+        const tipos_consulta = data.tipos_consulta;
+        const tipos_box = data.tipos_box;
         
         const specialtyTranslationMap = {
             'Cirugía': 'surgery',
@@ -256,8 +330,8 @@ router.get('/agenda', async (req, res) => {
             return res.json(eventos);
         }
         
-        // Renderizar la vista EJS con TODOS los datos necesarios
-        res.render('agenda', {
+        // Preparar datos para render y cache
+        const renderData = {
             boxes: normalizedBoxes,
             box,
             tipos_profesional,                    
@@ -271,11 +345,34 @@ router.get('/agenda', async (req, res) => {
             pct_ocupado,
             pct_libre,
             messages: req.flash ? req.flash('error') : [],
-            title: 'Agenda',
-            activePage: 'agenda'
+            title: 'Agenda'
+        };
+
+        // Guardar en cache
+        agendaCache.set(cacheKey, renderData);
+        logger.info(`Datos de agenda box ${boxNumber} guardados en cache`);
+        
+        // Renderizar la vista EJS con TODOS los datos necesarios
+        res.render('agenda', {
+            ...renderData,
+            activePage: 'agenda',
+            fromCache: false
         });
     } catch (error) {
         logger.error('Error cargando agenda', { error: error.message, stack: error.stack });
+        
+        // Intentar servir desde cache en caso de error
+        const cachedData = agendaCache.get(cacheKey);
+        if (cachedData) {
+            logger.warn('Sirviendo agenda desde cache debido a error');
+            return res.render('agenda', {
+                ...cachedData,
+                user: req.session.user,
+                activePage: 'agenda',
+                fromCache: true
+            });
+        }
+        
         return res.status(500).send('Error interno del servidor');
     } finally {
         logger.trace('GET /agenda procesado', Date.now() - inicio);
