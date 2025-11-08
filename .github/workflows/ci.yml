@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ feature/ci-test ]
+
+jobs:
+  aws-cognito-ci:
+    name: CI - aws-cognito-jwt-login
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aws-cognito-jwt-login
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: aws-cognito-jwt-login/package-lock.json
+      - run: npm ci
+      - run: echo "(sin build/test, ok)"
+
+  dynamo-ci:
+    name: CI - serverless-dynamo
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Reeva_node/serverless-dynamo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Reeva_node/serverless-dynamo/package-lock.json
+      - run: npm ci
+      - run: echo "(sin build/test, ok)"
+
+  reeva-ci:
+    name: CI - Reeva_node (Express)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Reeva_node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Reeva_node/package-lock.json
+      - run: npm ci
+      - run: echo "(sin build/test, ok)"
