@@ -165,6 +165,27 @@ router.get('/info-box/:idBox', async (req, res) => {
         box.estadoBox = estadoBoxMap[box.idEstadoBox] || 'Desconocido';
         box.disabled = box.idEstadoBox === 4; // 4 = inhabilitado
 
+        // Mapeo de traducción para especialidades
+        const specialtyTranslationMap = {
+            'Cirugía': 'surgery',
+            'Dermatología': 'dermatology',
+            'Ginecología': 'gynecology',
+            'Odontología': 'dentistry',
+            'Oftalmología': 'ophthalmology',
+            'Pediatría': 'pediatrics',
+            'General': 'general',
+            'Médico General': 'generalPractitioner',
+            'Cirujano': 'surgeon',
+            'Ginecólogo': 'gynecologist',
+            'Odontólogo': 'dentist',
+            'Oftalmólogo': 'ophthalmologist',
+            'Dermatólogo': 'dermatologist',
+            'Pediatra': 'pediatrician'
+        };
+
+        // Agregar translation key al box
+        box.especialidadTranslationKey = specialtyTranslationMap[box.especialidad] || null;
+
         // Calcular ocupación del día
         let segmentosOcupados = [];
         const inicioJornada = new Date(hoy);
@@ -268,14 +289,26 @@ router.get('/info-box/:idBox', async (req, res) => {
         }));
         const mensual = agendasMensualResult.Items?.length || 0;
 
-        // Preparar items del box
+        const itemTranslationMap = {
+            'Mesa': 'mesa',
+            'Silla': 'silla',
+            'Balanza': 'balanza',
+            'Computador': 'computador',
+            'Escritorio': 'escritorio',
+            'Camilla': 'camilla',
+        };
+
         const elementos = [];
         tiposItem.forEach(tipo => {
             const item = items.find(i => i.idTipoItem === tipo.idTipoItem);
             if (item && item.cantidad > 0) {
+                const nombreOriginal = tipo.tipoItem || tipo.tipoitem;
+                const translationKey = itemTranslationMap[nombreOriginal] || null;
+                
                 elementos.push({
                     id: tipo.idTipoItem,
-                    nombre: tipo.tipoItem || tipo.tipoitem,
+                    nombre: nombreOriginal,
+                    translationKey: translationKey,
                     cantidad: item.cantidad || 0
                 });
             }
@@ -350,6 +383,36 @@ router.get('/info-box/:idBox', async (req, res) => {
             especialidad: String(p.idTipoProfesional || p.idtipoprofesional || '')
         }));
 
+        // Mapeo de traducción para tipos de consulta
+        const consultationTranslationMap = {
+            'Control': 'followup',
+            'Ingreso': 'admission',
+            'Gestión': 'management',
+            'Alta': 'discharge'
+        };
+
+        const tipos_profesional_normalizados_i18n = (tiposProfesional || []).map(t => {
+            const nombre = t.tipoprofesional || t.tipoProfesional || t.nombre || '';
+            const translationKey = specialtyTranslationMap[nombre] || null;
+            
+            return {
+                id: String(t.idTipoProfesional || t.idtipoprofesional || ''),
+                nombre: nombre,
+                translationKey: translationKey
+            };
+        });
+
+        const tipos_consulta_normalizados_i18n = (tiposConsulta || []).map(t => {
+            const nombre = t.tipoconsulta || t.tipoConsulta || t.nombre || '';
+            const translationKey = consultationTranslationMap[nombre] || null;
+            
+            return {
+                id: String(t.idTipoConsulta || t.idtipoconsulta || ''),
+                nombre: nombre,
+                translationKey: translationKey
+            };
+        });
+
         res.render('info_box', {
             user: req.user,
             box,
@@ -372,9 +435,9 @@ router.get('/info-box/:idBox', async (req, res) => {
             disabled: box.disabled,
             elementos,
             prof_por_tipo_json: JSON.stringify(profPorTipo),
-            // Variables normalizadas para los modales de agenda
-            tipos_profesional_normalizados,
-            tipos_consulta_normalizados,
+            // Variables normalizadas para los modales de agenda CON i18n
+            tipos_profesional_normalizados: tipos_profesional_normalizados_i18n,
+            tipos_consulta_normalizados: tipos_consulta_normalizados_i18n,
             profesionales_normalizados
         });
 
@@ -423,12 +486,27 @@ router.get('/info-box/:idBox/items', async (req, res) => {
             cantidadesMap[item.idTipoItem] = item.cantidad || 0;
         });
 
-        // Preparar lista completa con todos los tipos
-        const data = tiposItem.map(tipo => ({
-            id: tipo.idTipoItem,
-            nombre: tipo.tipoItem || tipo.tipoitem,
-            cantidad: cantidadesMap[tipo.idTipoItem] || 0
-        }));
+        const itemTranslationMap = {
+            'Mesa': 'mesa',
+            'Silla': 'silla',
+            'Balanza': 'balanza',
+            'Computador': 'computador',
+            'Escritorio': 'escritorio',
+            'Camilla': 'camilla',
+        };
+
+
+        const data = tiposItem.map(tipo => {
+            const nombreOriginal = tipo.tipoItem || tipo.tipoitem;
+            const translationKey = itemTranslationMap[nombreOriginal] || null;
+            
+            return {
+                id: tipo.idTipoItem,
+                nombre: nombreOriginal,
+                translationKey: translationKey,  
+                cantidad: cantidadesMap[tipo.idTipoItem] || 0
+            };
+        });
 
         res.json({ items: data });
 
@@ -441,7 +519,7 @@ router.get('/info-box/:idBox/items', async (req, res) => {
 // POST /info-box/:idBox/items - API para actualizar items del box
 router.post('/info-box/:idBox/items', async (req, res) => {
     try {
-        const idBox = req.params.idBox; // mantener como string
+        const idBox = req.params.idBox;
         const { items: itemsPayload } = req.body;
 
         if (!Array.isArray(itemsPayload)) {
@@ -509,7 +587,6 @@ router.post('/info-box/:idBox/items', async (req, res) => {
             }
         }
 
-        // Obtener lista actualizada
         const [tiposItemResult, itemsNuevosResult] = await Promise.all([
             db.send(new ScanCommand({ TableName: 'tipoitem' })),
             db.send(new ScanCommand({
@@ -527,11 +604,26 @@ router.post('/info-box/:idBox/items', async (req, res) => {
             cantidadesMap[item.idTipoItem] = item.cantidad || 0;
         });
 
-        const data = tiposItem.map(tipo => ({
-            id: tipo.idTipoItem,
-            nombre: tipo.tipoItem || tipo.tipoitem,
-            cantidad: cantidadesMap[tipo.idTipoItem] || 0
-        }));
+        const itemTranslationMap = {
+            'Mesa': 'mesa',
+            'Silla': 'silla',
+            'Balanza': 'balanza',
+            'Computador': 'computador',
+            'Escritorio': 'escritorio',
+            'Camilla': 'camilla',
+        };
+
+        const data = tiposItem.map(tipo => {
+            const nombreOriginal = tipo.tipoItem || tipo.tipoitem;
+            const translationKey = itemTranslationMap[nombreOriginal] || null;
+            
+            return {
+                id: tipo.idTipoItem,
+                nombre: nombreOriginal,
+                translationKey: translationKey,  
+                cantidad: cantidadesMap[tipo.idTipoItem] || 0
+            };
+        });
 
         res.json({ ok: true, cambios, items: data });
 
@@ -860,10 +952,10 @@ router.get('/info-box/:idBox/events', async (req, res) => {
                 borderColor: coloresPorEstado[estado] || '#94a3b8',
                 extendedProps: {
                     idBox: agenda.idBox,
-                    usuario_id: agenda.idUsuario, // ← AGREGADO
+                    usuario_id: agenda.idUsuario,
                     idUsuario: agenda.idUsuario,
                     nombreUsuario: usuarioMap[agenda.idUsuario] || 'sin profesional',
-                    tipo_id: agenda.idTipoConsulta, // ← AGREGADO
+                    tipo_id: agenda.idTipoConsulta,
                     idTipoConsulta: agenda.idTipoConsulta,
                     nombreTipoConsulta: tipoConsultaMap[agenda.idTipoConsulta] || 'sin tipo',
                     idEstado: estado,
@@ -893,7 +985,7 @@ router.post('/toggle_mantenimiento/:boxId', async (req, res) => {
             return res.redirect('/infobox');
         }
         
-        const boxesCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
+        const boxesCmd = new ScanCommand({ TableName: 'box' });
         const boxesRes = await db.send(boxesCmd);
         const boxes = boxesRes.Items || [];
         const box = boxes.find(b => String(b.idBox || b.idbox) === String(boxId));
@@ -909,7 +1001,7 @@ router.post('/toggle_mantenimiento/:boxId', async (req, res) => {
         console.log('Updating box', box.idBox || box.idbox, 'nuevo estado=', nuevo);
         
         await db.send(new UpdateCommand({
-            TableName: config.dynamodb.tablas.box,
+            TableName: 'box',
             Key: { idBox: box.idBox || box.idbox },
             UpdateExpression: 'SET idEstadoBox = :e',
             ExpressionAttributeValues: { ':e': nuevo }

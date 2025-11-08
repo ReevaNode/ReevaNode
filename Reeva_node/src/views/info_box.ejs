@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<%= userLang || 'es' %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reeva - Información del Box <%= box.numero %></title>
-
+  <title data-i18n="infoBox.title">Reeva - <%= __("infoBox.title") %> <%= box.numero %></title>
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
@@ -32,11 +31,10 @@
 
   <!-- ECharts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
-
+  
   <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/es.global.min.js"></script>
 
   <link rel="stylesheet" href="/css/header.css" />
   <!-- Agenda CSS -->
@@ -81,14 +79,20 @@
               <div class="p-4">
                   <div class="text-4xl font-bold"><%= box.numero %></div>
                   <div class="text-sm font-semibold text-gray-700 mt-1">
-                      BOX <%= box.especialidad.toUpperCase() %>
+                      <span data-i18n="infoBox.boxNumber"><%= __("infoBox.boxNumber") %></span>
+                      <% if (box.especialidadTranslationKey) { %>
+                        <span data-i18n="specialties.<%= box.especialidadTranslationKey %>">
+                          <%= __('specialties.' + box.especialidadTranslationKey).toUpperCase() %>
+                        </span>
+                      <% } else { %>
+                        <%= box.especialidad.toUpperCase() %>
+                      <% } %>
                   </div>
               </div>
           </div>
-
           <!-- Estado Box -->
           <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-4">
-              <div class="text-center mb-2 font-medium">Ocupación del Día</div>
+              <div class="text-center mb-2 font-medium" data-i18n="infoBox.dayOccupancy"><%= __("infoBox.dayOccupancy") %></div>
               <div class="w-full h-48" id="estadoChart"></div>
           </div>
 
@@ -99,7 +103,7 @@
 
             <!-- Pacientes atendidos Card -->
             <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
-              <h2 class="text-lg font-medium text-gray-800 mb-4">Pacientes atendidos</h2>
+              <h2 class="text-lg font-medium text-gray-800 mb-4" data-i18n="infoBox.patientsAttended"><%= __("infoBox.patientsAttended") %></h2>
               <div class="grid grid-cols-2 gap-4">
 
                 <!-- Diario -->
@@ -109,7 +113,7 @@
                     <div class="text-3xl font-bold">
                       <%= total_diario %>
                     </div>
-                    <div class="text-sm text-gray-600">Diario</div>
+                    <div class="text-sm text-gray-600" data-i18n="infoBox.daily"><%= __("infoBox.daily") %></div>
                   </div>
                 </div>
 
@@ -120,63 +124,69 @@
                     <div class="text-3xl font-bold">
                       <%= mensual %>
                     </div>
-                    <div class="text-sm text-gray-600">Mensual</div>
+                    <div class="text-sm text-gray-600" data-i18n="infoBox.monthly"><%= __("infoBox.monthly") %></div>
                   </div>
                 </div>
 
               </div>
             </div>
 
-          <!-- Items del Box -->
-          <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
-              <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-medium text-gray-800">Elementos del Box</h2>
-                <button id="editarItemsBtn" type="button" class="text-sm px-3 py-1.5 rounded-button bg-primary text-white hover:opacity-90">Editar</button>
-              </div>
-              <div id="listaItemsBox" class="space-y-2">
-                  <% if (elementos && elementos.length > 0) { %>
-                    <% elementos.forEach(item => { %>
-                      <div class="flex items-center justify-between text-sm border border-gray-100 rounded px-3 py-2">
-                        <span class="font-medium"><%= item.nombre %></span>
-                        <span class="text-gray-700">x <%= item.cantidad %></span>
-                      </div>
-                    <% }) %>
-                  <% } else { %>
-                    <p class="text-sm text-gray-500">Sin registros.</p>
-                  <% } %>
-              </div>
-          </div>
+            <!-- Items del Box -->
+            <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-medium text-gray-800" data-i18n="infoBox.boxElements2"><%= __("infoBox.boxElements2") %></h2>
+                  <button id="editarItemsBtn" type="button" class="text-sm px-3 py-1.5 rounded-button bg-primary text-white hover:opacity-90" data-i18n="infoBox.editBtn"><%= __("infoBox.editBtn") %></button>
+                </div>
+                <div id="listaItemsBox" class="space-y-2">
+                    <% if (elementos && elementos.length > 0) { %>
+                      <% elementos.forEach(item => { %>
+                        <div class="flex items-center justify-between text-sm border border-gray-100 rounded px-3 py-2">
+                          <% if (item.translationKey) { %>
+                            <span class="font-medium" data-i18n="infoBox.boxElements.<%= item.translationKey %>">
+                              <%= __('infoBox.boxElements.' + item.translationKey) %>
+                            </span>
+                          <% } else { %>
+                            <span class="font-medium"><%= item.nombre %></span>
+                          <% } %>
+                          <span class="text-gray-700">x <%= item.cantidad %></span>
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <p class="text-sm text-gray-500" data-i18n="infoBox.noRecords"><%= __("infoBox.noRecords") %></p>
+                    <% } %>
+                </div>
+            </div>
 
       </div>
   </div>
 
-  <!-- Estadísticas rápidas -->
+  <!-- Estadísticas rapidas -->
   <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
       <div class="bg-white rounded shadow-sm p-4 text-center">
           <div class="text-2xl font-bold"><%= horas_tot %></div>
-          <div class="text-sm text-gray-600">Horas Totales</div>
+          <div class="text-sm text-gray-600" data-i18n="infoBox.totalHours"><%= __("infoBox.totalHours") %></div>
       </div>
       <div class="bg-white rounded shadow-sm p-4 text-center">
           <div class="text-2xl font-bold"><%= ingresos %></div>
-          <div class="text-sm text-gray-600">Ingresos</div>
+          <div class="text-sm text-gray-600" data-i18n="infoBox.admissions"><%= __("infoBox.admissions") %></div>
       </div>
       <div class="bg-white rounded shadow-sm p-4 text-center">
           <div class="text-2xl font-bold"><%= controles %></div>
-          <div class="text-sm text-gray-600">Controles</div>
+          <div class="text-sm text-gray-600" data-i18n="infoBox.followups"><%= __("infoBox.followups") %></div>
       </div>
       <div class="bg-white rounded shadow-sm p-4 text-center">
           <div class="text-2xl font-bold"><%= altas %></div>
-          <div class="text-sm text-gray-600">Altas</div>
+          <div class="text-sm text-gray-600" data-i18n="infoBox.discharges"><%= __("infoBox.discharges") %></div>
       </div>
       <div class="bg-white rounded shadow-sm p-4 text-center">
           <div class="text-2xl font-bold"><%= gestiones %></div>
-          <div class="text-sm text-gray-600">Gestión</div>
+          <div class="text-sm text-gray-600" data-i18n="infoBox.management"><%= __("infoBox.management") %></div>
       </div>
   </div>
 
   <!-- Calendario -->
   <section class="bg-white rounded-lg shadow-sm mt-6 md:mt-8 p-4 md:p-6">
-    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800">Calendario</h2></div>
+    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800" data-i18n="infoBox.boxSchedule"><%= __("infoBox.boxSchedule") %></h2></div>
     
     <!-- Banner instructivo -->
     <div id="instructionBanner" class="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg relative overflow-hidden">
@@ -184,8 +194,8 @@
         <div class="flex items-center space-x-3">
           <div class="flex-shrink-0"><div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center"><i class="ri-question-line text-primary text-sm"></i></div></div>
           <div>
-            <h4 class="text-sm font-medium text-gray-900">¿Cómo usar el calendario?</h4>
-            <p class="text-xs text-gray-500">Haz clic para ver instrucciones</p>
+            <h4 class="text-sm font-medium text-gray-900" data-i18n="infoBox.helpTitle"><%= __("infoBox.helpTitle") %></h4>
+            <p class="text-xs text-gray-500" data-i18n="infoBox.helpSubtitle"><%= __("infoBox.helpSubtitle") %></p>
           </div>
         </div>
         <button id="toggleBanner" class="text-gray-400 hover:text-gray-600 transition-all duration-200 transform hover:scale-110">
@@ -195,7 +205,7 @@
       <div id="bannerContent" class="px-4 pb-4 max-h-0 overflow-hidden transition-all duration-300">
         <div class="border-t border-purple-200 pt-3">
           <div class="space-y-3">
-            <div><h5 class="text-sm font-medium text-gray-900">Editar una consulta</h5><p class="text-sm text-gray-600"><span class="mx-2">•</span><span class="font-medium text-primary">Haz clic en el evento que quieres modificar</span></p></div>
+            <div><h5 class="text-sm font-medium text-gray-900" data-i18n="infoBox.editConsultation"><%= __("infoBox.editConsultation") %></h5><p class="text-sm text-gray-600"><span class="mx-2">•</span><span class="font-medium text-primary" data-i18n="infoBox.clickToEdit"><%= __("infoBox.clickToEdit") %></span></p></div>
           </div>
         </div>
       </div>
@@ -213,10 +223,10 @@
   >
     <% if (disabled) { %>
       <i class="ri-play-circle-line text-lg"></i>
-      Habilitar box
+      <span data-i18n="infoBox.enableBox"><%= __("infoBox.enableBox") %></span>
     <% } else { %>
       <i class="ri-stop-circle-line text-lg"></i>
-      Inhabilitar box
+      <span data-i18n="infoBox.disableBox"><%= __("infoBox.disableBox") %></span>
     <% } %>
   </button>
 
@@ -226,14 +236,14 @@
 <div id="itemsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm overflow-auto p-4">
   <div class="items-panel bg-white rounded-2xl p-8 w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-2xl font-medium">Editar Elementos del Box</h3>
+      <h3 class="text-2xl font-medium" data-i18n="infoBox.editElements"><%= __("infoBox.editElements") %></h3>
       <button id="cerrarItemsModal" class="text-gray-400 hover:text-gray-600">
         <i class="ri-close-line ri-2x"></i>
       </button>
     </div>
 
-    <div id="itemsLoading" class="text-center py-8 text-gray-500">
-      Cargando elementos...
+    <div id="itemsLoading" class="text-center py-8 text-gray-500" data-i18n="infoBox.loading">
+      <%= __("infoBox.loading") %>
     </div>
 
     <div id="itemsList" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
@@ -241,8 +251,8 @@
     <div id="itemsStatus" class="text-sm text-center mb-4 text-green-600"></div>
 
     <div class="flex justify-between">
-      <button id="cancelItemsBtn" type="button" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
-      <button id="saveItemsBtn" type="button" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar Cambios</button>
+      <button id="cancelItemsBtn" type="button" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" data-i18n="infoBox.cancel"><%= __("infoBox.cancel") %></button>
+      <button id="saveItemsBtn" type="button" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="infoBox.saveChanges"><%= __("infoBox.saveChanges") %></button>
     </div>
   </div>
 </div>
@@ -250,54 +260,63 @@
 <!-- Modal Editar -->
 <div id="editEventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
   <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-    <h3 class="text-2xl font-medium text-center mb-8">Editar Evento</h3>
+    <h3 class="text-2xl font-medium text-center mb-8" data-i18n="infoBox.editEvent"><%= __("infoBox.editEvent") %></h3>
     <form id="editEventoForm" method="post" action="" class="space-y-6">
       <input type="hidden" id="editEventoId" name="eventoId" value="" />
       <input type="hidden" id="editEstadoId" name="idEstado" value="" />
       <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
       <div>
-        <label class="block text-sm text-gray-600 mb-2">Especialidad</label>
+        <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel"><%= __("agenda.specialtyLabel") %></label>
         <select id="editEspecialidadSelect" class="w-full border rounded p-2" required>
-          <option value="" disabled selected>— Selecciona especialidad —</option>
-          <% (tipos_profesional_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
+          <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder"><%= __("agenda.selectSpecialtyPlaceholder") %></option>
+          <% (tipos_profesional_normalizados || []).forEach(tipo => { %>
+            <option value="<%= tipo.id %>" 
+                    data-i18n="<%= tipo.translationKey ? 'specialties.' + tipo.translationKey : '' %>">
+              <%= tipo.translationKey ? __('specialties.' + tipo.translationKey) : tipo.nombre %>
+            </option>
+          <% }) %>
         </select>
       </div>
       <div>
-        <label class="block text-sm text-gray-600 mb-2">Profesional</label>
+        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.professional"><%= __("infoBox.professional") %></label>
         <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-          <option value="" disabled selected>— Selecciona profesional —</option>
+          <option value="" disabled selected data-i18n="infoBox.selectProfessional"><%= __("infoBox.selectProfessional") %></option>
         </select>
       </div>
       <div>
-        <label class="block text-sm text-gray-600 mb-2">Tipo de Consulta</label>
+        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.consultationType"><%= __("infoBox.consultationType") %></label>
         <select id="editTipoConsulta" name="idTipoConsulta" class="w-full border rounded p-2" required>
-          <option value="" disabled selected>— Selecciona tipo —</option>
-          <% (tipos_consulta_normalizados || []).forEach(tipo => { %><option value="<%= tipo.id %>"><%= tipo.nombre %></option><% }) %>
+          <option value="" disabled selected data-i18n="infoBox.selectType"><%= __("infoBox.selectType") %></option>
+          <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
+            <option value="<%= tipo.id %>">
+              <%= tipo.translationKey ? __('consultationTypes.' + tipo.translationKey) : tipo.nombre %>
+            </option>
+          <% }) %>
         </select>
       </div>
       <div>
-        <label class="block text-sm text-gray-600 mb-2">Fecha</label>
+        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.date"><%= __("infoBox.date") %></label>
         <input type="date" id="editFecha" name="fecha" class="w-full border rounded p-2" required />
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-600 mb-2">Hora Inicio</label>
+          <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.startTime"><%= __("infoBox.startTime") %></label>
           <input type="time" id="editHoraInicio" name="horainicio" class="w-full border rounded p-2" required />
         </div>
         <div>
-          <label class="block text-sm text-gray-600 mb-2">Hora Fin</label>
+          <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.endTime"><%= __("infoBox.endTime") %></label>
           <input type="time" id="editHoraFin" name="horafin" class="w-full border rounded p-2" required />
         </div>
       </div>
       <div>
-        <label class="block text-sm text-gray-600 mb-2">Observaciones</label>
+        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.detailsObservations"><%= __("infoBox.detailsObservations") %></label>
         <textarea id="editObservaciones" name="observaciones" rows="3" class="w-full border rounded p-2"></textarea>
       </div>
       <div class="flex justify-between gap-3">
-        <button id="deleteEventoBtn" type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700">Eliminar</button>
+        <button id="deleteEventoBtn" type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" data-i18n="infoBox.delete"><%= __("infoBox.delete") %></button>
         <div class="flex gap-3">
-          <button type="button" onclick="editEventoModal.classList.add('hidden')" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</button>
-          <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90">Guardar</button>
+          <button type="button" onclick="editEventoModal.classList.add('hidden')" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" data-i18n="infoBox.cancel"><%= __("infoBox.cancel") %></button>
+          <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="infoBox.saveChanges"><%= __("infoBox.saveChanges") %></button>
         </div>
       </div>
     </form>
@@ -307,28 +326,37 @@
 <!-- Modal Mantenimiento -->
 <div id="mantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
   <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-xl">
-    <h3 class="text-2xl font-medium text-center mb-6">
-      <%= disabled ? 'Habilitar box' : 'Inhabilitar box' %>
+    <h3 class="text-2xl font-medium text-center mb-6" data-i18n="<%= disabled ? 'infoBox.enableBox' : 'infoBox.disableBox' %>">
+      <%= disabled ? __("infoBox.enableBox") : __("infoBox.disableBox") %>
     </h3>
-    <p class="text-center text-gray-600 mb-6">
-      <%= disabled ? '¿Está seguro que desea habilitar este box?' : '¿Está seguro que desea inhabilitar este box?' %>
+    <p class="text-center text-gray-600 mb-6" data-i18n="<%= disabled ? 'infoBox.confirmEnable' : 'infoBox.confirmDisable' %>">
+      <%= disabled ? __("infoBox.confirmEnable") : __("infoBox.confirmDisable") %>
     </p>
     <div class="flex justify-between">
-      <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="closeMantModal()">
-        Cancelar
+      <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="closeMantModal()" data-i18n="infoBox.cancel">
+        <%= __("infoBox.cancel") %>
       </button>
-      <button type="button" class="px-4 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded" onclick="toggleMantenimiento()">
-        Confirmar
+      <button type="button" class="px-4 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded" onclick="toggleMantenimiento()" data-i18n="infoBox.confirm">
+        <%= __("infoBox.confirm") %>
       </button>
     </div>
   </div>
 </div>
+
 <%- include('footer') %>
-<!-- Scripts -->
 <script>
-// Variables globales
 const boxId = <%= box.idBox %>;
 const eventos = <%- eventos_json %>;
+const userLang = '<%= userLang || "es" %>';
+
+window.__i18n = {
+  'infoBox.boxElements.mesa': '<%= __("infoBox.boxElements.mesa") %>',
+  'infoBox.boxElements.silla': '<%= __("infoBox.boxElements.silla") %>',
+  'infoBox.boxElements.balanza': '<%= __("infoBox.boxElements.balanza") %>',
+  'infoBox.boxElements.computador': '<%= __("infoBox.boxElements.computador") %>',
+  'infoBox.boxElements.escritorio': '<%= __("infoBox.boxElements.escritorio") %>',
+  'infoBox.boxElements.camilla': '<%= __("infoBox.boxElements.camilla") %>',
+};
 
 // ECharts - Gráfico de ocupación
 document.addEventListener('DOMContentLoaded', () => {
@@ -380,9 +408,11 @@ function toggleMantenimiento() {
 <!-- Scripts del Modal de Eventos -->
 <script>
   const eventoModal = document.getElementById('eventoModal');
-  eventoModal.addEventListener('click', e => {
-    if (e.target === eventoModal) eventoModal.classList.add('hidden');
-  });
+  if (eventoModal) {
+    eventoModal.addEventListener('click', e => {
+      if (e.target === eventoModal) eventoModal.classList.add('hidden');
+    });
+  }
 </script>
 
 <script>
@@ -415,9 +445,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('calendar');
   const eventos = <%- eventos_json || '[]' %>;
   
+  const texts = {
+    today: userLang === 'en' ? 'Today' : 'Hoy',
+    month: userLang === 'en' ? 'Month' : 'Mes',
+    week: userLang === 'en' ? 'Week' : 'Semana',
+    day: userLang === 'en' ? 'Day' : 'Día',
+    allDay: userLang === 'en' ? 'all-day' : 'todo el día'
+  };
+  
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridDay',
-    locale: 'es',
+    locale: userLang === 'en' ? 'en' : 'es',
     timeZone: 'local',
     height: 'auto',
     contentHeight: 600,
@@ -427,15 +465,15 @@ document.addEventListener('DOMContentLoaded', function() {
     eventTimeFormat: {
       hour: 'numeric',
       minute: '2-digit',
-      meridiem: false,
-      hour12: false
+      meridiem: userLang === 'en' ? 'short' : false,
+      hour12: userLang === 'en'
     },
     
     slotLabelFormat: {
       hour: 'numeric',
       minute: '2-digit',
-      meridiem: false,
-      hour12: false
+      meridiem: userLang === 'en' ? 'short' : false,
+      hour12: userLang === 'en'
     },
     
     headerToolbar: {
@@ -444,12 +482,12 @@ document.addEventListener('DOMContentLoaded', function() {
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     buttonText: {
-      today: 'Hoy',
-      month: 'Mes',
-      week: 'Semana',
-      day: 'Día'
+      today: texts.today,
+      month: texts.month,
+      week: texts.week,
+      day: texts.day
     },
-    allDayText: 'todo el día',
+    allDayText: texts.allDay,
     events: eventos,
     slotMinHeight: 30,
     slotDuration: '00:05:00',
@@ -551,9 +589,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const profesionales = <%- JSON.stringify(profesionales_normalizados || []) %>;
   console.log('PROFESIONALES desde servidor:', profesionales);
   
+  const selectProfPlaceholder = userLang === 'en' ? 'Select professional' : '— Selecciona profesional —';
+  
   function fillProfesionalSelect(selectEl, especialidadId) {
     if (!selectEl) return;
-    selectEl.innerHTML = '<option value="" disabled selected>— Selecciona profesional —</option>';
+    selectEl.innerHTML = `<option value="" disabled selected>${selectProfPlaceholder}</option>`;
     profesionales.forEach(function(prof) {
       if (!especialidadId || String(prof.especialidad) === String(especialidadId)) {
         const option = document.createElement('option');
@@ -658,7 +698,14 @@ document.getElementById('deleteEventoBtn').onclick = async function() {
   const eventoId = document.getElementById('editEventoId').value;
   const boxId = <%= box.idBox || box.idbox %>;
   
-  if (confirm('¿Seguro que quieres eliminar este evento?')) {
+  const deleteConfirmMsg = userLang === 'en' 
+    ? 'Are you sure you want to delete this event?' 
+    : '¿Seguro que quieres eliminar este evento?';
+  const deleteErrorMsg = userLang === 'en'
+    ? 'Error deleting event'
+    : 'Error al eliminar el evento';
+  
+  if (confirm(deleteConfirmMsg)) {
     try {
       const response = await fetch(`/eliminar_evento/${eventoId}`, {
         method: 'DELETE',
@@ -669,11 +716,11 @@ document.getElementById('deleteEventoBtn').onclick = async function() {
         closeEditEventoModal();
         window.location.href = `/info-box/${boxId}`;
       } else {
-        alert('Error al eliminar el evento');
+        alert(deleteErrorMsg);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al eliminar el evento');
+      alert(deleteErrorMsg);
     }
   }
 };
@@ -713,6 +760,14 @@ editEventoForm.addEventListener('submit', async function(e) {
   const errorBox = document.getElementById('editError');
   errorBox.classList.add('hidden');
   errorBox.textContent = '';
+  
+  const networkErrorMsg = userLang === 'en' 
+    ? 'Network error. Please try again.' 
+    : 'Error de red. Intenta nuevamente.';
+  const saveErrorMsg = userLang === 'en'
+    ? 'Could not save.'
+    : 'No se pudo guardar.';
+  
   const formData = new FormData(editEventoForm);
   const params = new URLSearchParams();
   for (const pair of formData.entries()) params.append(pair[0], pair[1]);
@@ -730,7 +785,7 @@ editEventoForm.addEventListener('submit', async function(e) {
     if (isJson) {
       const data = await resp.json();
       if (!data.ok) {
-        errorBox.textContent = data.error || 'No se pudo guardar.';
+        errorBox.textContent = data.error || saveErrorMsg;
         errorBox.classList.remove('hidden');
         return;
       }
@@ -740,7 +795,7 @@ editEventoForm.addEventListener('submit', async function(e) {
     }
     window.location.reload();
   } catch (err) {
-    errorBox.textContent = 'Error de red. Intenta nuevamente.';
+    errorBox.textContent = networkErrorMsg;
     errorBox.classList.remove('hidden');
   }
 });
@@ -749,6 +804,16 @@ editEventoForm.addEventListener('submit', async function(e) {
 <!-- Script de Validación de Horarios -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const timeRangeMsg = userLang === 'en' 
+    ? 'Time must be between 08:00 and 19:00' 
+    : 'La hora debe estar entre 08:00 y 19:00';
+  const timeOrderMsg = userLang === 'en'
+    ? 'End time must be after start time'
+    : 'La hora de fin debe ser posterior a la hora de inicio';
+  const alertMsg = userLang === 'en'
+    ? 'Please verify that times are between 08:00 and 19:00 and that the end time is after the start time'
+    : 'Por favor, verifique que las horas estén entre 08:00 y 19:00 y que la hora de fin sea posterior a la de inicio';
+  
   function validateTimeRange(timeInput) {
     const timeValue = timeInput.value;
     if (timeValue) {
@@ -758,7 +823,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const maxTime = 19 * 60;
       
       if (timeInMinutes < minTime || timeInMinutes > maxTime) {
-        timeInput.setCustomValidity('La hora debe estar entre 08:00 y 19:00');
+        timeInput.setCustomValidity(timeRangeMsg);
         return false;
       } else {
         timeInput.setCustomValidity('');
@@ -776,7 +841,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const endMinutes = endTime[0] * 60 + endTime[1];
       
       if (endMinutes <= startMinutes) {
-        endInput.setCustomValidity('La hora de fin debe ser posterior a la hora de inicio');
+        endInput.setCustomValidity(timeOrderMsg);
         return false;
       } else {
         endInput.setCustomValidity('');
@@ -826,7 +891,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (!isValid) {
         e.preventDefault();
-        alert('Por favor, verifique que las horas estén entre 08:00 y 19:00 y que la hora de fin sea posterior a la de inicio');
+        alert(alertMsg);
       }
     });
   });
@@ -892,36 +957,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-deleteAgendaBtn.addEventListener('click', async () => {
-  if (!confirm('¿eliminar esta agenda?')) return;
-  
-  agendaStatus.textContent = 'eliminando...';
-  agendaStatus.className = 'text-sm text-center text-gray-600';
-  
-  try {
-    const res = await fetch(`/info-box/${boxId}/agenda/${agendaId.value}`, {
-      method: 'DELETE'
-    });
-    
-    const result = await res.json();
-    
-    if (result.ok) {
-      agendaStatus.textContent = 'eliminado correctamente';
-      agendaStatus.className = 'text-sm text-center text-green-600';
-      setTimeout(() => {
-        cerrarAgendaModal();
-        location.reload();
-      }, 700);
-    } else {
-      agendaStatus.textContent = 'error al eliminar';
-      agendaStatus.className = 'text-sm text-center text-red-600';
-    }
-  } catch (err) {
-    agendaStatus.textContent = 'error de red';
-    agendaStatus.className = 'text-sm text-center text-red-600';
-  }
-});
-
 // items editor
 const itemsModal = document.getElementById('itemsModal');
 const editarItemsBtn = document.getElementById('editarItemsBtn');
@@ -936,6 +971,13 @@ let itemsData = [];
 const itemsApiUrl = `/info-box/${boxId}/items`;
 
 let itemsCloseTimer = null;
+
+const savingText = userLang === 'en' ? 'Saving...' : 'Guardando...';
+const savedText = userLang === 'en' ? 'Saved successfully' : 'Guardado correctamente';
+const saveErrorText = userLang === 'en' ? 'Error saving' : 'Error al guardar';
+const networkErrorText = userLang === 'en' ? 'Network error' : 'Error de red';
+const loadErrorText = userLang === 'en' ? 'Error loading items' : 'Error al cargar items';
+const noRecordsText = userLang === 'en' ? 'No records.' : 'Sin registros.';
 
 function openItemsModal(){
   if(itemsCloseTimer){ clearTimeout(itemsCloseTimer); itemsCloseTimer=null; }
@@ -961,8 +1003,19 @@ function renderItemsEditor(){
   itemsData.forEach(item => {
     const card = document.createElement('div');
     card.className = 'border rounded-md p-3 flex flex-col gap-2 bg-gray-50/60';
+    
+    // Determinar el nombre traducido
+    let displayName = item.nombre;
+    if (item.translationKey) {
+      const translatedKey = `infoBox.boxElements.${item.translationKey}`;
+      // Si existe la traducción en el objeto window (desde el servidor)
+      displayName = window.__i18n && window.__i18n[translatedKey] 
+        ? window.__i18n[translatedKey] 
+        : item.nombre;
+    }
+    
     card.innerHTML = `
-      <div class="text-sm font-medium text-gray-800 line-clamp-2">${item.nombre}</div>
+      <div class="text-sm font-medium text-gray-800 line-clamp-2">${displayName}</div>
       <div class="flex items-center justify-between mt-1">
         <button type="button" class="dec px-2 py-1 rounded bg-white border text-gray-600 hover:bg-gray-100" data-id="${item.id}">-</button>
         <span class="cantidad font-semibold" data-id="${item.id}">${item.cantidad}</span>
@@ -984,7 +1037,7 @@ function loadItems(){
       itemsLoadingEl.classList.add('hidden');
     })
     .catch(() => {
-      itemsLoadingEl.textContent = 'Error al cargar items';
+      itemsLoadingEl.textContent = loadErrorText;
     });
 }
 
@@ -1001,7 +1054,7 @@ itemsListEl.addEventListener('click', e => {
 });
 
 function guardarItems(){
-  itemsStatusEl.textContent = 'Guardando...';
+  itemsStatusEl.textContent = savingText;
   fetch(itemsApiUrl, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -1010,27 +1063,37 @@ function guardarItems(){
   .then(r => r.json())
   .then(data => {
     if(data.ok){
-      itemsStatusEl.textContent = 'Guardado correctamente';
-      // Actualizar lista en la tarjeta principal
+      itemsStatusEl.textContent = savedText;
+      // Actualizar lista en la tarjeta principal CON TRADUCCIONES
       const listaBox = document.getElementById('listaItemsBox');
       listaBox.innerHTML = '';
       const activos = data.items.filter(i => i.cantidad > 0);
       if(activos.length === 0){
-        listaBox.innerHTML = '<p class="text-sm text-gray-500">Sin registros.</p>';
+        listaBox.innerHTML = `<p class="text-sm text-gray-500">${noRecordsText}</p>`;
       } else {
         activos.forEach(it => {
           const row = document.createElement('div');
           row.className='flex items-center justify-between text-sm border border-gray-100 rounded px-3 py-2';
-          row.innerHTML = `<span class='font-medium'>${it.nombre}</span><span class='text-gray-700'>x ${it.cantidad}</span>`;
+          
+          // Determinar nombre traducido
+          let displayName = it.nombre;
+          if (it.translationKey) {
+            const translatedKey = `infoBox.boxElements.${it.translationKey}`;
+            displayName = window.__i18n && window.__i18n[translatedKey] 
+              ? window.__i18n[translatedKey] 
+              : it.nombre;
+          }
+          
+          row.innerHTML = `<span class='font-medium'>${displayName}</span><span class='text-gray-700'>x ${it.cantidad}</span>`;
           listaBox.appendChild(row);
         });
       }
       setTimeout(() => { closeItemsModal(); itemsStatusEl.textContent=''; }, 700);
     } else {
-      itemsStatusEl.textContent = 'Error al guardar';
+      itemsStatusEl.textContent = saveErrorText;
     }
   })
-  .catch(() => { itemsStatusEl.textContent = 'Error de red'; });
+  .catch(() => { itemsStatusEl.textContent = networkErrorText; });
 }
 
 saveItemsBtn.addEventListener('click', guardarItems);
