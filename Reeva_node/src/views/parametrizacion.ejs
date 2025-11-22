@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="<%= userLang || 'es' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle || 'Parametrización' %> </title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/header.css" />
+  <link rel="stylesheet" href="/css/parametrizacion.css">
+</head>
+<body>
+  <%- include('header') %>
+  
+  <div class="parametrizacion-container">
+    <div class="parametrizacion-card">
+      
+      <!-- ===== INDICADOR DE PROGRESO ===== -->
+      <div class="progress-indicator">
+        <div class="progress-step active" data-step="1">
+          <div class="step-circle">1</div>
+          <span class="step-label">Nombres</span>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="2">
+          <div class="step-circle">2</div>
+          <span class="step-label">Estructura</span>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="3">
+          <div class="step-circle">3</div>
+          <span class="step-label">Ocupantes</span>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="4">
+          <div class="step-circle">4</div>
+          <span class="step-label">Vista Previa</span>
+        </div>
+      </div>
+
+      <!-- ===== CONTENIDO DINÁMICO ===== -->
+      <div class="parametrizacion-content">
+
+        <!-- ===== PASO 1: CONFIGURAR NOMBRES ===== -->
+        <div class="paso-content active" id="paso-1">
+          <h2 class="paso-titulo">Configura tu propia empresa</h2>
+          <p class="paso-descripcion">Define los nombres de tu estructura</p>
+
+          <div class="nombres-form">
+            
+            <div class="form-section">
+              <div class="form-section-title">
+                <i class="fas fa-building"></i>
+                Empresa
+              </div>
+              <div class="form-group">
+                <label>
+                  Nombre de la Empresa
+                  <span class="required">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="input-empresa"
+                  placeholder="Ej: Hospital Padre Hurtado" 
+                >
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">
+                <i class="fas fa-layer-group"></i>
+                Niveles
+              </div>
+              
+              <div class="form-group">
+                <label>
+                  Nivel 1 (Contiene múltiples Nivel 2)
+                  <span class="required">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="input-nivel1"
+                  placeholder="Ej: Sala, Pasillo, Área..." 
+                >
+                <div class="form-help">Elemento principal - Ej: "Sala" (que contendrá mesas)</div>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  Nivel 2 (Elementos dentro del Nivel 1)
+                  <span class="required">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="input-nivel2"
+                  placeholder="Ej: Mesa, Box, Consultorio..." 
+                >
+                <div class="form-help">Elemento secundario - Ej: "Mesa" (dentro de cada sala)</div>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  Nivel 3 (¿Cómo llamar al ocupante?)
+                  <span class="optional">(opcional)</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="input-nivel3"
+                  placeholder="Ej: Doctor, Paciente, Técnico..." 
+                >
+                <div class="form-help">Si no lo defines, se usará "Ocupante" por defecto</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ===== PASO 2: CONFIGURAR ESTRUCTURA ===== -->
+        <div class="paso-content" id="paso-2">
+          <h2 class="paso-titulo"><i class="ri-layout-grid-fill" style="margin-right: 0.5rem;"></i>Configurar Estructura</h2>
+          <p class="paso-descripcion">Agrega y configura tus elementos</p>
+
+          <div id="espacios-container"></div>
+
+          <button class="btn-agregar-espacio" id="btn-agregar-espacio">
+            <i class="fas fa-plus-circle"></i>
+            <span id="btn-agregar-texto">Agregar Nivel 1</span>
+          </button>
+        </div>
+
+        <!-- ===== PASO 3: OCUPANTES GENERALES ===== -->
+        <div class="paso-content" id="paso-3">
+          <h2 class="paso-titulo"><i style="margin-right: 0.5rem;"></i>Ocupantes Generales</h2>
+          <p class="paso-descripcion">Agrega el nombre de los ocupantes que se pueden agendar</p>
+
+          <div class="nombres-form">
+            <div class="form-group">
+              <div style="display: flex; gap: 0.75rem;">
+                <input 
+                  type="text" 
+                  id="nuevo-ocupante"
+                  placeholder="Ej: Juan García" 
+                  class="flex-1"
+                >
+                <button type="button" class="btn-agregar-ocupante" id="btn-agregar-ocupante">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="ocupantes-lista" id="ocupantes-lista">
+              <!-- Se llenarán dinámicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PASO 4: VISTA PREVIA ===== -->
+        <div class="paso-content" id="paso-4">
+          <h2 class="paso-titulo">Vista Previa</h2>
+          <p class="paso-descripcion">Revisa tu configuración</p>
+
+          <div id="preview-final"></div>
+
+          <div class="preview-actions">
+            <button class="btn-secundario" id="btn-editar-config">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button class="btn-primario" id="btn-confirmar">
+              <i class="fas fa-check-circle"></i>
+              Confirmar
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== NAVEGACIÓN ===== -->
+      <div class="parametrizacion-nav">
+        <button class="btn-nav btn-anterior" id="btn-anterior" disabled>
+          <i class="fas fa-arrow-left"></i>
+          Anterior
+        </button>
+        <button class="btn-nav btn-siguiente" id="btn-siguiente">
+          Siguiente
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/js/parametrizacion.js"></script>
+  <%- include('footer') %>
+</body>
+</html>

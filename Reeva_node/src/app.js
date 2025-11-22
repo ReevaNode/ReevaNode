@@ -25,6 +25,7 @@ import agendaRouter from "./routes/agenda.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
 import languageRouter from "./routes/language.js";
 import infoBoxRouter from "./routes/infoBox.js";
+import parametrizacionRouter from "./routes/parametrizacion.js";
 
 const app = express();
 
@@ -113,6 +114,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+// ===== Rutas =====
 app.use("/", authRouter);
 app.use("/", requireAuth, bienvenidaRouter);
 app.use("/", requireAuth, dashboardRouter);
@@ -121,6 +123,7 @@ app.use("/", requireAuth, agendaRouter);
 app.use("/", requireAuth, matrizBoxRouter);
 app.use("/", languageRouter);
 app.use("/", requireAuth, infoBoxRouter);
+app.use("/", requireAuth, parametrizacionRouter);
 
 // ===== 404 =====
 app.use((req, res) => {

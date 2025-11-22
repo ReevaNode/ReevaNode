@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="<%= userLang || 'es' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar <%= empresa.nombre %> </title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/header.css" />
+  <link rel="stylesheet" href="/css/editar-empresa.css">
+</head>
+<body>
+  <%- include('header') %>
+  
+  <div class="editar-container">
+    <!-- Header -->
+    <div class="header-editar">
+      <div>
+        <h1><%= empresa.nombre %></h1>
+        <p style="color: #999; margin: 0.5rem 0 0; font-size: 0.95rem;">
+          <%= empresa.nombreNivel1 %> • <%= empresa.nombreNivel2 %> • <%= empresa.nombreNivel3 %>
+        </p>
+      </div>
+      <a href="javascript:history.back()" class="btn-volver">
+        <i class="ri-arrow-left-line"></i>
+        Volver
+      </a>
+    </div>
+
+    <!-- Tabs/Pestañas -->
+    <div class="tabs-container">
+      <button class="tab-button active" onclick="cambiarTab('salas')">
+        <i class="ri-layout-grid-line"></i>
+        Estructura
+      </button>
+      <button class="tab-button" onclick="cambiarTab('ocupantes')">
+        <i class="ri-user-line"></i>
+        Ocupantes
+      </button>
+    </div>
+
+    <!-- CONTENIDO TABS -->
+
+    <!-- TAB: ESPACIOS Y MESAS -->
+    <div id="tab-salas" class="tab-content active">
+      <div class="seccion-editar">
+        <div id="espacios-lista-editar"></div>
+
+        <button class="btn-agregar-espacio" onclick="agregarEspacio()">
+          <i class="ri-add-line"></i>
+          Agregar <%= empresa.nombreNivel1.toLowerCase() %>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB: OCUPANTES -->
+    <div id="tab-ocupantes" class="tab-content">
+      <div class="seccion-editar">
+        <div class="ocupantes-input-wrapper">
+          <input 
+            type="text" 
+            id="nuevo-ocupante-editar"
+            placeholder="Ej: Juan García"
+          >
+          <button type="button" class="btn-agregar-ocupante-editar" onclick="agregarOcupanteEditar()">
+            <i class="ri-add-line"></i>
+          </button>
+        </div>
+
+        <div id="ocupantes-lista-editar"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODALES - ELIMINADOS -->
+  <!-- Los modales han sido removidos. La estructura ahora es inline como en crear empresa -->
+
+  <script>
+    const empresaId = '<%= empresa.empresaId %>';
+    const empresa = <%- JSON.stringify(empresa) %>;
+    const idToken = '<%= idToken %>';
+
+    // Asegurar que ocupantes es un array
+    if (!empresa.ocupantes) {
+      empresa.ocupantes = [];
+    }
+    if (!empresa.espacios) {
+      empresa.espacios = [];
+    }
+
+    const espaciosUnicos = {};
+    for (const espacio of empresa.espacios) {
+      if (!espaciosUnicos[espacio.espacioId]) {
+        espaciosUnicos[espacio.espacioId] = espacio;
+      }
+    }
+    empresa.espacios = Object.values(espaciosUnicos);
+
+    const ocupantesUnicos = {};
+    for (const ocupante of empresa.ocupantes) {
+      if (!ocupantesUnicos[ocupante.ocupanteId]) {
+        ocupantesUnicos[ocupante.ocupanteId] = ocupante;
+      }
+    }
+    empresa.ocupantes = Object.values(ocupantesUnicos);
+
+    console.log('Datos iniciales cargados:', {
+      empresaId: empresa.empresaId,
+      nombre: empresa.nombre,
+      espacios: empresa.espacios ? empresa.espacios.length : 0,
+      ocupantes: empresa.ocupantes ? empresa.ocupantes.length : 0
+    });
+    console.log('Espacios completos:', empresa.espacios);
+    console.log('Ocupantes completos:', empresa.ocupantes);
+
+    // ===== INICIALIZAR =====
+    document.addEventListener('DOMContentLoaded', () => {
+      renderizarEspacios();
+      renderizarOcupantes();
+    });
+
+    // ===== FUNCIÓN PARA CAMBIAR TABS =====
+    function cambiarTab(tabName) {
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      event.target.closest('.tab-button').classList.add('active');
+    }
+
+    // ===== RENDERIZAR ESPACIOS DINÁMICAMENTE =====
+    function renderizarEspacios() {
+      const container = document.getElementById('espacios-lista-editar');
+      const nombreNivel1 = empresa.nombreNivel1 || 'Nivel 1';
+      const nombreNivel2 = empresa.nombreNivel2 || 'Box';
+
+      if (!empresa.espacios || empresa.espacios.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+            <i class="ri-inbox-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px;"></i>
+            <p style="font-size: 15px; font-weight: 600;">No hay ${nombreNivel1} configurados</p>
+            <p style="font-size: 13px; margin-top: 8px;">Haz clic en "Agregar" para comenzar</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = empresa.espacios.map((espacio, espacioIdx) => `
+        <div class="espacio-card">
+          <div class="espacio-header">
+            <div class="espacio-titulo-editable">
+              <div class="espacio-numero">${espacioIdx + 1}</div>
+              <input 
+                type="text" 
+                class="espacio-nombre-input"
+                placeholder="Nombre del ${nombreNivel1}..." 
+                value="${espacio.pasilloNombre}"
+                onchange="actualizarNombreEspacio('${espacio.espacioId}', this.value)"
+              >
+              <button class="btn-editar-nombre" title="Editar nombre">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+            </div>
+            <button 
+              class="btn-eliminar-espacio" 
+              onclick="eliminarEspacio('${espacio.espacioId}')"
+            >
+              <i class="fas fa-trash"></i>
+              Eliminar
+            </button>
+          </div>
+
+          <div class="mesas-section">
+            ${espacio.mesas && espacio.mesas.length > 0 ? `
+              <div class="mesas-grid">
+                ${espacio.mesas.map((mesa, mesaIdx) => `
+                  <div class="mesa-card">
+                    <button 
+                      class="btn-eliminar-mesa" 
+                      onclick="eliminarMesa('${espacio.espacioId}', '${mesa.id}')"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                    <div class="mesa-numero-badge">${mesaIdx + 1}</div>
+                    <input 
+                      type="text" 
+                      placeholder="${nombreNivel2}..." 
+                      value="${mesa.nombre}"
+                      onblur="if(this.value.trim()) actualizarNombreMesa('${espacio.espacioId}', '${mesa.id}', this.value)"
+                    >
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+            
+            <button 
+              class="btn-agregar-mesa" 
+              onclick="agregarMesa('${espacio.espacioId}')"
+            >
+              <i class="fas fa-plus"></i>
+              Agregar ${nombreNivel2}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== FORMULARIO VACÍO PARA AGREGAR ESPACIOS (COMO EN PASO 2) =====
+    function mostrarFormularioEspacioVacio() {
+      const container = document.getElementById('espacios-lista-editar');
+      const nombreNivel1 = empresa.nombreNivel1 || 'Nivel 1';
+      const nombreNivel2 = empresa.nombreNivel2 || 'Box';
+
+      // Crear un div temporal para el nuevo espacio
+      const nuevoEspacioDiv = document.createElement('div');
+      nuevoEspacioDiv.className = 'espacio-form-wrapper';
+      nuevoEspacioDiv.innerHTML = `
+        <div class="espacio-form">
+          <h4>Nuevo ${nombreNivel1}</h4>
+          <div class="espacio-form-input">
+            <input 
+              type="text" 
+              id="nuevo-espacio-nombre"
+              placeholder="Nombre del ${nombreNivel1}..."
+              autofocus
+            >
+            <button class="btn-confirmar-espacio" onclick="confirmarNuevoEspacio()">
+              <i class="fas fa-check"></i>
+            </button>
+            <button class="btn-cancelar-espacio" onclick="cancelarNuevoEspacio()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Si hay espacios, agregarlo al final del contenedor
+      if (empresa.espacios && empresa.espacios.length > 0) {
+        container.appendChild(nuevoEspacioDiv);
+      } else {
+        // Si no hay espacios, limpiar y mostrar solo el formulario
+        container.innerHTML = nuevoEspacioDiv.innerHTML;
+      }
+
+      // Enfocar el input automáticamente
+      setTimeout(() => {
+        const input = document.getElementById('nuevo-espacio-nombre');
+        if (input) input.focus();
+      }, 100);
+    }
+
+    function confirmarNuevoEspacio() {
+      const input = document.getElementById('nuevo-espacio-nombre');
+      const nombre = input?.value.trim();
+
+      if (!nombre) {
+        alert(`Por favor ingresa el nombre del ${empresa.nombreNivel1.toLowerCase()}`);
+        return;
+      }
+
+      // Guardar en BD
+      fetch(`/api/empresas/${empresaId}/espacios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pasilloNombre: nombre,
+          mesas: []
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.espacioId) {
+          const nuevoEspacio = {
+            espacioId: data.espacioId,
+            pasilloNombre: nombre,
+            mesas: []
+          };
+          empresa.espacios.push(nuevoEspacio);
+          renderizarEspacios();
+          console.log('Espacio agregado:', data.espacioId);
+        } else {
+          alert('Error al agregar ' + empresa.nombreNivel1.toLowerCase());
+          console.error('Error respuesta:', data);
+        }
+      })
+      .catch(err => {
+        console.error('Error al agregar espacio:', err);
+        alert('Error al agregar ' + empresa.nombreNivel1.toLowerCase());
+      });
+    }
+
+    function cancelarNuevoEspacio() {
+      renderizarEspacios();
+    }
+
+    // ===== ESPACIOS =====
+    function agregarEspacio() {
+      // Mostrar formulario vacío para que el usuario escriba el nombre
+      mostrarFormularioEspacioVacio();
+    }
+
+    function eliminarEspacio(espacioId) {
+      if (confirm(`¿Eliminar este ${empresa.nombreNivel1.toLowerCase()}?`)) {
+        fetch(`/api/empresas/${empresaId}/espacios/${espacioId}`, {
+          method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            empresa.espacios = empresa.espacios.filter(e => e.espacioId !== espacioId);
+            renderizarEspacios();
+            console.log('Espacio eliminado:', espacioId);
+          } else {
+            alert('Error al eliminar ' + empresa.nombreNivel1.toLowerCase());
+            console.error('Error respuesta:', data);
+          }
+        })
+        .catch(err => {
+          console.error('Error al eliminar espacio:', err);
+          alert('Error al eliminar ' + empresa.nombreNivel1.toLowerCase());
+        });
+      }
+    }
+
+    function actualizarNombreEspacio(espacioId, nuevoNombre) {
+      if (!nuevoNombre || !nuevoNombre.trim()) {
+        alert(`El ${empresa.nombreNivel1.toLowerCase()} debe tener un nombre`);
+        return;
+      }
+
+      const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
+      if (!espacio) return;
+
+      // Validar que todas las mesas tengan nombre
+      if (espacio.mesas && espacio.mesas.length > 0) {
+        const mesasSinNombre = espacio.mesas.filter(m => !m.nombre || !m.nombre.trim());
+        if (mesasSinNombre.length > 0) {
+          alert(`Todas las ${empresa.nombreNivel2.toLowerCase()} deben tener un nombre antes de guardar`);
+          return;
+        }
+      }
+
+      const payload = {
+        espacioId: espacioId,
+        pasilloNombre: nuevoNombre.trim(),
+        mesas: espacio.mesas
+      };
+
+      fetch(`/api/empresas/${empresaId}/espacios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          espacio.pasilloNombre = nuevoNombre.trim();
+          renderizarEspacios();
+          console.log('Espacio actualizado:', espacioId);
+        } else {
+          alert('Error al actualizar ' + empresa.nombreNivel1.toLowerCase());
+          console.error('Error respuesta:', data);
+        }
+      })
+      .catch(err => {
+        console.error('Error al actualizar espacio:', err);
+        alert('Error al actualizar ' + empresa.nombreNivel1.toLowerCase());
+      });
+    }
+
+    // ===== MESAS =====
+    function agregarMesa(espacioId) {
+      const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
+      if (!espacio) return;
+
+      // Añadir una mesa vacía a nivel local (sin nombre)
+      const nuevaMesa = {
+        id: `mesa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        nombre: '' // Vacía, el usuario escribirá el nombre
+      };
+
+      espacio.mesas.push(nuevaMesa);
+      renderizarEspacios();
+
+      // Enfocar el input de la nueva mesa para que el usuario escriba de inmediato
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('.mesa-card input');
+        if (inputs.length > 0) {
+          inputs[inputs.length - 1].focus();
+        }
+      }, 100);
+    }
+
+    function eliminarMesa(espacioId, mesaId) {
+      if (confirm(`¿Eliminar esta ${empresa.nombreNivel2.toLowerCase()}?`)) {
+        const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
+        if (!espacio) return;
+
+        espacio.mesas = espacio.mesas.filter(m => m.id !== mesaId);
+        
+        const payload = {
+          espacioId: espacioId,
+          pasilloNombre: espacio.pasilloNombre,
+          mesas: espacio.mesas
+        };
+
+        fetch(`/api/empresas/${empresaId}/espacios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            renderizarEspacios();
+            console.log('Mesa eliminada del espacio:', espacioId);
+          } else {
+            alert('Error al eliminar ' + empresa.nombreNivel2.toLowerCase());
+            console.error('Error respuesta:', data);
+            renderizarEspacios();
+          }
+        })
+        .catch(err => {
+          console.error('Error al eliminar mesa:', err);
+          alert('Error al eliminar ' + empresa.nombreNivel2.toLowerCase());
+          renderizarEspacios();
+        });
+      }
+    }
+
+    function actualizarNombreMesa(espacioId, mesaId, nuevoNombre) {
+      const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
+      if (!espacio) return;
+
+      const mesa = espacio.mesas.find(m => m.id === mesaId);
+      if (!mesa) return;
+
+      // Si el nombre está vacío
+      if (!nuevoNombre || !nuevoNombre.trim()) {
+        // Verificar si la mesa es nueva (fue creada hace menos de 5 segundos)
+        const ahora = Date.now();
+        const idTimestamp = parseInt(mesa.id.split('-')[1]);
+        const esNueva = (ahora - idTimestamp) < 5000;
+
+        if (esNueva) {
+          // Es nueva sin nombre: eliminar del array local sin guardar
+          espacio.mesas = espacio.mesas.filter(m => m.id !== mesaId);
+          renderizarEspacios();
+          console.log('Mesa nueva vacía descartada (no guardada)');
+          return;
+        } else {
+          // Es una mesa guardada: no permitir dejar sin nombre
+          alert(`El ${empresa.nombreNivel2.toLowerCase()} debe tener un nombre. No puede quedar vacío.`);
+          renderizarEspacios(); // Recargar para mostrar el nombre anterior
+          return;
+        }
+      }
+
+      // Nombre válido: guardar en backend
+      const payload = {
+        espacioId: espacioId,
+        pasilloNombre: espacio.pasilloNombre,
+        mesas: espacio.mesas.map(m => 
+          m.id === mesaId ? { ...m, nombre: nuevoNombre.trim() } : m
+        )
+      };
+
+      fetch(`/api/empresas/${empresaId}/espacios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          mesa.nombre = nuevoNombre.trim();
+          console.log('Mesa actualizada en espacio:', espacioId);
+        } else {
+          alert('Error al actualizar ' + empresa.nombreNivel2.toLowerCase());
+          console.error('Error respuesta:', data);
+          renderizarEspacios();
+        }
+      })
+      .catch(err => {
+        console.error('Error al actualizar mesa:', err);
+        alert('Error al actualizar ' + empresa.nombreNivel2.toLowerCase());
+        renderizarEspacios();
+      });
+    }
+
+    // ===== OCUPANTES =====
+
+    function agregarOcupanteEditar() {
+      const input = document.getElementById('nuevo-ocupante-editar');
+      const nombre = input?.value.trim();
+
+      if (!nombre) {
+        alert('Por favor ingresa un nombre');
+        return;
+      }
+
+      const payload = { nombre };
+
+      fetch(`/api/empresas/${empresaId}/ocupantes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const nuevoOcupante = {
+            ocupanteId: data.ocupanteId,
+            nombre: nombre
+          };
+          empresa.ocupantes.push(nuevoOcupante);
+          input.value = '';
+          renderizarOcupantes();
+          console.log('Ocupante agregado:', data.ocupanteId);
+        } else {
+          alert('Error al agregar ocupante: ' + (data.message || data.error));
+          console.error('Error respuesta:', data);
+        }
+      })
+      .catch(err => {
+        console.error('Error al agregar ocupante:', err);
+        alert('Error al agregar ocupante');
+      });
+    }
+
+    function renderizarOcupantes() {
+      const container = document.getElementById('ocupantes-lista-editar');
+      
+      if (!empresa.ocupantes || empresa.ocupantes.length === 0) {
+        container.innerHTML = `
+          <div class="lista-vacia">
+            <i class="ri-user-add-line"></i>
+            <p>No hay ocupantes registrados</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = empresa.ocupantes.map(ocupante => `
+        <div class="ocupante-item-editar" data-id="${ocupante.ocupanteId}">
+          <span style="font-weight: 500; color: #1a1a1a;">${ocupante.nombre}</span>
+          <button type="button" class="btn-icon btn-icon-delete" onclick="eliminarOcupanteEditar('${ocupante.ocupanteId}')" title="Eliminar">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function eliminarOcupanteEditar(ocupanteId) {
+      if (confirm('¿Eliminar este ocupante?')) {
+        fetch(`/api/empresas/${empresaId}/ocupantes/${ocupanteId}`, {
+          method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            empresa.ocupantes = empresa.ocupantes.filter(o => o.ocupanteId !== ocupanteId);
+            renderizarOcupantes();
+            console.log('Ocupante eliminado:', ocupanteId);
+          } else {
+            alert('Error al eliminar ocupante');
+            console.error('Error respuesta:', data);
+          }
+        })
+        .catch(err => {
+          console.error('Error al eliminar ocupante:', err);
+          alert('Error al eliminar ocupante');
+        });
+      }
+    }
+  </script>
+</body>
+</html>

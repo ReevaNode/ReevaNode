@@ -3,6 +3,7 @@
   const navStateClass = (page) => activeNavKey === page
     ? 'text-primary font-semibold'
     : 'text-gray-700 hover:text-primary';
+  const mostrarHeaderPorDefecto = typeof mostrarHeader === 'undefined' ? true : mostrarHeader;
 %>
 
 <script>
@@ -36,6 +37,7 @@
   })();
 </script>
 
+<% if (mostrarHeaderPorDefecto !== false) { %>
 <!-- Header -->
 <header class="w-full bg-white py-4 px-6 shadow-sm">
   <div class="container mx-auto flex items-center justify-between">
@@ -91,6 +93,10 @@
           <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
             <i class="ri-user-line ri-lg"></i>
             <span class="font-medium" data-i18n="header.mySpace"><%= __("header.mySpace") %></span>
+          </a>
+          <a href="/mis-empresas" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+            <i class="ri-building-line ri-lg"></i>
+            <span class="font-medium" data-i18n="header.myCompanies"><%= __("header.myCompanies") %></span>
           </a>
           <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
             <i class="ri-settings-3-line ri-lg"></i>
@@ -157,6 +163,10 @@
         <i class="ri-user-line ri-lg"></i>
         <span class="font-medium" data-i18n="header.mySpace"><%= __("header.mySpace") %></span>
       </a>
+      <a href="/mis-empresas" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
+        <i class="ri-building-line ri-lg"></i>
+        <span class="font-medium"data-i18n="header.myCompanies"><%= __("header.myCompanies") %></span>
+      </a>
       <a href="#" data-personalizacion-trigger role="button" aria-haspopup="dialog" class="flex items-center gap-3 text-gray-700 hover:text-primary transition-colors py-2">
         <i class="ri-settings-3-line ri-lg"></i>
         <span class="font-medium" data-i18n="header.personalization"><%= __("header.personalization") %></span>
@@ -219,6 +229,7 @@
     <p class="text-xs text-gray-400">BoxCare v1.0.0 · Hospital Padre Hurtado</p>
   </div>
 </aside>
+<% } %>
 <script>
 // Toggle del menu movil
 document.addEventListener('DOMContentLoaded', function() {
