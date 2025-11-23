@@ -18,3 +18,6 @@ Este folder replica el `devops_aws_demo` adaptado a la app real (puerto 3001 y n
 Notas:
 - El puerto publicado es 3001; si lo cambias ajusta `appspec.yaml`, `taskdef.json`, el listener del ALB y la variable `PORT` del contenedor.
 - El buildspec omite fallar si no hay pruebas configuradas (`npm test` está con fallback).
+
+
+Test commit Pipeline
