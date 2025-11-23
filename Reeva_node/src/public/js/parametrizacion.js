@@ -13,6 +13,9 @@ class ParametrizacionManager {
       ocupantes: []
     };
     
+    const urlParams = new URLSearchParams(window.location.search);
+    this.desde = urlParams.get('desde') || null;
+    
     this.init();
   }
 
@@ -209,7 +212,6 @@ class ParametrizacionManager {
   }
 
   // ===== PASO 2: ESPACIOS Y MESAS =====
-
   actualizarTextosPaso2() {
     const titulo = document.querySelector('#paso-2 .paso-titulo');
     const btnTexto = document.getElementById('btn-agregar-texto');
@@ -417,7 +419,6 @@ class ParametrizacionManager {
   }
 
   // ===== PASO 4: VISTA PREVIA =====
-
   renderizarVistaPrevia() {
     const previewContainer = document.getElementById('preview-final');
     
@@ -485,7 +486,8 @@ class ParametrizacionManager {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          configuracion: this.configuracion
+          configuracion: this.configuracion,
+          desde: this.desde 
         })
       });
 
@@ -510,7 +512,6 @@ class ParametrizacionManager {
   }
 
   // ===== UTILIDADES =====
-
   mostrarNotificacion(mensaje, tipo = 'info') {
     const iconos = {
       success: 'fa-check-circle',

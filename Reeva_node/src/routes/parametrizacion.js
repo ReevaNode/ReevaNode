@@ -1,13 +1,10 @@
-// src/routes/parametrizacion.js - TRES TABLAS NORMALIZADAS
-// ✅ EmpresasTable: Datos generales de la empresa
-// ✅ EspaciosTable: Pasillos y Mesas
-// ✅ OcupantesTable: Ocupantes por empresa
+// src/routes/parametrizacion.js 
 
 import express from 'express';
 import requireAuth from '../middlewares/requireAuth.js';
 import checkEmpresas from '../middlewares/checkEmpresas.js';
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand, UpdateCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
 
 const router = express.Router();
 
@@ -15,10 +12,78 @@ const router = express.Router();
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-// ✅ TRES TABLAS NORMALIZADAS
 const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'aws-cognito-jwt-login-dev-empresas-new';
 const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'aws-cognito-jwt-login-dev-espacios';
 const OCUPANTES_TABLE = process.env.OCUPANTES_TABLE || 'aws-cognito-jwt-login-dev-ocupantes';
+
+/**
+ * GET /seleccionar-empresa
+ * Muestra interfaz para seleccionar empresa cuando el usuario tiene 2+ empresas
+ * Se carga después del login si tiene múltiples empresas
+ */
+router.get('/seleccionar-empresa', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user.sub || req.user.email;
+
+    // Obtener todas las empresas del usuario
+    const queryCommand = new QueryCommand({
+      TableName: EMPRESAS_TABLE,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId
+      }
+    });
+
+    const result = await docClient.send(queryCommand);
+    const empresas = result.Items || [];
+
+    // Si tiene menos de 2 empresas, redirigir según corresponda
+    if (empresas.length < 2) {
+      if (empresas.length === 0) {
+        return res.redirect('/parametrizacion');
+      } else {
+        // Si tiene 1 sola, cargarla automáticamente
+        return res.redirect('/bienvenida');
+      }
+    }
+
+    // CARGAR ESPACIOS Y OCUPANTES PARA CADA EMPRESA
+    for (let empresa of empresas) {
+      // Obtener espacios
+      const resultEspacios = await docClient.send(new QueryCommand({
+        TableName: ESPACIOS_TABLE,
+        KeyConditionExpression: 'empresaId = :empresaId',
+        ExpressionAttributeValues: {
+          ':empresaId': empresa.empresaId
+        }
+      }));
+
+      empresa.espacios = resultEspacios.Items || [];
+
+      // Obtener ocupantes
+      const resultOcupantes = await docClient.send(new QueryCommand({
+        TableName: OCUPANTES_TABLE,
+        KeyConditionExpression: 'empresaId = :empresaId',
+        ExpressionAttributeValues: {
+          ':empresaId': empresa.empresaId
+        }
+      }));
+
+      empresa.ocupantes = resultOcupantes.Items || [];
+    }
+
+    console.log(`Mostrando selector con ${empresas.length} empresas`);
+
+    res.render('seleccionar-empresa', {
+      user: req.user,
+      empresas,
+      pageTitle: 'Seleccionar Empresa'
+    });
+  } catch (error) {
+    console.error('Error al cargar seleccionar empresa:', error);
+    res.status(500).render('error', { error: error.message });
+  }
+});
 
 /**
  * GET /mis-empresas
@@ -27,7 +92,7 @@ const OCUPANTES_TABLE = process.env.OCUPANTES_TABLE || 'aws-cognito-jwt-login-de
 router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
   try {
     if (!req.tieneEmpresas) {
-      console.log('ℹ️ Usuario sin empresas, redirigiendo a parametrización');
+      console.log('ℹUsuario sin empresas, redirigiendo a parametrización');
       return res.redirect('/parametrizacion');
     }
 
@@ -45,7 +110,7 @@ router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
     const result = await docClient.send(queryCommand);
     const empresas = result.Items || [];
     
-    // 🔥 CARGAR ESPACIOS Y OCUPANTES PARA CADA EMPRESA
+    // CARGAR ESPACIOS Y OCUPANTES PARA CADA EMPRESA
     for (let empresa of empresas) {
       // Obtener espacios
       const resultEspacios = await docClient.send(new QueryCommand({
@@ -56,7 +121,6 @@ router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
         }
       }));
       
-      // 🔥 DEDUPLICAR espacios por espacioId
       let espacios = resultEspacios.Items || [];
       const espaciosUnicos = {};
       for (const espacio of espacios) {
@@ -77,7 +141,7 @@ router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
       empresa.ocupantes = resultOcupantes.Items || [];
     }
     
-    console.log(`✅ Se obtuvieron ${empresas.length} empresas con espacios y ocupantes`);
+    console.log(`Se obtuvieron ${empresas.length} empresas con espacios y ocupantes`);
     
     res.render('mis_empresas', {
       user: req.user,
@@ -85,23 +149,22 @@ router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
       pageTitle: 'Mis Empresas'
     });
   } catch (error) {
-    console.error('❌ Error al cargar mis empresas:', error);
+    console.error('Error al cargar mis empresas:', error);
     res.status(500).render('error', { error: error.message });
   }
 });
 
 /**
  * GET /mis-empresas/editar/:empresaId
- * Carga la página de edición con datos de las 3 tablas
  */
 router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
   try {
     const userId = req.user.id || req.user.sub || req.user.email;
     const { empresaId } = req.params;
 
-    console.log('🔍 Buscando empresa:', { userId, empresaId });
+    console.log('Buscando empresa:', { userId, empresaId });
 
-    // 1️⃣ Obtener empresa desde EmpresasTable
+    // Obtener empresa desde EmpresasTable
     const resultEmpresa = await docClient.send(new QueryCommand({
       TableName: EMPRESAS_TABLE,
       KeyConditionExpression: 'userId = :userId AND empresaId = :empresaId',
@@ -112,16 +175,16 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
     }));
 
     if (!resultEmpresa.Items || resultEmpresa.Items.length === 0) {
-      console.warn('⚠️ Empresa no encontrada:', { userId, empresaId });
+      console.warn('Empresa no encontrada:', { userId, empresaId });
       return res.status(404).render('error', {
         message: 'Empresa no encontrada'
       });
     }
 
     const empresa = resultEmpresa.Items[0];
-    console.log('✅ Empresa encontrada:', empresa.nombre);
+    console.log('Empresa encontrada:', empresa.nombre);
 
-    // 2️⃣ Obtener espacios (pasillos y mesas) desde EspaciosTable
+    //Obtener espacios (pasillos y mesas) desde EspaciosTable
     const resultEspacios = await docClient.send(new QueryCommand({
       TableName: ESPACIOS_TABLE,
       KeyConditionExpression: 'empresaId = :empresaId',
@@ -130,7 +193,6 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
       }
     }));
 
-    // 🔥 DEDUPLICAR espacios por espacioId (en caso de que haya duplicados)
     let espacios = resultEspacios.Items || [];
     const espaciosUnicos = {};
     for (const espacio of espacios) {
@@ -140,9 +202,9 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
     }
     espacios = Object.values(espaciosUnicos);
     
-    console.log(`✅ Se obtuvieron ${espacios.length} espacios únicos`);
+    console.log(`Se obtuvieron ${espacios.length} espacios únicos`);
 
-    // 3️⃣ Obtener ocupantes desde OcupantesTable
+    // Obtener ocupantes desde OcupantesTable
     const resultOcupantes = await docClient.send(new QueryCommand({
       TableName: OCUPANTES_TABLE,
       KeyConditionExpression: 'empresaId = :empresaId',
@@ -152,7 +214,7 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
     }));
 
     const ocupantes = resultOcupantes.Items || [];
-    console.log(`✅ Se obtuvieron ${ocupantes.length} ocupantes`);
+    console.log(`Se obtuvieron ${ocupantes.length} ocupantes`);
 
     // Agregar espacios y ocupantes a empresa para renderizar
     empresa.espacios = espacios;
@@ -165,7 +227,7 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
       mostrarHeader: true
     });
   } catch (error) {
-    console.error('❌ Error al cargar empresa para edición:', error);
+    console.error('Error al cargar empresa para edición:', error);
     res.status(500).render('error', {
       message: 'Error al cargar la empresa: ' + error.message
     });
@@ -178,13 +240,14 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
  */
 router.get('/parametrizacion', requireAuth, async (req, res) => {
   try {
-    const { empresaId } = req.query;
+    const { empresaId, desde } = req.query;
     let empresaActual = null;
 
     res.render('parametrizacion', {
       user: req.user,
       empresaId,
       empresaActual,
+      desde: desde || null, 
       mostrarHeader: false,
       pageTitle: 'Crear Nueva Empresa'
     });
@@ -201,7 +264,7 @@ router.get('/parametrizacion', requireAuth, async (req, res) => {
 router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
   try {
     const userId = req.user.id || req.user.sub || req.user.email;
-    const { configuracion } = req.body;
+    const { configuracion, desde } = req.body;
 
     if (!configuracion || !configuracion.nombreEmpresa) {
       return res.status(400).json({
@@ -214,7 +277,7 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
     const empresaId = `emp-${Date.now()}`;
     const ahora = new Date().toISOString();
 
-    // 📋 ESTRUCTURA 1: EmpresasTable - Solo metadatos
+    // ESTRUCTURA 1: EmpresasTable - Solo metadatos
     const empresaData = {
       userId,
       empresaId,
@@ -233,12 +296,35 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
       Item: empresaData
     }));
 
-    console.log('✅ Empresa guardada en EmpresasTable:', {
+    // 🔥 SI VIENE DE MIS-EMPRESAS O SELECCIONAR-EMPRESA, DESACTIVAR LAS OTRAS
+    if (desde === 'mis-empresas' || desde === 'seleccionar-empresa') {
+      const resultOtrasEmpresas = await docClient.send(new QueryCommand({
+        TableName: EMPRESAS_TABLE,
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId }
+      }));
+
+      const otrasEmpresas = resultOtrasEmpresas.Items || [];
+      
+      // Desactivar todas excepto la recién creada
+      for (const empresa of otrasEmpresas) {
+        if (empresa.empresaId !== empresaId) {
+          await docClient.send(new UpdateCommand({
+            TableName: EMPRESAS_TABLE,
+            Key: { userId, empresaId: empresa.empresaId },
+            UpdateExpression: 'SET activa = :zero',
+            ExpressionAttributeValues: { ':zero': 0 }
+          }));
+        }
+      }
+    }
+
+    console.log('✅ Empresa guardada:', {
       empresaId,
       nombre: configuracion.nombreEmpresa
     });
 
-    // 🔥 GUARDAR ESPACIOS (Paso 2)
+    // GUARDAR ESPACIOS (Paso 2)
     if (configuracion.espacios && configuracion.espacios.length > 0) {
       for (const espacio of configuracion.espacios) {
         const espacioId = espacio.espacioId || `esp-${Date.now()}-${Math.random()}`;
@@ -255,11 +341,11 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
           }
         }));
 
-        console.log('✅ Espacio guardado:', espacioId);
+        console.log('Espacio guardado:', espacioId);
       }
     }
 
-    // 🔥 GUARDAR OCUPANTES (Paso 3)
+    // GUARDAR OCUPANTES (Paso 3)
     if (configuracion.ocupantes && configuracion.ocupantes.length > 0) {
       for (const ocupante of configuracion.ocupantes) {
         const ocupanteId = ocupante.ocupanteId || `ocp-${Date.now()}-${Math.random()}`;
@@ -276,18 +362,39 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
           }
         }));
 
-        console.log('✅ Ocupante guardado:', ocupanteId);
+        console.log('Ocupante guardado:', ocupanteId);
       }
+    }
+
+    // CONTAR EMPRESAS DEL USUARIO PARA DETERMINAR REDIRECT
+    const resultEmpresas = await docClient.send(new QueryCommand({
+      TableName: EMPRESAS_TABLE,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId
+      }
+    }));
+
+    const totalEmpresas = resultEmpresas.Items ? resultEmpresas.Items.length : 1;
+    let redirectUrl = '/bienvenida';
+
+    // 🔥 DETERMINAR REDIRECT SEGÚN ORIGEN
+    if (desde === 'seleccionar-empresa' || desde === 'mis-empresas') {
+      // Viene de seleccionar-empresa o mis-empresas → ir a bienvenida
+      redirectUrl = '/bienvenida?skip-select=1';
+    } else if (totalEmpresas >= 2) {
+      // Viene del login y ahora tiene 2+ empresas → mostrar selector
+      redirectUrl = '/seleccionar-empresa';
     }
 
     res.json({
       success: true,
       empresaId,
-      redirect: '/mis-empresas',
+      redirect: redirectUrl,
       message: 'Empresa creada exitosamente con todos sus datos'
     });
   } catch (error) {
-    console.error('❌ Error al guardar empresa:', error);
+    console.error('Error al guardar empresa:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -311,7 +418,7 @@ router.post('/api/empresas/seleccionar', requireAuth, async (req, res) => {
       });
     }
 
-    // 1️⃣ Obtener todas las empresas del usuario
+    // 1️Obtener todas las empresas del usuario
     const resultEmpresas = await docClient.send(new QueryCommand({
       TableName: EMPRESAS_TABLE,
       KeyConditionExpression: 'userId = :userId',
@@ -320,42 +427,30 @@ router.post('/api/empresas/seleccionar', requireAuth, async (req, res) => {
 
     const empresas = resultEmpresas.Items || [];
 
-    // 2️⃣ Actualizar todas a activa=0
+    // 🔄 Actualizar todas a activa=0 (usando UpdateCommand)
     for (const empresa of empresas) {
-      await docClient.send(new PutCommand({
+      await docClient.send(new UpdateCommand({
         TableName: EMPRESAS_TABLE,
-        Item: {
-          ...empresa,
-          activa: 0
-        }
+        Key: { userId, empresaId: empresa.empresaId },
+        UpdateExpression: 'SET activa = :zero',
+        ExpressionAttributeValues: { ':zero': 0 }
       }));
     }
 
-    // 3️⃣ Establecer la empresa seleccionada a activa=1
-    const empresaSeleccionada = empresas.find(e => e.empresaId === empresaId);
-    if (!empresaSeleccionada) {
-      return res.status(404).json({
-        success: false,
-        message: 'Empresa no encontrada'
-      });
-    }
-
-    await docClient.send(new PutCommand({
+    // 🔄 Establecer la empresa seleccionada a activa=1 (usando UpdateCommand)
+    await docClient.send(new UpdateCommand({
       TableName: EMPRESAS_TABLE,
-      Item: {
-        ...empresaSeleccionada,
-        activa: 1
-      }
+      Key: { userId, empresaId: empresaId },
+      UpdateExpression: 'SET activa = :one',
+      ExpressionAttributeValues: { ':one': 1 }
     }));
-
-    console.log('✅ Empresa seleccionada:', empresaId);
 
     res.json({
       success: true,
       message: 'Empresa seleccionada correctamente'
     });
   } catch (error) {
-    console.error('❌ Error al seleccionar empresa:', error);
+    console.error('Error al seleccionar empresa:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -365,15 +460,13 @@ router.post('/api/empresas/seleccionar', requireAuth, async (req, res) => {
 
 /**
  * DELETE /api/empresas/:empresaId
- * Elimina empresa y sus datos relacionados (espacios y ocupantes)
- * Si era la activa, selecciona otra o ninguna
  */
 router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
   try {
     const userId = req.user.id || req.user.sub || req.user.email;
     const { empresaId } = req.params;
 
-    // 0️⃣ Obtener la empresa a eliminar para saber si era activa
+    // Obtener la empresa a eliminar para saber si era activa
     const resultEmpresa = await docClient.send(new QueryCommand({
       TableName: EMPRESAS_TABLE,
       KeyConditionExpression: 'userId = :userId AND empresaId = :empresaId',
@@ -386,13 +479,13 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
     const empresaAEliminar = resultEmpresa.Items?.[0];
     const eraActiva = empresaAEliminar?.activa === 1;
 
-    // 1️⃣ Eliminar empresa de EmpresasTable
+    // Eliminar empresa de EmpresasTable
     await docClient.send(new DeleteCommand({
       TableName: EMPRESAS_TABLE,
       Key: { userId, empresaId }
     }));
 
-    // 2️⃣ Obtener y eliminar todos los espacios de EspaciosTable
+    // Obtener y eliminar todos los espacios de EspaciosTable
     const resultEspacios = await docClient.send(new QueryCommand({
       TableName: ESPACIOS_TABLE,
       KeyConditionExpression: 'empresaId = :empresaId',
@@ -408,7 +501,7 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
       }
     }
 
-    // 3️⃣ Obtener y eliminar todos los ocupantes de OcupantesTable
+    // Obtener y eliminar todos los ocupantes de OcupantesTable
     const resultOcupantes = await docClient.send(new QueryCommand({
       TableName: OCUPANTES_TABLE,
       KeyConditionExpression: 'empresaId = :empresaId',
@@ -424,9 +517,9 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
       }
     }
 
-    console.log('✅ Empresa y todos sus datos eliminados:', empresaId);
+    console.log('Empresa y todos sus datos eliminados:', empresaId);
 
-    // 4️⃣ Si era activa, buscar otra empresa para activar
+    // Si era activa, buscar otra empresa para activar
     let empresaActivaActual = null;
     if (eraActiva) {
       const resultOtrasEmpresas = await docClient.send(new QueryCommand({
@@ -450,9 +543,9 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
           }
         }));
         
-        console.log('✅ Nueva empresa activada:', empresaActivaActual.empresaId);
+        console.log('Nueva empresa activada:', empresaActivaActual.empresaId);
       } else {
-        console.log('ℹ️ No hay más empresas disponibles');
+        console.log('No hay más empresas disponibles');
       }
     }
 
@@ -462,7 +555,7 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
       empresaActivaActual: empresaActivaActual?.empresaId || null
     });
   } catch (error) {
-    console.error('❌ Error al eliminar empresa:', error);
+    console.error('Error al eliminar empresa:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -472,13 +565,6 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
 
 /**
  * POST /api/empresas/:empresaId/espacios
- * Agrega o actualiza un espacio (pasillo con sus mesas)
- * Body: { espacioId?, pasilloNombre, mesas[] }
- * 
- * Si espacioId viene en body:
- *   - Obtiene el registro existente y lo actualiza manteniendo fechaCreacion
- * Si NO viene espacioId:
- *   - Crea uno nuevo con fechaCreacion actual
  */
 router.post('/api/empresas/:empresaId/espacios', requireAuth, async (req, res) => {
   try {
@@ -510,17 +596,17 @@ router.post('/api/empresas/:empresaId/espacios', requireAuth, async (req, res) =
       if (resultEspacioExistente.Items && resultEspacioExistente.Items.length > 0) {
         // Mantener la fecha de creación del registro existente
         fechaCreacion = resultEspacioExistente.Items[0].fechaCreacion;
-        console.log('📝 Actualizando espacio existente:', espacioId);
+        console.log('Actualizando espacio existente:', espacioId);
       } else {
-        console.log('⚠️ No se encontró espacio con ese ID, creando nuevo:', espacioId);
+        console.log('No se encontró espacio con ese ID, creando nuevo:', espacioId);
       }
     } else {
       // Crear nuevo espacioId si no se proporcionó
       nuevoEspacioId = `esp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      console.log('📝 Creando nuevo espacio:', nuevoEspacioId);
+      console.log('Creando nuevo espacio:', nuevoEspacioId);
     }
 
-    // 📋 ESTRUCTURA 2: EspaciosTable - Pasillo + sus mesas
+    // ESTRUCTURA 2: EspaciosTable - Pasillo + sus mesas
     const espacioData = {
       empresaId,
       espacioId: nuevoEspacioId,
@@ -535,7 +621,7 @@ router.post('/api/empresas/:empresaId/espacios', requireAuth, async (req, res) =
       Item: espacioData
     }));
 
-    console.log('✅ Espacio guardado:', nuevoEspacioId);
+    console.log('Espacio guardado:', nuevoEspacioId);
 
     res.json({ 
       success: true, 
@@ -543,7 +629,7 @@ router.post('/api/empresas/:empresaId/espacios', requireAuth, async (req, res) =
       espacio: espacioData
     });
   } catch (error) {
-    console.error('❌ Error al guardar espacio:', error);
+    console.error('Error al guardar espacio:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -561,11 +647,11 @@ router.delete('/api/empresas/:empresaId/espacios/:espacioId', requireAuth, async
       Key: { empresaId, espacioId }
     }));
 
-    console.log('✅ Espacio eliminado:', espacioId);
+    console.log('Espacio eliminado:', espacioId);
 
     res.json({ success: true });
   } catch (error) {
-    console.error('❌ Error al eliminar espacio:', error);
+    console.error('Error al eliminar espacio:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -587,12 +673,12 @@ router.post('/api/empresas/:empresaId/ocupantes', requireAuth, async (req, res) 
       });
     }
 
-    console.log('📝 Guardando ocupante:', { empresaId, nombre });
+    console.log('Guardando ocupante:', { empresaId, nombre });
 
     const nuevoOcupanteId = ocupanteId || `ocp-${Date.now()}`;
     const ahora = new Date().toISOString();
 
-    // 📋 ESTRUCTURA 3: OcupantesTable - Datos del ocupante
+    // ESTRUCTURA 3: OcupantesTable - Datos del ocupante
     const ocupanteData = {
       empresaId,
       ocupanteId: nuevoOcupanteId,
@@ -607,7 +693,7 @@ router.post('/api/empresas/:empresaId/ocupantes', requireAuth, async (req, res) 
       Item: ocupanteData
     }));
 
-    console.log('✅ Ocupante guardado:', nuevoOcupanteId);
+    console.log('Ocupante guardado:', nuevoOcupanteId);
 
     res.json({ 
       success: true, 
@@ -615,7 +701,7 @@ router.post('/api/empresas/:empresaId/ocupantes', requireAuth, async (req, res) 
       ocupante: ocupanteData
     });
   } catch (error) {
-    console.error('❌ Error al guardar ocupante:', error);
+    console.error('Error al guardar ocupante:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -633,11 +719,11 @@ router.delete('/api/empresas/:empresaId/ocupantes/:ocupanteId', requireAuth, asy
       Key: { empresaId, ocupanteId }
     }));
 
-    console.log('✅ Ocupante eliminado:', ocupanteId);
+    console.log('Ocupante eliminado:', ocupanteId);
 
     res.json({ success: true });
   } catch (error) {
-    console.error('❌ Error al eliminar ocupante:', error);
+    console.error('Error al eliminar ocupante:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

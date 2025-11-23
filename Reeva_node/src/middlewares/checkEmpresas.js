@@ -20,27 +20,36 @@ async function checkEmpresas(req, res, next) {
 
     const userId = req.user.id || req.user.sub || req.user.email;
 
-    // Consultar DynamoDB para ver si tiene empresas
+    // Consultar DynamoDB para obtener todas las empresas del usuario
     const queryCommand = new QueryCommand({
       TableName: EMPRESAS_TABLE,
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
         ':userId': userId
-      },
-      Limit: 1 // Solo necesitamos saber si existe al menos 1
+      }
     });
 
     const result = await docClient.send(queryCommand);
-    const tieneEmpresas = result.Count > 0;
+    const empresas = result.Items || [];
+    const countEmpresas = result.Count || 0;
+    const tieneEmpresas = countEmpresas > 0;
 
     // Guardar en request para usar después
     req.tieneEmpresas = tieneEmpresas;
-    req.countEmpresas = result.Count || 0;
+    req.countEmpresas = countEmpresas;
+    req.empresas = empresas;
+
+
+    if (req.path === '/bienvenida' && countEmpresas >= 2 && !req.query['skip-select']) {
+      console.log(`ℹUsuario con ${countEmpresas} empresas, redirigiendo a seleccionar-empresa`);
+      return res.redirect('/seleccionar-empresa');
+    }
 
     next();
   } catch (error) {
     console.warn('Advertencia en checkEmpresas:', error.message);
     req.tieneEmpresas = false;
+    req.countEmpresas = 0;
     next();
   }
 }
