@@ -1,0 +1,42 @@
+version: 0.2
+env:
+  variables:
+    APP_NAME: "reeva-node"
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - >
+        cd "$CODEBUILD_SRC_DIR/Reeva_node" &&
+        npm install
+  pre_build:
+    commands:
+      - >
+        cd "$CODEBUILD_SRC_DIR/Reeva_node" &&
+        (npm run test --if-present || echo "Tests skipped (no suite configured)")
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME"
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR
+  build:
+    commands:
+      - >
+        cd "$CODEBUILD_SRC_DIR/Reeva_node" &&
+        GIT_SHA=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest} | cut -c1-7) &&
+        IMAGE_TAG=${GIT_SHA:-latest} &&
+        docker build -t $APP_NAME:$IMAGE_TAG . &&
+        docker tag $APP_NAME:$IMAGE_TAG $ECR:$IMAGE_TAG
+  post_build:
+    commands:
+      - docker push $ECR:$IMAGE_TAG
+      - chmod +x "$CODEBUILD_SRC_DIR/Reeva_node/devops/aws/scripts/smoke.sh"
+      - >
+        cd "$CODEBUILD_SRC_DIR/Reeva_node" &&
+        printf '{"ImageURI":"%s"}' "$ECR:$IMAGE_TAG" > imageDetail.json
+artifacts:
+  files:
+    - Reeva_node/imageDetail.json
+    - Reeva_node/devops/aws/pipeline/appspec.yaml
+    - Reeva_node/devops/aws/pipeline/taskdef.json
+    - Reeva_node/devops/aws/scripts/smoke.sh

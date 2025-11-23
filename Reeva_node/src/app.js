@@ -26,6 +26,7 @@ import matrizBoxRouter from "./routes/matrizBox.js";
 import languageRouter from "./routes/language.js";
 import infoBoxRouter from "./routes/infoBox.js";
 import parametrizacionRouter from "./routes/parametrizacion.js";
+import chatbotRouter from "./routes/chatbot.js";
 
 const app = express();
 
@@ -114,14 +115,17 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ===== Rutas =====
+// ===== Rutas públicas (sin autenticación) =====
 app.use("/", authRouter);
+app.use("/", languageRouter);
+app.use("/", chatbotRouter); // Chatbot routes (webhook NO requiere auth)
+
+// ===== Rutas protegidas (requieren autenticación) =====
 app.use("/", requireAuth, bienvenidaRouter);
 app.use("/", requireAuth, dashboardRouter);
 app.use("/", requireAuth, adminBDDRouter);
 app.use("/", requireAuth, agendaRouter);
 app.use("/", requireAuth, matrizBoxRouter);
-app.use("/", languageRouter);
 app.use("/", requireAuth, infoBoxRouter);
 app.use("/", requireAuth, parametrizacionRouter);
 

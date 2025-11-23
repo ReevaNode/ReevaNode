@@ -1,0 +1,14 @@
+version: 1
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "TASK_DEFINITION"
+        LoadBalancerInfo:
+          ContainerName: "reeva-web"
+          ContainerPort: 3001
+Hooks:
+  AfterAllowTestTraffic:
+    - location: devops/aws/scripts/smoke.sh
+      timeout: 60
+      runOrder: 1
