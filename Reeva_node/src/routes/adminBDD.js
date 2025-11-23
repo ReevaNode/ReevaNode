@@ -6,6 +6,8 @@ import db from '../../db.js';
 import Logger from '../utils/logger.js';
 import { randomUUID } from 'crypto';
 import { broadcastBoxUpdate } from '../services/websocketService.js';
+import { notifyBoxStateChange } from '../services/chatbotService.js';
+import { config } from '../config/index.js';
 
 const router = Router();
 const logger = new Logger('ADMIN_BDD');
@@ -396,6 +398,36 @@ router.post('/admin-bdd/api/:tabla/update', requireAdmin, async (req, res) => {
     }));
     
     logger.info(`registro actualizado en ${tabla}`, { key });
+    
+    // Si es una actualización de box, notificar cambio de estado
+    if (tabla === 'box' && updateData.idestadobox && config.chatbot.enabled) {
+      try {
+        // Obtener estado actualizado
+        const estadoCmd = new GetCommand({
+          TableName: 'estadobox',
+          Key: { idestado: updateData.idestadobox }
+        });
+        const estadoResult = await db.send(estadoCmd);
+        const nuevoEstado = estadoResult.Item?.estado || 'Desconocido';
+        
+        // Obtener datos completos del box
+        const boxCmd = new GetCommand({
+          TableName: 'box',
+          Key: key
+        });
+        const boxResult = await db.send(boxCmd);
+        const boxData = boxResult.Item;
+        
+        // Enviar notificaciones
+        if (config.chatbot.notificationRecipients.length > 0) {
+          await notifyBoxStateChange(boxData, nuevoEstado, config.chatbot.notificationRecipients);
+          logger.info('notificación de cambio de estado enviada', { box: boxData.numero, estado: nuevoEstado });
+        }
+      } catch (notifError) {
+        logger.error('error al enviar notificación de cambio de estado', { error: notifError.message });
+        // No fallar la actualización si falla la notificación
+      }
+    }
     
     res.json({ success: true });
     

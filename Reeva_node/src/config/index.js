@@ -88,6 +88,28 @@ export const config = {
   cors: {
     origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
   },
+
+  // Twilio (Chatbot WhatsApp)
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    whatsappFrom: process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886', // Twilio Sandbox default
+    validateSignature: process.env.TWILIO_VALIDATE_SIGNATURE !== 'false', // true por defecto
+  },
+
+  // OpenAI (Chatbot)
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0'),
+    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '500', 10),
+  },
+
+  // Chatbot
+  chatbot: {
+    enabled: process.env.CHATBOT_ENABLED === 'true',
+    notificationRecipients: process.env.CHATBOT_NOTIFICATION_RECIPIENTS?.split(',') || [],
+  },
 };
 
 // validar que esten las variables importantes
@@ -104,6 +126,21 @@ export function validarConfig() {
   
   if (faltantes.length > 0) {
     throw new Error(`Faltan variables de entorno: ${faltantes.join(', ')}`);
+  }
+
+  // Validar variables del chatbot si está habilitado
+  if (process.env.CHATBOT_ENABLED === 'true') {
+    const chatbotRequeridas = [
+      'TWILIO_ACCOUNT_SID',
+      'TWILIO_AUTH_TOKEN',
+      'OPENAI_API_KEY',
+    ];
+    
+    const chatbotFaltantes = chatbotRequeridas.filter(key => !process.env[key]);
+    
+    if (chatbotFaltantes.length > 0) {
+      console.warn(`⚠️ Chatbot habilitado pero faltan variables: ${chatbotFaltantes.join(', ')}`);
+    }
   }
 
   console.log('✓ Configuracion validada correctamente');
