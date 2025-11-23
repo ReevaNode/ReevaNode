@@ -1,4 +1,4 @@
-/* src/public/css/parametrizacion.css - Con soporte para modo oscuro */
+/* src/public/css/parametrizacion.css */
 
 :root {
   --primary-color: #9b4f88;
@@ -10,7 +10,7 @@
   --card-bg: #ffffff;
   --text-primary: #2c3e50;
   --text-secondary: #6c757d;
-  --border-color: #e1e8ed;
+  --border-color: #9ca3af;
   --success: #27ae60;
   --danger: #e74c3c;
   --warning: #f39c12;
@@ -128,7 +128,7 @@ body {
   transition: var(--transition);
 }
 
-.progress-step.completed ~ .progress-line {
+.progress-step.completed + .progress-line {
   background: var(--success);
 }
 
@@ -865,6 +865,7 @@ body {
   .plantillas-grid { grid-template-columns: 1fr; }
   .preview-pasillos { grid-template-columns: 1fr; }
   .preview-actions { flex-direction: column; }
+  .ocupantes-lista { grid-template-columns: 1fr; }
 }
 
 /* ===== MODO OSCURO ===== */
@@ -872,6 +873,7 @@ body {
 body.theme-dark {
   background-color: #0f172a;
   color: #e2e8f0;
+  --border-color: #e2e8f0;
 }
 
 body.theme-dark .parametrizacion-card {
@@ -1097,6 +1099,23 @@ body.theme-dark .mesas-section {
   background: #111827;
 }
 
+body.theme-dark .btn-agregar-box,
+body.theme-dark .btn-agregar-mesa,
+body.theme-dark .btn-agregar-pasillo,
+body.theme-dark .btn-agregar-espacio {
+  border-color: #e2e8f0;
+  color: #e2e8f0;
+}
+
+body.theme-dark .btn-agregar-box:hover,
+body.theme-dark .btn-agregar-mesa:hover,
+body.theme-dark .btn-agregar-pasillo:hover,
+body.theme-dark .btn-agregar-espacio:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: transparent;
+}
+
 body.theme-dark .box-card {
   background: #1f2937;
   border-color: rgba(148, 163, 184, 0.3);
@@ -1209,46 +1228,6 @@ body.theme-dark .btn-agregar-espacio:hover {
   background: rgba(155, 79, 136, 0.1);
 }
 
-/* Vista Previa - Modo Oscuro */
-body.theme-dark .preview-final {
-  background: #111827;
-}
-
-body.theme-dark .preview-empresa {
-  color: var(--primary-light);
-}
-
-body.theme-dark .preview-estructura-info {
-  color: #94a3b8;
-}
-
-body.theme-dark .preview-pasillo-card {
-  background: #1f2937;
-  border-left-color: var(--primary-color);
-  box-shadow: 0 25px 60px -35px rgba(15, 23, 42, 0.75);
-}
-
-body.theme-dark .preview-pasillo-nombre {
-  color: #e2e8f0;
-}
-
-body.theme-dark .preview-box-item {
-  background: #111827;
-  color: #94a3b8;
-}
-
-body.theme-dark .btn-secundario {
-  background: #1f2937;
-  color: #e2e8f0;
-  border-color: rgba(148, 163, 184, 0.3);
-}
-
-body.theme-dark .btn-secundario:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: rgba(155, 79, 136, 0.1);
-}
-
 /* Navegación - Modo Oscuro */
 body.theme-dark .parametrizacion-nav {
   border-top-color: rgba(148, 163, 184, 0.2);
@@ -1299,9 +1278,9 @@ body.theme-dark .spinner {
 /* ===== OCUPANTES GENERALES ===== */
 
 .ocupantes-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
@@ -1405,4 +1384,247 @@ body.theme-dark .ocupante-info {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+body.theme-dark .espacio-nombre-input,
+body.theme-dark .pasillo-nombre-input {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+}
+
+body.theme-dark .espacio-nombre-input::placeholder,
+body.theme-dark .pasillo-nombre-input::placeholder {
+  color: #64748b;
+}
+
+body.theme-dark .espacio-nombre-input:hover,
+body.theme-dark .pasillo-nombre-input:hover {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+body.theme-dark .espacio-nombre-input:focus,
+body.theme-dark .pasillo-nombre-input:focus {
+  background: #0f172a;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(155, 79, 136, 0.2);
+  color: #e2e8f0;
+}
+
+/* Corrección para las secciones de mesas/boxes */
+body.theme-dark .mesas-section,
+body.theme-dark .boxes-section {
+  background: transparent;
+}
+
+/* Corrección para cards de mesa/box */
+body.theme-dark .mesa-card,
+body.theme-dark .box-card {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+body.theme-dark .mesa-card:hover,
+body.theme-dark .box-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(155, 79, 136, 0.25);
+}
+
+/* Corrección para inputs dentro de mesa/box cards */
+body.theme-dark .mesa-card input,
+body.theme-dark .box-card input {
+  background: #1f2937;
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+}
+
+body.theme-dark .mesa-card input::placeholder,
+body.theme-dark .box-card input::placeholder {
+  color: #64748b;
+}
+
+body.theme-dark .mesa-card input:focus,
+body.theme-dark .box-card input:focus {
+  border-color: var(--primary-color);
+  background: #111827;
+  box-shadow: 0 0 0 2px rgba(155, 79, 136, 0.2);
+}
+
+/* Corrección para botones eliminar mesa/box */
+body.theme-dark .btn-eliminar-mesa,
+body.theme-dark .btn-eliminar-box {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+body.theme-dark .btn-eliminar-mesa:hover,
+body.theme-dark .btn-eliminar-box:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* Corrección para botones agregar mesa/box */
+body.theme-dark .btn-agregar-mesa,
+body.theme-dark .btn-agregar-box {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
+}
+
+body.theme-dark .btn-agregar-mesa:hover,
+body.theme-dark .btn-agregar-box:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(155, 79, 136, 0.1);
+}
+
+/* Corrección para badge de números */
+body.theme-dark .mesa-numero-badge,
+body.theme-dark .box-numero-badge {
+  background: rgba(155, 79, 136, 0.2);
+  color: var(--primary-light);
+}
+
+/* Corrección para botón agregar espacio/pasillo */
+body.theme-dark .btn-agregar-espacio,
+body.theme-dark .btn-agregar-pasillo {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
+}
+
+body.theme-dark .btn-agregar-espacio:hover,
+body.theme-dark .btn-agregar-pasillo:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(155, 79, 136, 0.1);
+}
+
+/* PASO 4: Vista Previa - Correcciones */
+
+body.theme-dark .preview-final {
+  background: #0f172a;
+}
+
+body.theme-dark .preview-empresa {
+  color: var(--primary-light);
+}
+
+body.theme-dark .preview-estructura-info {
+  color: #94a3b8;
+}
+
+/* Corrección para cards de espacios en preview */
+body.theme-dark .preview-espacio-card,
+body.theme-dark .preview-pasillo-card {
+  background: #1f2937;
+  border-left-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .preview-espacio-nombre,
+body.theme-dark .preview-pasillo-nombre {
+  color: #e2e8f0;
+}
+
+body.theme-dark .preview-espacio-nombre i,
+body.theme-dark .preview-pasillo-nombre i {
+  color: var(--primary-light);
+}
+
+/* Corrección para items de mesa/box en preview */
+body.theme-dark .preview-mesa-item,
+body.theme-dark .preview-box-item {
+  background: #0f172a;
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+body.theme-dark .preview-mesa-item i,
+body.theme-dark .preview-box-item i {
+  color: var(--primary-light);
+}
+
+/* Corrección para sección de ocupantes registrados en preview */
+.preview-ocupantes-section {
+  margin-top: 25px;
+}
+
+.preview-ocupantes-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.preview-ocupantes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.preview-ocupante-card {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--primary-color);
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.preview-ocupante-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.preview-ocupante-card i {
+  color: var(--primary-color);
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+/* Modo oscuro */
+body.theme-dark .preview-ocupantes-title {
+  color: #e2e8f0;
+}
+
+body.theme-dark .preview-ocupante-card {
+  background: #1f2937;
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-left: 3px solid var(--primary-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .preview-ocupante-card:hover {
+  border-color: var(--primary-color);
+  border-left: 3px solid var(--primary-color);
+  box-shadow: 0 4px 12px rgba(155, 79, 136, 0.2);
+}
+
+body.theme-dark .preview-ocupante-card i {
+  color: var(--primary-light);
+}
+
+/* Corrección para estado vacío */
+body.theme-dark #espacios-container > div {
+  color: #94a3b8;
+}
+
+body.theme-dark #espacios-container > div i {
+  opacity: 0.2;
+}
+
+body.theme-dark #espacios-container > div p {
+  color: #94a3b8;
 }

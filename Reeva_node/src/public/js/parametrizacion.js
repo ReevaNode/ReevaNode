@@ -152,7 +152,6 @@ class ParametrizacionManager {
   }
 
   // ===== VALIDACIONES =====
-
   validarPaso1() {
     const { nombreEmpresa, nombreNivel1, nombreNivel2 } = this.configuracion;
 
@@ -183,24 +182,24 @@ class ParametrizacionManager {
     const nombreNivel2 = this.configuracion.nombreNivel2 || 'box';
 
     if (this.configuracion.espacios.length === 0) {
-      this.mostrarNotificacion('Agrega al menos un ' + nombreNivel1, 'warning');
+      this.mostrarNotificacion('Agrega al menos un/a ' + nombreNivel1, 'warning');
       return false;
     }
 
     for (let espacio of this.configuracion.espacios) {
       if (!espacio.pasilloNombre.trim()) {
-        this.mostrarNotificacion('Todos los ' + nombreNivel1 + ' deben tener nombre', 'warning');
+        this.mostrarNotificacion('Todos los/as ' + nombreNivel1 + ' deben tener nombre', 'warning');
         return false;
       }
 
       if (espacio.mesas.length === 0) {
-        this.mostrarNotificacion('Cada ' + nombreNivel1 + ' debe tener al menos un ' + nombreNivel2, 'warning');
+        this.mostrarNotificacion('Cada ' + nombreNivel1 + ' debe tener al menos un/a ' + nombreNivel2, 'warning');
         return false;
       }
 
       for (let mesa of espacio.mesas) {
         if (!mesa.nombre.trim()) {
-          this.mostrarNotificacion('Todos los ' + nombreNivel2 + ' deben tener nombre', 'warning');
+          this.mostrarNotificacion('Todos los/as ' + nombreNivel2 + ' deben tener nombre', 'warning');
           return false;
         }
       }
@@ -371,7 +370,6 @@ class ParametrizacionManager {
   }
 
   // ===== PASO 3: OCUPANTES =====
-
   agregarOcupante() {
     const inputNuevoOcupante = document.getElementById('nuevo-ocupante');
     const nombre = inputNuevoOcupante?.value.trim();
@@ -401,11 +399,7 @@ class ParametrizacionManager {
     if (!container) return;
 
     if (this.configuracion.ocupantes.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
-          <p style="font-size: 14px;">No hay ocupantes agregados aún</p>
-        </div>
-      `;
+      container.innerHTML = '';
       return;
     }
 
@@ -464,14 +458,14 @@ class ParametrizacionManager {
       </div>
 
       ${this.configuracion.ocupantes.length > 0 ? `
-        <div style="margin-top: 25px;">
-          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">
-            ${nivel3Display}s Registrados (${this.configuracion.ocupantes.length})
+        <div class="preview-ocupantes-section">
+          <h3 class="preview-ocupantes-title">
+            ${nivel3Display}s Registrados/as (${this.configuracion.ocupantes.length})
           </h3>
-          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <div class="preview-ocupantes-grid">
             ${this.configuracion.ocupantes.map(ocupante => `
-              <div style="background: white; padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--primary-color); font-size: 13px;">
-                <i class="fas fa-user-circle" style="margin-right: 6px; color: var(--primary-color);"></i>
+              <div class="preview-ocupante-card">
+                <i class="fas fa-user-circle"></i>
                 ${ocupante.nombre}
               </div>
             `).join('')}

@@ -1,4 +1,4 @@
-/* mis_empresas.css - Con soporte para modo oscuro */
+/* mis_empresas.css */
 
 :root {
     --primary: #9b4f88;
@@ -6,8 +6,6 @@
     --primary-light: #f3eef1;
     --primary-border: #d4a8c7;
 }
-
-/* ===== MODO CLARO (por defecto) ===== */
 
 .empresa-seleccionada {
     border: 3px solid var(--primary);
@@ -128,35 +126,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.empresa-seleccionada-banner {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: white;
-    padding: 16px 24px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 12px rgba(155, 79, 136, 0.3);
-}
-
-.empresa-seleccionada-banner i {
-    font-size: 32px;
-}
-
-.empresa-seleccionada-banner h3 {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.empresa-seleccionada-banner p {
-    font-size: 14px;
-    opacity: 0.9;
-}
-
 /* ===== MODO OSCURO ===== */
-
 body.theme-dark .header-section {
     background-color: #1f2937 !important;
 }
@@ -212,7 +182,6 @@ body.theme-dark .empresa-card:hover:not(.empresa-seleccionada) {
     border-color: var(--primary-border);
 }
 
-/* Sombras en modo oscuro */
 body.theme-dark .header-section,
 body.theme-dark .empresa-card,
 body.theme-dark .crear-empresa-card {

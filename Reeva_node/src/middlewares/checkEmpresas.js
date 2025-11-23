@@ -14,7 +14,6 @@ const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'aws-cognito-jwt-login-dev-
 
 async function checkEmpresas(req, res, next) {
   try {
-    // Si no está autenticado, dejar pasar
     if (!req.user) {
       return next();
     }
@@ -41,7 +40,6 @@ async function checkEmpresas(req, res, next) {
     next();
   } catch (error) {
     console.warn('Advertencia en checkEmpresas:', error.message);
-    // Si hay error, dejamos que continúe (fallback a sesión)
     req.tieneEmpresas = false;
     next();
   }

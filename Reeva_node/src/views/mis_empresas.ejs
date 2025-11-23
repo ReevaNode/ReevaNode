@@ -23,27 +23,6 @@
       <p class="text-gray-600">Gestiona tus empresas y cambia entre ellas cuando lo necesites</p>
     </div>
 
-    <!-- BANNER: Empresa Seleccionada Actualmente -->
-    <% if (empresas && empresas.length > 0) { %>
-      <% const empresaActual = empresas.find(e => e.activa); %>
-      <% if (empresaActual) { %>
-        <div class="empresa-seleccionada-banner">
-          <i class="fas fa-check-circle"></i>
-          <div>
-            <h3>Empresa Seleccionada</h3>
-            <p>
-              <%= empresaActual.nombre %> • 
-              <%= empresaActual.nombreNivel1 %> × 
-              <%= empresaActual.nombreNivel2 %>
-              <% if (empresaActual.nombreNivel3) { %>
-                • <%= empresaActual.nombreNivel3 %>
-              <% } %>
-            </p>
-          </div>
-        </div>
-      <% } %>
-    <% } %>
-
     <!-- GRID DE EMPRESAS -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       
@@ -54,7 +33,7 @@
           <i class="fas fa-plus-circle"></i>
         </div>
         <h3 class="text-xl font-bold text-gray-700 mb-2">Nueva Empresa</h3>
-        <p class="text-gray-500 text-center text-sm">Crea una nueva configuración para tu empresa</p>
+        <p class="text-gray-500 text-center text-sm">Crea una nueva empresa y configura su estructura</p>
       </div>
 
       <!-- CARDS: EMPRESAS EXISTENTES DEL USUARIO -->
@@ -158,7 +137,7 @@
     window.addEventListener('pageshow', function(event) {
       if (event.persisted) {
         // Si viene del cache del navegador (atrás), recarga los datos
-        console.log('📄 Página restaurada del cache, recargando datos...');
+        console.log('Página restaurada del cache, recargando datos...');
         location.reload();
       }
     });
@@ -210,11 +189,8 @@
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            console.log('✅ Empresa eliminada:', empresaId);
-            
-            // Siempre recargar a mis_empresas (si hay más, mostrará una nueva activa)
-            // Si no hay más, mostrará solo la opción de crear
-            alert('Empresa eliminada correctamente');
+            console.log('Empresa eliminada:', empresaId);
+            // Recargar sin mostrar alertas adicionales
             window.location.reload();
           } else {
             alert('Error al eliminar la empresa: ' + (data.error || data.message));
@@ -222,7 +198,7 @@
           }
         })
         .catch(error => {
-          console.error('❌ Error al eliminar empresa:', error);
+          console.error('Error al eliminar empresa:', error);
           alert('Error al eliminar la empresa');
         });
       }

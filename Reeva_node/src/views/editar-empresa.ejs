@@ -74,9 +74,6 @@
 
   </div>
 
-  <!-- MODALES - ELIMINADOS -->
-  <!-- Los modales han sido removidos. La estructura ahora es inline como en crear empresa -->
-
   <script>
     const empresaId = '<%= empresa.empresaId %>';
     const empresa = <%- JSON.stringify(empresa) %>;
@@ -210,7 +207,6 @@
       `).join('');
     }
 
-    // ===== FORMULARIO VACÍO PARA AGREGAR ESPACIOS (COMO EN PASO 2) =====
     function mostrarFormularioEspacioVacio() {
       const container = document.getElementById('espacios-lista-editar');
       const nombreNivel1 = empresa.nombreNivel1 || 'Nivel 1';
@@ -226,7 +222,7 @@
             <input 
               type="text" 
               id="nuevo-espacio-nombre"
-              placeholder="Nombre del ${nombreNivel1}..."
+              placeholder="Nombre ${nombreNivel1}..."
               autofocus
             >
             <button class="btn-confirmar-espacio" onclick="confirmarNuevoEspacio()">
@@ -259,7 +255,7 @@
       const nombre = input?.value.trim();
 
       if (!nombre) {
-        alert(`Por favor ingresa el nombre del ${empresa.nombreNivel1.toLowerCase()}`);
+        alert(`Por favor ingresa el nombre de ${empresa.nombreNivel1.toLowerCase()}`);
         return;
       }
 
@@ -373,12 +369,11 @@
       });
     }
 
-    // ===== MESAS =====
+    // ===== MESAS (Nivel2)=====
     function agregarMesa(espacioId) {
       const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
       if (!espacio) return;
 
-      // Añadir una mesa vacía a nivel local (sin nombre)
       const nuevaMesa = {
         id: `mesa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         nombre: '' // Vacía, el usuario escribirá el nombre
@@ -440,15 +435,12 @@
       const mesa = espacio.mesas.find(m => m.id === mesaId);
       if (!mesa) return;
 
-      // Si el nombre está vacío
       if (!nuevoNombre || !nuevoNombre.trim()) {
-        // Verificar si la mesa es nueva (fue creada hace menos de 5 segundos)
         const ahora = Date.now();
         const idTimestamp = parseInt(mesa.id.split('-')[1]);
         const esNueva = (ahora - idTimestamp) < 5000;
 
         if (esNueva) {
-          // Es nueva sin nombre: eliminar del array local sin guardar
           espacio.mesas = espacio.mesas.filter(m => m.id !== mesaId);
           renderizarEspacios();
           console.log('Mesa nueva vacía descartada (no guardada)');
@@ -494,7 +486,6 @@
     }
 
     // ===== OCUPANTES =====
-
     function agregarOcupanteEditar() {
       const input = document.getElementById('nuevo-ocupante-editar');
       const nombre = input?.value.trim();
