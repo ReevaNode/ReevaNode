@@ -1,7 +1,7 @@
 version: 0.2
 env:
   variables:
-    APP_NAME: "reeva-node"
+    APP_NAME: "ReevaNode"
 phases:
   install:
     runtime-versions:
