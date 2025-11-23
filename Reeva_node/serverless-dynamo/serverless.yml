@@ -7,8 +7,21 @@ provider:
   runtime: nodejs20.x
   region: ${opt:region, env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, env:STAGE, 'dev'}
-  # usando LABROLE para AWS Academy (ya tiene todos los permisos)
-  role: ${env:LABROLE}
+  # rol opcional (si usas AWS Academy o un rol asignado). Si no tienes uno, deja sin role para usar tus credenciales por defecto.
+  # role: ${env:LABROLE}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/*
+        - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/*/index/*
   environment:
     AGENDA_TABLE: agenda
     BOX_TABLE: box
@@ -173,6 +186,13 @@ plugins:
 custom:
   dotenv:
     path: ../.env
+    # Evitar inyectar credenciales/vars reservadas en las Lambdas
+    exclude:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_REGION
+      - AWS_ACCOUNT_ID
 
 resources:
   Resources:

@@ -6,11 +6,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// cargar .env desde src/.env SOLO en desarrollo
-// En producción (Docker), las variables vienen de docker-compose.yml
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config({ path: path.resolve(__dirname, '../.env') });
-}
+// Cargar .env desde la raíz del proyecto para que las variables estén
+// disponibles aunque NODE_ENV sea "production" al correr localmente.
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const config = {
   // AWS

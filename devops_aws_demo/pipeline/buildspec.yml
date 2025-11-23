@@ -1,0 +1,30 @@
+version: 0.2
+env:
+  variables:
+    APP_NAME: "demo-devops"
+phases:
+  install:
+    commands:
+      - npm ci
+  pre_build:
+    commands:
+      - npm test --if-present
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME"
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR
+  build:
+    commands:
+      - GIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - IMAGE_TAG=${GIT_SHA:-latest}
+      - docker build -t $APP_NAME:$IMAGE_TAG ./app
+      - docker tag  $APP_NAME:$IMAGE_TAG $ECR:$IMAGE_TAG
+  post_build:
+    commands:
+      - docker push $ECR:$IMAGE_TAG
+      - printf '{"ImageURI":"%s"}' "$ECR:$IMAGE_TAG" > imageDetail.json
+artifacts:
+  files:
+    - imageDetail.json
+    - pipeline/appspec.yaml
+    - pipeline/taskdef.json

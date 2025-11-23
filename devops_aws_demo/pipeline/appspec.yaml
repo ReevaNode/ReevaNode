@@ -1,0 +1,14 @@
+version: 1
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "TASK_DEFINITION"
+        LoadBalancerInfo:
+          ContainerName: "web"
+          ContainerPort: 3000
+Hooks:
+  AfterAllowTestTraffic:
+    - location: scripts/smoke.sh
+      timeout: 60
+      runOrder: 1
