@@ -92,7 +92,7 @@ router.get('/seleccionar-empresa', requireAuth, async (req, res) => {
 router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
   try {
     if (!req.tieneEmpresas) {
-      console.log('ℹUsuario sin empresas, redirigiendo a parametrización');
+      console.log('Usuario sin empresas, redirigiendo a parametrización');
       return res.redirect('/parametrizacion');
     }
 
@@ -296,7 +296,7 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
       Item: empresaData
     }));
 
-    // 🔥 SI VIENE DE MIS-EMPRESAS O SELECCIONAR-EMPRESA, DESACTIVAR LAS OTRAS
+    // SI VIENE DE MIS-EMPRESAS O SELECCIONAR-EMPRESA, DESACTIVAR LAS OTRAS
     if (desde === 'mis-empresas' || desde === 'seleccionar-empresa') {
       const resultOtrasEmpresas = await docClient.send(new QueryCommand({
         TableName: EMPRESAS_TABLE,
@@ -319,7 +319,7 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
       }
     }
 
-    console.log('✅ Empresa guardada:', {
+    console.log('Empresa guardada:', {
       empresaId,
       nombre: configuracion.nombreEmpresa
     });
@@ -348,7 +348,7 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
     // GUARDAR OCUPANTES (Paso 3)
     if (configuracion.ocupantes && configuracion.ocupantes.length > 0) {
       for (const ocupante of configuracion.ocupantes) {
-        const ocupanteId = ocupante.ocupanteId || `ocp-${Date.now()}-${Math.random()}`;
+        const ocupanteId = ocupante.ocupanteId || `ocp-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
         
         await docClient.send(new PutCommand({
           TableName: OCUPANTES_TABLE,
@@ -378,7 +378,7 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
     const totalEmpresas = resultEmpresas.Items ? resultEmpresas.Items.length : 1;
     let redirectUrl = '/bienvenida';
 
-    // 🔥 DETERMINAR REDIRECT SEGÚN ORIGEN
+    // DETERMINAR REDIRECT SEGÚN ORIGEN
     if (desde === 'seleccionar-empresa' || desde === 'mis-empresas') {
       // Viene de seleccionar-empresa o mis-empresas → ir a bienvenida
       redirectUrl = '/bienvenida?skip-select=1';
@@ -427,7 +427,7 @@ router.post('/api/empresas/seleccionar', requireAuth, async (req, res) => {
 
     const empresas = resultEmpresas.Items || [];
 
-    // 🔄 Actualizar todas a activa=0 (usando UpdateCommand)
+    // Actualizar todas a activa=0 (usando UpdateCommand)
     for (const empresa of empresas) {
       await docClient.send(new UpdateCommand({
         TableName: EMPRESAS_TABLE,
@@ -437,7 +437,7 @@ router.post('/api/empresas/seleccionar', requireAuth, async (req, res) => {
       }));
     }
 
-    // 🔄 Establecer la empresa seleccionada a activa=1 (usando UpdateCommand)
+    // Establecer la empresa seleccionada a activa=1 (usando UpdateCommand)
     await docClient.send(new UpdateCommand({
       TableName: EMPRESAS_TABLE,
       Key: { userId, empresaId: empresaId },
@@ -675,7 +675,7 @@ router.post('/api/empresas/:empresaId/ocupantes', requireAuth, async (req, res) 
 
     console.log('Guardando ocupante:', { empresaId, nombre });
 
-    const nuevoOcupanteId = ocupanteId || `ocp-${Date.now()}`;
+    const nuevoOcupanteId = ocupanteId || `ocp-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
     const ahora = new Date().toISOString();
 
     // ESTRUCTURA 3: OcupantesTable - Datos del ocupante

@@ -24,6 +24,11 @@ class ParametrizacionManager {
     this.actualizarNavegacion();
   }
 
+  // Generar ID corto (123)
+  generarIdCorto() {
+    return String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  }
+
   setupEventListeners() {
     // Navegación
     document.getElementById('btn-siguiente')?.addEventListener('click', () => this.siguientePaso());
@@ -229,7 +234,7 @@ class ParametrizacionManager {
 
   agregarEspacio() {
     const nuevoEspacio = {
-      espacioId: `esp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      espacioId: `esp-${this.generarIdCorto()}`,
       numero: this.configuracion.espacios.length + 1,
       pasilloNombre: '',
       mesas: []
@@ -260,7 +265,7 @@ class ParametrizacionManager {
     const espacio = this.configuracion.espacios.find(e => e.espacioId === espacioId);
     if (espacio) {
       const nuevaMesa = {
-        id: `mesa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `mesa-${this.generarIdCorto()}`,
         numero: espacio.mesas.length + 1,
         nombre: ''
       };
@@ -319,7 +324,7 @@ class ParametrizacionManager {
             <input 
               type="text" 
               class="espacio-nombre-input"
-              placeholder="Nombre del ${nombreNivel1}..." 
+              placeholder="Nombre ${nombreNivel1}..." 
               value="${espacio.pasilloNombre}"
               oninput="parametrizacion.actualizarNombreEspacio('${espacio.espacioId}', this.value)"
             >
@@ -347,10 +352,12 @@ class ParametrizacionManager {
                   >
                     <i class="fas fa-times"></i>
                   </button>
-                  <div class="mesa-numero-badge">${mesa.numero}</div>
+                  <div class="mesa-numero-badge">
+                    <i class="fas fa-box"></i>
+                  </div>
                   <input 
                     type="text" 
-                    placeholder="${nombreNivel2} ${mesa.numero}" 
+                    placeholder="${nombreNivel2}" 
                     value="${mesa.nombre}"
                     oninput="parametrizacion.actualizarNombreMesa('${espacio.espacioId}', '${mesa.id}', this.value)"
                   >
@@ -382,7 +389,7 @@ class ParametrizacionManager {
     }
 
     this.configuracion.ocupantes.push({
-      id: Date.now(),
+      id: `ocp-${this.generarIdCorto()}`,
       nombre
     });
 
