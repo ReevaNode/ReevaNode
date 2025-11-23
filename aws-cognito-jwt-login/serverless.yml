@@ -1,5 +1,5 @@
 service: aws-cognito-jwt-login
-frameworkVersion: '4'
+frameworkVersion: '3'
 
 provider:
   name: aws
@@ -12,6 +12,9 @@ provider:
     USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }
     USER_TABLE: { Ref: UserTable }
     PARAMETERS_TABLE: { Ref: CustomParametersTable }
+    EMPRESAS_TABLE: { Ref: EmpresasTable }
+    ESPACIOS_TABLE: { Ref: EspaciosTable }
+    OCUPANTES_TABLE: { Ref: OcupantesTable }
   logs:
     httpApi: true
   httpApi:
@@ -147,6 +150,43 @@ functions:
           authorizer:
             name: cognitoJwt
 
+  # === PARAMETRIZACIÓN DE EMPRESAS ===
+  guardarParametrizacion:
+    handler: src/handlers/parametrizacion.guardarParametrizacion
+    events:
+      - httpApi:
+          method: POST
+          path: /parametrizacion/guardar
+          authorizer:
+            name: cognitoJwt
+
+  obtenerParametrizacion:
+    handler: src/handlers/parametrizacion.obtenerParametrizacion
+    events:
+      - httpApi:
+          method: GET
+          path: /parametrizacion/{empresaId}/{grupoId}
+          authorizer:
+            name: cognitoJwt
+
+  actualizarParametrizacion:
+    handler: src/handlers/parametrizacion.actualizarParametrizacion
+    events:
+      - httpApi:
+          method: PUT
+          path: /parametrizacion/{empresaId}/{grupoId}
+          authorizer:
+            name: cognitoJwt
+
+  listarEmpresas:
+    handler: src/handlers/parametrizacion.listarEmpresas
+    events:
+      - httpApi:
+          method: GET
+          path: /parametrizacion/empresas
+          authorizer:
+            name: cognitoJwt
+
 plugins:
   - serverless-dotenv-plugin
   - serverless-offline
@@ -261,6 +301,81 @@ resources:
           - Key: Service
             Value: ${self:service}
 
+    # === TABLA DE EMPRESAS (Datos generales) ===
+    EmpresasTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${sls:stage}-empresas-new
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: empresaId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: empresaId
+            KeyType: RANGE
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
+    # === TABLA DE ESPACIOS (Pasillos y Mesas) ===
+    EspaciosTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${sls:stage}-espacios
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: empresaId
+            AttributeType: S
+          - AttributeName: espacioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: empresaId
+            KeyType: HASH
+          - AttributeName: espacioId
+            KeyType: RANGE
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
+    # === TABLA DE OCUPANTES ===
+    OcupantesTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${sls:stage}-ocupantes
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: empresaId
+            AttributeType: S
+          - AttributeName: ocupanteId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: empresaId
+            KeyType: HASH
+          - AttributeName: ocupanteId
+            KeyType: RANGE
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
   # === OUTPUTS ===
   Outputs:
     UserPoolId:
@@ -286,6 +401,24 @@ resources:
       Value: { Ref: CustomParametersTable }
       Export:
         Name: ${self:service}-${sls:stage}-ParametersTableName
+
+    EmpresasTableName:
+      Description: 'DynamoDB Empresas Table Name'
+      Value: { Ref: EmpresasTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-EmpresasTableName
+
+    EspaciosTableName:
+      Description: 'DynamoDB Espacios Table Name'
+      Value: { Ref: EspaciosTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-EspaciosTableName
+
+    OcupantesTableName:
+      Description: 'DynamoDB Ocupantes Table Name'
+      Value: { Ref: OcupantesTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-OcupantesTableName
 
     ApiEndpoint:
       Description: 'API Gateway Endpoint URL'

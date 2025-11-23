@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="<%= userLang || 'es' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Empresas </title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/header.css" />
+  <link rel="stylesheet" href="/css/mis_empresas.css" />
+</head>
+<body class="bg-gray-50">
+  <%- include('header') %>
+
+  <div class="container mx-auto px-4 py-8">
+    
+    <!-- HEADER SECCIÓN -->
+    <div class="header-section">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        Mis Empresas
+      </h1>
+      <p class="text-gray-600">Gestiona tus empresas y cambia entre ellas cuando lo necesites</p>
+    </div>
+
+    <!-- GRID DE EMPRESAS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      
+      <!-- CARD: CREAR NUEVA EMPRESA -->
+      <div class="crear-empresa-card bg-white rounded-lg shadow p-6 cursor-pointer border-2 border-dashed border-gray-300 flex flex-col items-center justify-center min-h-64"
+           onclick="window.location.href='/parametrizacion?desde=mis-empresas'">
+        <div class="icon-plus text-6xl text-gray-300 mb-4">
+          <i class="fas fa-plus-circle"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">Nueva Empresa</h3>
+        <p class="text-gray-500 text-center text-sm">Crea una nueva empresa y configura su estructura</p>
+      </div>
+
+      <!-- CARDS: EMPRESAS EXISTENTES DEL USUARIO -->
+      <% if (empresas && empresas.length > 0) { %>
+        <% const empresaActualData = empresas.find(e => e.activa); %>
+        <% empresas.forEach(empresa => { %>
+          <% const esSeleccionada = empresaActualData && empresaActualData.empresaId === empresa.empresaId %>
+          
+          <div class="empresa-card bg-white rounded-lg shadow-md p-6 <%= esSeleccionada ? 'empresa-seleccionada' : '' %>">
+            
+            <!-- Badge de Seleccionada -->
+            <% if (esSeleccionada) { %>
+              <div class="badge-seleccionada">
+                <i class="fas fa-check"></i>
+                SELECCIONADA
+              </div>
+            <% } %>
+            
+            <!-- Header con iconos -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="text-4xl" style="color: var(--primary);">
+                <i class="fas fa-building"></i>
+              </div>
+              
+              <!-- Acciones -->
+              <div class="flex gap-2">
+                <!-- Editar -->
+                <button class="btn-editar p-2 rounded"
+                        title="Editar configuración"
+                        onclick="editarEmpresa('<%= empresa.empresaId %>')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                
+                <!-- Eliminar -->
+                <button class="btn-eliminar p-2 rounded"
+                        title="Eliminar empresa"
+                        onclick="eliminarEmpresa('<%= empresa.empresaId %>', '<%= empresa.nombre %>')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Nombre de empresa -->
+            <h3 class="text-xl font-bold text-gray-900 mb-3">
+              <%= empresa.nombre %>
+            </h3>
+            
+            <!-- Información de estructura -->
+            <div class="mb-4">
+              <div class="info-estructura">
+                <i class="fas fa-layer-group"></i>
+                <span>
+                  <%= empresa.nombreNivel1 %> • 
+                  <%= empresa.nombreNivel2 %>
+                  <% if (empresa.nombreNivel3) { %>
+                    • <%= empresa.nombreNivel3 %>
+                  <% } %>
+                </span>
+              </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="flex gap-4 mb-4 text-sm text-gray-600">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-warehouse" style="color: var(--primary);"></i>
+                <span><strong><%= empresa.espacios ? empresa.espacios.length : 0 %></strong> <%= empresa.nombreNivel1 %></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i class="fas fa-box" style="color: var(--primary);"></i>
+                <span><strong><%= empresa.espacios ? empresa.espacios.reduce((sum, e) => sum + (e.mesas ? e.mesas.length : 0), 0) : 0 %></strong> <%= empresa.nombreNivel2 %></span>
+              </div>
+            </div>
+
+            <!-- Acciones del usuario -->
+            <div class="mt-6">
+              <% if (!esSeleccionada) { %>
+                <!-- Botón Seleccionar -->
+                <button class="btn-seleccionar w-full py-3 px-4 rounded-lg font-bold transition"
+                        onclick="seleccionarEmpresa('<%= empresa.empresaId %>')">
+                  <i class="fas fa-arrow-right mr-2"></i>
+                  Seleccionar Empresa
+                </button>
+              <% } else { %>
+                <!-- Indicador de seleccionada -->
+                <div class="btn-activa w-full py-3 px-4 rounded-lg font-bold text-center flex items-center justify-center gap-2">
+                  <i class="fas fa-check-circle"></i>
+                  Empresa Activa
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Recargar datos cuando vuelves a la página (desde atrás en el historial)
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        // Si viene del cache del navegador (atrás), recarga los datos
+        console.log('Página restaurada del cache, recargando datos...');
+        location.reload();
+      }
+    });
+
+    // Seleccionar empresa existente
+    function seleccionarEmpresa(empresaId) {
+      console.log('Seleccionando empresa:', empresaId);
+      localStorage.setItem('empresaActual', empresaId);
+      
+      // Llamar al backend para guardar empresa activa
+      fetch('/api/empresas/seleccionar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ empresaId: empresaId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert('Error al seleccionar empresa: ' + (data.error || data.message));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al seleccionar empresa');
+      });
+    }
+
+    // Editar empresa
+    function editarEmpresa(empresaId) {
+      console.log('Editando empresa:', empresaId);
+      window.location.href = '/mis-empresas/editar/' + empresaId;
+    }
+
+    // Eliminar empresa
+    function eliminarEmpresa(empresaId, nombreEmpresa) {
+      if (confirm('¿Eliminar empresa "' + nombreEmpresa + '"? Esta acción no se puede deshacer.')) {
+        console.log('Eliminando empresa:', empresaId);
+        
+        fetch('/api/empresas/' + empresaId, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log('Empresa eliminada:', empresaId);
+            // Recargar sin mostrar alertas adicionales
+            window.location.reload();
+          } else {
+            alert('Error al eliminar la empresa: ' + (data.error || data.message));
+            console.error('Error respuesta:', data);
+          }
+        })
+        .catch(error => {
+          console.error('Error al eliminar empresa:', error);
+          alert('Error al eliminar la empresa');
+        });
+      }
+    }
+  </script>
+
+  <%- include('footer') %>
+</body>
+</html>

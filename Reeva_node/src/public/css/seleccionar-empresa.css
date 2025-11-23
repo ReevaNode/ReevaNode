@@ -1,0 +1,266 @@
+/* src/public/css/seleccionar-empresa.css */
+
+:root {
+  --primary: #9b4f88;
+  --primary-light: #f3e8f7;
+  --success: #10b981;
+  --danger: #ef4444;
+  --border-color: #e5e7eb;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --bg-light: #f9fafb;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.seleccionar-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* HEADER */
+.header-seleccionar {
+  text-align: center;
+  margin: 40px 0 50px 0;
+  animation: slideDown 0.6s ease-out;
+}
+
+.header-seleccionar h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.header-seleccionar p {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* GRID DE EMPRESAS */
+.empresas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* CARD DE EMPRESA */
+.empresa-card-selector {
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideUp 0.6s ease-out;
+}
+
+.empresa-card-selector:hover {
+  border-color: var(--primary);
+  box-shadow: 0 10px 25px rgba(147, 51, 234, 0.1);
+  transform: translateY(-4px);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.empresa-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--primary-light);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.empresa-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.empresa-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.empresa-estructura {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.arrow-icon {
+  font-size: 20px;
+  color: var(--primary);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.empresa-card-selector:hover .arrow-icon {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+/* STATS */
+.card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-light);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.stat i {
+  color: var(--primary);
+  font-size: 11px;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-content {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-content p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ANIMATIONS */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .header-seleccionar h1 {
+    font-size: 24px;
+  }
+
+  .header-seleccionar p {
+    font-size: 14px;
+  }
+
+  .empresas-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card-header {
+    flex-direction: column;
+  }
+
+  .empresa-info {
+    width: 100%;
+  }
+
+  .arrow-icon {
+    position: absolute;
+    right: 24px;
+  }
+
+  .empresa-card-selector:hover .arrow-icon {
+    opacity: 1;
+  }
+
+  .card-stats {
+    justify-content: space-between;
+  }
+}

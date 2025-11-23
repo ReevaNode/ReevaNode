@@ -25,6 +25,7 @@ import agendaRouter from "./routes/agenda.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
 import languageRouter from "./routes/language.js";
 import infoBoxRouter from "./routes/infoBox.js";
+import parametrizacionRouter from "./routes/parametrizacion.js";
 import chatbotRouter from "./routes/chatbot.js";
 
 const app = express();
@@ -126,6 +127,7 @@ app.use("/", requireAuth, adminBDDRouter);
 app.use("/", requireAuth, agendaRouter);
 app.use("/", requireAuth, matrizBoxRouter);
 app.use("/", requireAuth, infoBoxRouter);
+app.use("/", requireAuth, parametrizacionRouter);
 
 // ===== 404 =====
 app.use((req, res) => {

@@ -1,6 +1,7 @@
 // ruta de bienvenida
 import { Router } from "express";
 import { requirePermission } from "../middlewares/requirePermission.js";
+import checkEmpresas from "../middlewares/checkEmpresas.js";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 import db from "../../db.js";
 import { retryWithBackoff, CircuitBreaker, SimpleCache } from "../utils/resilience.js";
@@ -21,7 +22,13 @@ const agendaCache = new SimpleCache({
   maxSize: 50
 });
 
-router.get("/bienvenida", requirePermission("bienvenidos.read"), async (req, res) => {
+router.get("/bienvenida", requirePermission("bienvenidos.read"), checkEmpresas, async (req, res) => {
+  // ✅ Si no tiene empresas, redirigir a parametrización
+  if (!req.tieneEmpresas) {
+    console.log('ℹ️ Usuario sin empresas, redirigiendo a parametrización');
+    return res.redirect('/parametrizacion');
+  }
+
   const cacheKey = 'agenda_latest';
   let agendaData = null;
   let fromCache = false;

@@ -1,0 +1,189 @@
+/* mis_empresas.css */
+
+:root {
+    --primary: #9b4f88;
+    --primary-dark: #853f75;
+    --primary-light: #f3eef1;
+    --primary-border: #d4a8c7;
+}
+
+.empresa-seleccionada {
+    border: 3px solid var(--primary);
+    background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+    box-shadow: 0 8px 20px rgba(155, 79, 136, 0.2);
+    position: relative;
+}
+
+.badge-seleccionada {
+    position: absolute;
+    top: -14px;
+    right: 20px;
+    background: var(--primary);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(155, 79, 136, 0.3);
+    z-index: 10;
+}
+
+.empresa-card {
+    position: relative;
+    transition: all 0.3s ease;
+    border: 2px solid #e5e7eb;
+    background-color: #ffffff;
+}
+
+.empresa-card:hover:not(.empresa-seleccionada) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-border);
+}
+
+.crear-empresa-card {
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+}
+
+.crear-empresa-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.crear-empresa-card:hover .icon-plus {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.icon-plus {
+    transition: all 0.3s ease;
+}
+
+.btn-seleccionar {
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.btn-seleccionar:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(155, 79, 136, 0.3);
+}
+
+.btn-activa {
+    background: var(--primary);
+    color: white;
+    border: 2px solid var(--primary);
+    cursor: default;
+}
+
+.btn-editar {
+    color: #6b7280;
+    transition: all 0.2s ease;
+}
+
+.btn-editar:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.btn-eliminar {
+    color: #6b7280;
+    transition: all 0.2s ease;
+}
+
+.btn-eliminar:hover {
+    color: #ef4444;
+    background: #fee2e2;
+}
+
+.info-estructura {
+    background: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.header-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== MODO OSCURO ===== */
+body.theme-dark .header-section {
+    background-color: #1f2937 !important;
+}
+
+body.theme-dark .empresa-card {
+    background-color: #1f2937 !important;
+    border-color: rgba(148, 163, 184, 0.38) !important;
+}
+
+body.theme-dark .crear-empresa-card {
+    background-color: #1f2937 !important;
+    border-color: rgba(148, 163, 184, 0.38) !important;
+}
+
+body.theme-dark .crear-empresa-card:hover {
+    background-color: rgba(155, 79, 136, 0.12) !important;
+}
+
+body.theme-dark .empresa-seleccionada {
+    background: linear-gradient(135deg, rgba(155, 79, 136, 0.15) 0%, #1f2937 100%) !important;
+}
+
+body.theme-dark .btn-seleccionar {
+    background-color: transparent;
+}
+
+body.theme-dark .btn-editar {
+    color: #94a3b8;
+}
+
+body.theme-dark .btn-editar:hover {
+    background-color: rgba(155, 79, 136, 0.12);
+}
+
+body.theme-dark .btn-eliminar {
+    color: #94a3b8;
+}
+
+body.theme-dark .btn-eliminar:hover {
+    color: #fca5a5;
+    background-color: rgba(248, 113, 113, 0.14);
+}
+
+body.theme-dark .icon-plus {
+    color: #94a3b8;
+}
+
+body.theme-dark .crear-empresa-card:hover .icon-plus {
+    color: var(--primary);
+}
+
+body.theme-dark .empresa-card:hover:not(.empresa-seleccionada) {
+    border-color: var(--primary-border);
+}
+
+body.theme-dark .header-section,
+body.theme-dark .empresa-card,
+body.theme-dark .crear-empresa-card {
+    box-shadow: 0 25px 60px -35px rgba(15, 23, 42, 0.75) !important;
+}
