@@ -30,7 +30,7 @@ phases:
   post_build:
     commands:
       - docker push $ECR:$IMAGE_TAG
-      - chmod +x Reeva_node/devops/aws/scripts/smoke.sh
+      - chmod +x "$CODEBUILD_SRC_DIR/Reeva_node/devops/aws/scripts/smoke.sh"
       - >
         cd "$CODEBUILD_SRC_DIR/Reeva_node" &&
         printf '{"ImageURI":"%s"}' "$ECR:$IMAGE_TAG" > imageDetail.json
