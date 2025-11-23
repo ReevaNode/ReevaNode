@@ -15,7 +15,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/reeva-node",
+          "awslogs-group": "/ecs/reeva-node-task",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "web"
         }
