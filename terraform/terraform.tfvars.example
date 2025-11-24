@@ -1,0 +1,31 @@
+# terraform.tfvars.example
+# copiar y llenar valores
+
+aws_region = "us-east-1"
+project_name = "reeva"
+environment = "dev"
+
+# fargate config
+fargate_cpu = 256  # 0.25 vCPU
+fargate_memory = 512  # 512 MB
+desired_count = 1
+use_fargate_spot = true  # true para 70% descuento
+
+# networking
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# app config
+container_port = 3001
+health_check_path = "/health"
+
+# secrets (IMPORTANTE: no commitear terraform.tfvars)
+twilio_account_sid = "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+twilio_auth_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+twilio_whatsapp_from = "whatsapp:+14155238886"
+openai_api_key = "sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+jwt_secret = "tu-jwt-secret-super-secreto"
+
+# dominio (opcional)
+domain_name = ""  # ej: "reeva.com"
+create_domain = false

@@ -26,6 +26,8 @@ import agendaRouter from "./routes/agenda.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
 import languageRouter from "./routes/language.js";
 import infoBoxRouter from "./routes/infoBox.js";
+import parametrizacionRouter from "./routes/parametrizacion.js";
+import chatbotRouter from "./routes/chatbot.js";
 
 const app = express();
 
@@ -114,6 +116,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+// ===== Rutas públicas (sin autenticación) =====
 app.use("/", authRouter);
 app.use("/", requireAuth, loadParametrizacion, bienvenidaRouter);
 app.use("/", requireAuth, loadParametrizacion, dashboardRouter);
@@ -123,6 +126,8 @@ app.use("/", requireAuth, loadParametrizacion, matrizBoxRouter);
 app.use("/", languageRouter);
 app.use("/", requireAuth, loadParametrizacion, infoBoxRouter);
 app.use("/", requireAuth, loadParametrizacion, parametrizacionRouter);
+app.use("/", languageRouter);
+app.use("/", chatbotRouter); // Chatbot routes (webhook NO requiere auth)
 
 // ===== 404 =====
 app.use((req, res) => {
