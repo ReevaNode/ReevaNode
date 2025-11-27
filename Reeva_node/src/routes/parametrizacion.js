@@ -4,7 +4,7 @@ import express from 'express';
 import requireAuth from '../middlewares/requireAuth.js';
 import checkEmpresas from '../middlewares/checkEmpresas.js';
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand, UpdateCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand, UpdateCommand, BatchGetCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 const router = express.Router();
 
@@ -15,6 +15,7 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'aws-cognito-jwt-login-dev-empresas-new';
 const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'aws-cognito-jwt-login-dev-espacios';
 const OCUPANTES_TABLE = process.env.OCUPANTES_TABLE || 'aws-cognito-jwt-login-dev-ocupantes';
+const ITEMS_TABLE = process.env.ITEMS_TABLE || 'aws-cognito-jwt-login-dev-items';
 
 /**
  * GET /seleccionar-empresa
@@ -82,6 +83,43 @@ router.get('/seleccionar-empresa', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error al cargar seleccionar empresa:', error);
     res.status(500).render('error', { error: error.message });
+  }
+});
+
+/**
+ * GET /api/empresas/count
+ * Retorna el número de empresas del usuario (para decidir si ir a seleccionar-empresa o bienvenida después del login)
+ */
+router.get('/api/empresas/count', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user.sub || req.user.email;
+
+    const queryCommand = new QueryCommand({
+      TableName: EMPRESAS_TABLE,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId
+      }
+    });
+
+    const result = await docClient.send(queryCommand);
+    const empresas = result.Items || [];
+
+    res.json({
+      success: true,
+      count: empresas.length,
+      empresas: empresas.map(e => ({
+        empresaId: e.empresaId,
+        nombre: e.nombre,
+        activa: e.activa
+      }))
+    });
+  } catch (error) {
+    console.error('Error al contar empresas:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 });
 
@@ -216,9 +254,22 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
     const ocupantes = resultOcupantes.Items || [];
     console.log(`Se obtuvieron ${ocupantes.length} ocupantes`);
 
-    // Agregar espacios y ocupantes a empresa para renderizar
+    // Obtener items desde ItemsTable
+    const resultItems = await docClient.send(new QueryCommand({
+      TableName: ITEMS_TABLE,
+      KeyConditionExpression: 'empresaId = :empresaId',
+      ExpressionAttributeValues: {
+        ':empresaId': empresaId
+      }
+    }));
+
+    const items = resultItems.Items || [];
+    console.log(`Se obtuvieron ${items.length} items`);
+
+    // Agregar espacios, ocupantes e items a empresa para renderizar
     empresa.espacios = espacios;
     empresa.ocupantes = ocupantes;
+    empresa.items = items;
 
     res.render('editar-empresa', {
       user: req.user,
@@ -241,13 +292,23 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
 router.get('/parametrizacion', requireAuth, async (req, res) => {
   try {
     const { empresaId, desde } = req.query;
+    const userId = req.user.id || req.user.sub || req.user.email;
     let empresaActual = null;
+
+    // Obtener conteo de empresas del usuario
+    const resultEmpresas = await docClient.send(new QueryCommand({
+      TableName: EMPRESAS_TABLE,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: { ':userId': userId }
+    }));
+    const countEmpresas = resultEmpresas.Count || 0;
 
     res.render('parametrizacion', {
       user: req.user,
       empresaId,
       empresaActual,
-      desde: desde || null, 
+      desde: desde || null,
+      countEmpresas, // Pasar el conteo de empresas
       mostrarHeader: false,
       pageTitle: 'Crear Nueva Empresa'
     });
@@ -285,6 +346,7 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
       nombreNivel1: configuracion.nombreNivel1 || 'Pasillo',
       nombreNivel2: configuracion.nombreNivel2 || 'Box',
       nombreNivel3: configuracion.nombreNivel3 || 'Ocupante',
+      nombreNivel4: configuracion.nombreNivel4 || '',
       activa: 1,
       fechaCreacion: ahora,
       fechaActualizacion: ahora
@@ -363,6 +425,27 @@ router.post('/parametrizacion/guardar', requireAuth, async (req, res) => {
         }));
 
         console.log('Ocupante guardado:', ocupanteId);
+      }
+    }
+
+    // GUARDAR ELEMENTOS (Paso 4) - Usar ItemsTable
+    if (configuracion.elementos && configuracion.elementos.length > 0) {
+      for (const elemento of configuracion.elementos) {
+        const itemId = elemento.itemId || `item-${String(Math.floor(Math.random() * 10000)).padStart(5, '0')}`;
+        
+        await docClient.send(new PutCommand({
+          TableName: ITEMS_TABLE,
+          Item: {
+            empresaId,
+            itemId,
+            nombre: elemento.nombre,
+            activo: 1,
+            fechaCreacion: ahora,
+            fechaActualizacion: ahora
+          }
+        }));
+
+        console.log('Item/Elemento guardado:', itemId);
       }
     }
 
@@ -724,6 +807,99 @@ router.delete('/api/empresas/:empresaId/ocupantes/:ocupanteId', requireAuth, asy
     res.json({ success: true });
   } catch (error) {
     console.error('Error al eliminar ocupante:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/empresas/:empresaId/items
+ * Agrega o actualiza un item/elemento
+ * Body: { nombre, itemId? }
+ */
+router.post('/api/empresas/:empresaId/items', requireAuth, async (req, res) => {
+  try {
+    const { empresaId } = req.params;
+    const { nombre } = req.body;
+
+    if (!nombre || !nombre.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El nombre del item es requerido'
+      });
+    }
+
+    console.log('Guardando item:', { empresaId, nombre });
+
+    const nuevoItemId = `item-${String(Math.floor(Math.random() * 10000)).padStart(5, '0')}`;
+    const ahora = new Date().toISOString();
+
+    // Guardar en ItemsTable
+    const itemData = {
+      empresaId,
+      itemId: nuevoItemId,
+      nombre: nombre.trim(),
+      activo: 1,
+      fechaCreacion: ahora,
+      fechaActualizacion: ahora
+    };
+
+    await docClient.send(new PutCommand({
+      TableName: ITEMS_TABLE,
+      Item: itemData
+    }));
+
+    console.log('Item guardado:', nuevoItemId);
+
+    res.json({ 
+      success: true, 
+      itemId: nuevoItemId,
+      item: itemData
+    });
+  } catch (error) {
+    console.error('Error al guardar item:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/empresas/:empresaId/items/:itemId
+ * Elimina un item y todas sus asignaciones a mesas
+ */
+router.delete('/api/empresas/:empresaId/items/:itemId', requireAuth, async (req, res) => {
+  try {
+    const { empresaId, itemId } = req.params;
+    const ITEMS_MESAS_TABLE = process.env.ITEMS_MESAS_TABLE || 'aws-cognito-jwt-login-dev-items-mesas';
+
+    // 1. Eliminar item de ITEMS_TABLE
+    await docClient.send(new DeleteCommand({
+      TableName: ITEMS_TABLE,
+      Key: { empresaId, itemId }
+    }));
+
+    console.log('Item eliminado de ITEMS_TABLE:', itemId);
+
+    // 2. Obtener todas las mesas que usan este item
+    const itemsMesasResult = await docClient.send(new ScanCommand({
+      TableName: ITEMS_MESAS_TABLE,
+      FilterExpression: 'itemId = :itemId',
+      ExpressionAttributeValues: { ':itemId': itemId }
+    }));
+
+    const itemsMesas = itemsMesasResult.Items || [];
+    console.log(`Encontrados ${itemsMesas.length} registros en ITEMS_MESAS_TABLE para eliminar`);
+
+    // 3. Eliminar cada registro de ITEMS_MESAS_TABLE
+    for (const item of itemsMesas) {
+      await docClient.send(new DeleteCommand({
+        TableName: ITEMS_MESAS_TABLE,
+        Key: { mesaId: item.mesaId, itemId: item.itemId }
+      }));
+      console.log(`Item eliminado de ITEMS_MESAS_TABLE: mesaId=${item.mesaId}, itemId=${itemId}`);
+    }
+
+    res.json({ success: true, eliminadosMesas: itemsMesas.length });
+  } catch (error) {
+    console.error('Error al eliminar item:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

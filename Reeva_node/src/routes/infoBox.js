@@ -1,5 +1,6 @@
 // routes/infoBox.js
 import express from 'express';
+import { config } from '../config/index.js';
 import { ScanCommand, QueryCommand, PutCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import db from '../../db.js';
 
@@ -10,14 +11,13 @@ router.get('/info-box/:idBox', async (req, res) => {
     try {
         const idBox = req.params.idBox; // mantener como string
         const empresaId = res.locals.empresaActiva?.empresaId;
+        const fechaSeleccionada = req.query.fecha || ''; // Capturar fecha del query string
 
-        // Intentar buscar primero en ESPACIOS_TABLE (nueva estructura parametrizada)
         let box = null;
         if (empresaId) {
             try {
-                const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'aws-cognito-jwt-login-dev-espacios';
                 const espaciosCmd = new QueryCommand({
-                    TableName: ESPACIOS_TABLE,
+                    TableName: config.dynamodb.tablas.espacios,
                     KeyConditionExpression: 'empresaId = :empresaId',
                     ExpressionAttributeValues: {
                         ':empresaId': empresaId
@@ -91,7 +91,10 @@ router.get('/info-box/:idBox', async (req, res) => {
             usuariosResult,
             tiposItemResult,
             itemsResult,
-            agendasResult
+            agendasResult,
+            ocupantesResult,
+            itemsEmpresaResult,
+            itemsMesasResult
         ] = await Promise.all([
             // Box específico de tabla antigua (fallback) - ConsistentRead para obtener el estado más reciente
             db.send(new ScanCommand({ 
@@ -129,6 +132,30 @@ router.get('/info-box/:idBox', async (req, res) => {
                     ':inicio': inicioRango,
                     ':fin': finRango
                 }
+            })),
+            // Ocupantes de la empresa (tabla OCUPANTES_TABLE)
+            empresaId ? db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.ocupantes,
+                KeyConditionExpression: 'empresaId = :empresaId',
+                ExpressionAttributeValues: {
+                    ':empresaId': empresaId
+                }
+            })) : Promise.resolve({ Items: [] }),
+            // Items de la empresa (ITEMS_TABLE)
+            empresaId ? db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.items,
+                KeyConditionExpression: 'empresaId = :empresaId',
+                ExpressionAttributeValues: {
+                    ':empresaId': empresaId
+                }
+            })) : Promise.resolve({ Items: [] }),
+            // Items de la mesa (ITEMS_MESAS_TABLE)
+            db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.itemsMesas,
+                KeyConditionExpression: 'mesaId = :mesaId',
+                ExpressionAttributeValues: {
+                    ':mesaId': idBox
+                }
             }))
         ]);
 
@@ -161,15 +188,20 @@ router.get('/info-box/:idBox', async (req, res) => {
         const tiposItem = tiposItemResult.Items || [];
         const items = itemsResult.Items || [];
         const todasAgendas = agendasResult.Items || [];
+        
+        // Obtener ocupantes de OCUPANTES_TABLE y normalizar
+        const ocupantes = (ocupantesResult?.Items || []).filter(o => o.activo === 1 || Number(o.activo) === 1);
+        const ocupantes_normalizados = (ocupantes || []).map(o => ({
+            id: String(o.ocupanteId || o.id || ''),
+            nombre: String(o.nombre || ''),
+            activo: Number(o.activo) || 1
+        })).filter(o => o.id);
 
         // Filtrar agendas del día actual para estadísticas
         const agendas = todasAgendas.filter(a => {
             const inicio = a.horainicio;
             return inicio >= inicioHoy && inicio <= finHoy;
         });
-
-        // Debug: ver estados de las agendas
-        console.log(`\n=== Box ${idBox} - ${todasAgendas.length} agendas totales, ${agendas.length} del dia ===\n`);
 
         // Crear mapas para lookups rápidos
         const tipoBoxMap = {};
@@ -192,6 +224,15 @@ router.get('/info-box/:idBox', async (req, res) => {
             usuarioMap[u.idUsuario] = u.nombreProfesional || u.nombreprofesional || 'Sin nombre';
         });
 
+        // Crear mapa de ocupantes para los eventos (preferir ocupantes sobre usuarios)
+        const ocupanteMap = {};
+        ocupantes_normalizados.forEach(o => {
+            ocupanteMap[o.id] = o.nombre;
+        });
+        
+        // Usar ocupanteMap si está disponible, si no, usar usuarioMap
+        const getNombreOcupante = (id) => ocupanteMap[id] || usuarioMap[id] || 'sin profesional';
+
         const tipoConsultaMap = {};
         tiposConsulta.forEach(tc => {
             tipoConsultaMap[tc.idTipoConsulta] = tc.tipoConsulta || tc.tipoconsulta;
@@ -207,8 +248,6 @@ router.get('/info-box/:idBox', async (req, res) => {
         box.estadoBox = estadoBoxMap[box.idEstadoBox] || 'Desconocido';
         box.disabled = box.idEstadoBox === 4 || box.idEstadoBox === '4'; // 4 = inhabilitado
         
-        console.log(`📦 Box ${idBox} - idEstadoBox: ${box.idEstadoBox} (tipo: ${typeof box.idEstadoBox}) - disabled: ${box.disabled}`);
-
         // Mapeo de traducción para especialidades
         const specialtyTranslationMap = {
             'Cirugía': 'surgery',
@@ -342,18 +381,29 @@ router.get('/info-box/:idBox', async (req, res) => {
             'Camilla': 'camilla',
         };
 
+        // Obtener items de la empresa e items de la mesa
+        const itemsEmpresa = itemsEmpresaResult.Items || [];
+        const itemsMesas = itemsMesasResult.Items || [];
+
+        // Crear mapa de cantidades por mesa
+        const cantidadesMesaMap = {};
+        itemsMesas.forEach(item => {
+            cantidadesMesaMap[item.itemId] = item.cantidad || 0;
+        });
+
+        // Construir lista de elementos con cantidades de la mesa
         const elementos = [];
-        tiposItem.forEach(tipo => {
-            const item = items.find(i => i.idTipoItem === tipo.idTipoItem);
-            if (item && item.cantidad > 0) {
-                const nombreOriginal = tipo.tipoItem || tipo.tipoitem;
+        itemsEmpresa.forEach(item => {
+            const cantidad = cantidadesMesaMap[item.itemId] || 0;
+            if (cantidad > 0) {
+                const nombreOriginal = item.nombre || '';
                 const translationKey = itemTranslationMap[nombreOriginal] || null;
                 
                 elementos.push({
-                    id: tipo.idTipoItem,
+                    id: item.itemId,
                     nombre: nombreOriginal,
                     translationKey: translationKey,
-                    cantidad: item.cantidad || 0
+                    cantidad: cantidad
                 });
             }
         });
@@ -374,10 +424,11 @@ router.get('/info-box/:idBox', async (req, res) => {
             const usuario = usuarios.find(u => u.idUsuario === agenda.idUsuario);
             const tipoConsulta = tiposConsulta.find(tc => tc.idTipoConsulta === agenda.idTipoConsulta);
             const estado = agenda.idEstado || '1';
+            const nombreOcupante = getNombreOcupante(agenda.idUsuario);
             
             return {
                 id: agenda.idAgenda,
-                title: usuarioMap[agenda.idUsuario] || 'sin profesional',
+                title: nombreOcupante,
                 start: agenda.horainicio,
                 end: agenda.horaTermino,
                 backgroundColor: coloresPorEstado[estado] || '#94a3b8',
@@ -386,7 +437,7 @@ router.get('/info-box/:idBox', async (req, res) => {
                     idBox: agenda.idBox,
                     usuario_id: agenda.idUsuario, // ← AGREGADO para compatibilidad
                     idUsuario: agenda.idUsuario,
-                    nombreUsuario: usuarioMap[agenda.idUsuario] || 'sin profesional',
+                    nombreUsuario: nombreOcupante,
                     tipo_id: agenda.idTipoConsulta, // ← AGREGADO para compatibilidad
                     idTipoConsulta: agenda.idTipoConsulta,
                     nombreTipoConsulta: tipoConsultaMap[agenda.idTipoConsulta] || 'sin tipo',
@@ -461,6 +512,7 @@ router.get('/info-box/:idBox', async (req, res) => {
             user: req.user,
             box,
             hoy: hoy.toISOString().split('T')[0],
+            fechaSeleccionada: fechaSeleccionada,
             eventos_json: JSON.stringify(eventos),
             estado: merged.some(seg => ahora >= seg[0] && ahora < seg[1]) ? 'OCUPADO' : 'DISPONIBLE',
             pct_ocupado: pctOcupado,
@@ -483,6 +535,7 @@ router.get('/info-box/:idBox', async (req, res) => {
             tipos_profesional_normalizados: tipos_profesional_normalizados_i18n,
             tipos_consulta_normalizados: tipos_consulta_normalizados_i18n,
             profesionales_normalizados,
+            ocupantes_normalizados,
             // Parametrización e i18n
             parametrizacionLabels: res.locals.parametrizacionLabels || {},
             userLang: req.session?.userLang || 'es',
@@ -511,28 +564,33 @@ router.get('/info-box/:idBox', async (req, res) => {
     }
 });
 
-// GET /info-box/:idBox/items - API para obtener items del box
+// GET /info-box/:idBox/items - API para obtener items del box/mesa
 router.get('/info-box/:idBox/items', async (req, res) => {
     try {
-        const idBox = req.params.idBox; // mantener como string
+        const mesaId = req.params.idBox; // mesaId es el idBox
+        const empresaId = res.locals.empresaActiva?.empresaId;
 
-        // Obtener todos los tipos de items y los items del box
-        const [tiposItemResult, itemsResult] = await Promise.all([
-            db.send(new ScanCommand({ TableName: 'tipoitem' })),
-            db.send(new ScanCommand({
-                TableName: 'items',
-                FilterExpression: 'idBox = :idBox',
-                ExpressionAttributeValues: { ':idBox': idBox }
+        // Obtener items de la empresa e items de la mesa
+        const [itemsEmpresaResult, itemsMesasResult] = await Promise.all([
+            empresaId ? db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.items,
+                KeyConditionExpression: 'empresaId = :empresaId',
+                ExpressionAttributeValues: { ':empresaId': empresaId }
+            })) : Promise.resolve({ Items: [] }),
+            db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.itemsMesas,
+                KeyConditionExpression: 'mesaId = :mesaId',
+                ExpressionAttributeValues: { ':mesaId': mesaId }
             }))
         ]);
 
-        const tiposItem = tiposItemResult.Items || [];
-        const items = itemsResult.Items || [];
+        const itemsEmpresa = itemsEmpresaResult.Items || [];
+        const itemsMesas = itemsMesasResult.Items || [];
 
-        // Crear mapa de cantidades actuales
+        // Crear mapa de cantidades actuales por mesa
         const cantidadesMap = {};
-        items.forEach(item => {
-            cantidadesMap[item.idTipoItem] = item.cantidad || 0;
+        itemsMesas.forEach(item => {
+            cantidadesMap[item.itemId] = item.cantidad || 0;
         });
 
         const itemTranslationMap = {
@@ -544,16 +602,16 @@ router.get('/info-box/:idBox/items', async (req, res) => {
             'Camilla': 'camilla',
         };
 
-
-        const data = tiposItem.map(tipo => {
-            const nombreOriginal = tipo.tipoItem || tipo.tipoitem;
+        // Mapear items de la empresa con sus cantidades en la mesa
+        const data = itemsEmpresa.map(item => {
+            const nombreOriginal = item.nombre || '';
             const translationKey = itemTranslationMap[nombreOriginal] || null;
             
             return {
-                id: tipo.idTipoItem,
+                id: item.itemId,
                 nombre: nombreOriginal,
                 translationKey: translationKey,  
-                cantidad: cantidadesMap[tipo.idTipoItem] || 0
+                cantidad: cantidadesMap[item.itemId] || 0
             };
         });
 
@@ -565,92 +623,98 @@ router.get('/info-box/:idBox/items', async (req, res) => {
     }
 });
 
-// POST /info-box/:idBox/items - API para actualizar items del box
+// POST /info-box/:idBox/items - API para actualizar items de la mesa/box
 router.post('/info-box/:idBox/items', async (req, res) => {
     try {
-        const idBox = req.params.idBox;
+        const mesaId = req.params.idBox;
+        const empresaId = res.locals.empresaActiva?.empresaId;
         const { items: itemsPayload } = req.body;
 
         if (!Array.isArray(itemsPayload)) {
             return res.status(400).json({ error: 'Formato inválido: se espera {items: [...]}' });
         }
 
-        // Obtener items actuales del box
-        const itemsActualesResult = await db.send(new ScanCommand({
-            TableName: 'items',
-            FilterExpression: 'idBox = :idBox',
-            ExpressionAttributeValues: { ':idBox': idBox }
+        // Obtener items actuales de la mesa
+        const itemsActualesResult = await db.send(new QueryCommand({
+            TableName: config.dynamodb.tablas.itemsMesas,
+            KeyConditionExpression: 'mesaId = :mesaId',
+            ExpressionAttributeValues: { ':mesaId': mesaId }
         }));
         const itemsActuales = itemsActualesResult.Items || [];
 
         // Crear mapa de items existentes
         const itemsMap = {};
         itemsActuales.forEach(item => {
-            itemsMap[item.idTipoItem] = item;
+            itemsMap[item.itemId] = item;
         });
 
         const cambios = { creados: 0, actualizados: 0, eliminados: 0 };
 
         // Procesar cada item del payload
         for (const entry of itemsPayload) {
-            const tipoItemId = entry.id;
+            const itemId = entry.id; // idTipoItem -> itemId en ItemsMesasTable
             const cantidad = Math.max(0, parseInt(entry.cantidad) || 0);
 
             if (cantidad > 0) {
-                const itemExistente = itemsMap[tipoItemId];
+                const itemExistente = itemsMap[itemId];
                 
                 if (itemExistente) {
                     // Actualizar si la cantidad cambió
                     if (itemExistente.cantidad !== cantidad) {
                         await db.send(new UpdateCommand({
-                            TableName: 'items',
-                            Key: { idItem: itemExistente.idItem },
-                            UpdateExpression: 'SET cantidad = :cantidad',
+                            TableName: config.dynamodb.tablas.itemsMesas,
+                            Key: { mesaId, itemId },
+                            UpdateExpression: 'SET cantidad = :cantidad, fechaActualizacion = :ahora',
                             ExpressionAttributeValues: {
-                                ':cantidad': cantidad
+                                ':cantidad': cantidad,
+                                ':ahora': new Date().toISOString()
                             }
                         }));
                         cambios.actualizados++;
                     }
                 } else {
                     // Crear nuevo item
-                    const { v4: uuidv4 } = await import('uuid');
                     await db.send(new PutCommand({
-                        TableName: 'items',
+                        TableName: config.dynamodb.tablas.itemsMesas,
                         Item: {
-                            idItem: uuidv4(),
-                            idBox: idBox,
-                            idTipoItem: tipoItemId,
-                            cantidad: cantidad
+                            mesaId,
+                            itemId,
+                            cantidad: cantidad,
+                            fechaCreacion: new Date().toISOString(),
+                            fechaActualizacion: new Date().toISOString()
                         }
                     }));
                     cambios.creados++;
                 }
-            } else if (itemsMap[tipoItemId]) {
+            } else if (itemsMap[itemId]) {
                 // Eliminar item si cantidad es 0
                 await db.send(new DeleteCommand({
-                    TableName: 'items',
-                    Key: { idItem: itemsMap[tipoItemId].idItem }
+                    TableName: config.dynamodb.tablas.itemsMesas,
+                    Key: { mesaId, itemId }
                 }));
                 cambios.eliminados++;
             }
         }
 
-        const [tiposItemResult, itemsNuevosResult] = await Promise.all([
-            db.send(new ScanCommand({ TableName: 'tipoitem' })),
-            db.send(new ScanCommand({
-                TableName: 'items',
-                FilterExpression: 'idBox = :idBox',
-                ExpressionAttributeValues: { ':idBox': idBox }
+        const [itemsEmpresaResult, itemsNuevosResult] = await Promise.all([
+            empresaId ? db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.items,
+                KeyConditionExpression: 'empresaId = :empresaId',
+                ExpressionAttributeValues: { ':empresaId': empresaId }
+            })) : Promise.resolve({ Items: [] }),
+            db.send(new QueryCommand({
+                TableName: config.dynamodb.tablas.itemsMesas,
+                KeyConditionExpression: 'mesaId = :mesaId',
+                ExpressionAttributeValues: { ':mesaId': mesaId }
             }))
         ]);
 
-        const tiposItem = tiposItemResult.Items || [];
+        const itemsEmpresa = itemsEmpresaResult.Items || [];
         const itemsNuevos = itemsNuevosResult.Items || [];
 
         const cantidadesMap = {};
         itemsNuevos.forEach(item => {
-            cantidadesMap[item.idTipoItem] = item.cantidad || 0;
+            cantidadesMap[item.itemId] = item.cantidad || 0;
         });
 
         const itemTranslationMap = {
@@ -662,15 +726,15 @@ router.post('/info-box/:idBox/items', async (req, res) => {
             'Camilla': 'camilla',
         };
 
-        const data = tiposItem.map(tipo => {
-            const nombreOriginal = tipo.tipoItem || tipo.tipoitem;
+        const data = itemsEmpresa.map(item => {
+            const nombreOriginal = item.nombre || '';
             const translationKey = itemTranslationMap[nombreOriginal] || null;
             
             return {
-                id: tipo.idTipoItem,
+                id: item.itemId,
                 nombre: nombreOriginal,
                 translationKey: translationKey,  
-                cantidad: cantidadesMap[tipo.idTipoItem] || 0
+                cantidad: cantidadesMap[item.itemId] || 0
             };
         });
 
@@ -920,6 +984,7 @@ router.delete('/eliminar_evento/:eventoId', async (req, res) => {
 router.get('/info-box/:idBox/events', async (req, res) => {
     try {
         const idBox = req.params.idBox;
+        const empresaId = res.locals.empresaActiva?.empresaId;
         
         // Rango de ±1 año para el calendario
         const ahora = new Date();
@@ -938,9 +1003,9 @@ router.get('/info-box/:idBox/events', async (req, res) => {
         const inicioRango = formatFechaRango(unAnioAtras);
         const finRango = formatFechaRango(unAnioAdelante);
 
-        console.log(`📅 Obteniendo eventos para Box ${idBox}, rango: ${inicioRango} a ${finRango}`);
+        console.log(`Obteniendo eventos para Box ${idBox}, rango: ${inicioRango} a ${finRango}`);
 
-        // Usar Scan con FilterExpression para mayor compatibilidad
+        // Obtener agendas
         const agendasResult = await db.send(new ScanCommand({
             TableName: 'agenda',
             FilterExpression: 'idBox = :idBox AND horainicio BETWEEN :inicio AND :fin',
@@ -952,23 +1017,30 @@ router.get('/info-box/:idBox/events', async (req, res) => {
         }));
         const agendas = agendasResult.Items || [];
 
-        console.log(`✅ ${agendas.length} agendas encontradas`);
+        console.log(`${agendas.length} agendas encontradas`);
 
-        // Obtener usuarios y tipos de consulta para los nombres
-        const usuariosResult = await db.send(new ScanCommand({ TableName: 'usuario' }));
-        const usuarios = usuariosResult.Items || [];
-        const usuarioMap = {};
-        usuarios.forEach(u => {
-            // Usar nombreProfesional que es el campo correcto
-            usuarioMap[u.idUsuario] = u.nombreProfesional || u.nombreprofesional || u.nombre || u.Nombre || 'Sin nombre';
-        });
-
-        const tiposConsultaResult = await db.send(new ScanCommand({ TableName: 'tipoconsulta' }));
-        const tiposConsulta = tiposConsultaResult.Items || [];
-        const tipoConsultaMap = {};
-        tiposConsulta.forEach(tc => {
-            tipoConsultaMap[tc.idTipoConsulta] = tc.nombre;
-        });
+        // Obtener ocupantes de OCUPANTES_TABLE (igual que agenda.js)
+        let ocupantes_normalizados = [];
+        if (empresaId) {
+            try {
+                const ocupantesResult = await db.send(new QueryCommand({
+                    TableName: config.dynamodb.tablas.ocupantes,
+                    KeyConditionExpression: 'empresaId = :empresaId',
+                    ExpressionAttributeValues: {
+                        ':empresaId': empresaId
+                    }
+                }));
+                
+                const ocupantes = (ocupantesResult.Items || []).filter(o => o.activo === 1 || Number(o.activo) === 1);
+                ocupantes_normalizados = (ocupantes || []).map(o => ({
+                    id: String(o.ocupanteId || o.id || ''),
+                    nombre: String(o.nombre || ''),
+                    activo: Number(o.activo) || 1
+                })).filter(o => o.id);
+            } catch (error) {
+                console.warn('Error obteniendo ocupantes de OCUPANTES_TABLE:', error.message);
+            }
+        }
 
         const tiposEstadoResult = await db.send(new ScanCommand({ TableName: 'tipoestado' }));
         const tiposEstado = tiposEstadoResult.Items || [];
@@ -989,12 +1061,14 @@ router.get('/info-box/:idBox/events', async (req, res) => {
 
         // Formatear eventos para FullCalendar
         const eventos = agendas.map(agenda => {
-            const usuario = usuarios.find(u => u.idUsuario === agenda.idUsuario);
             const estado = agenda.idEstado || '1';
+            // Buscar el ocupante por su ID
+            const ocupante = ocupantes_normalizados.find(o => o.id === String(agenda.idUsuario));
+            const nombreOcupante = ocupante?.nombre || 'Sin ocupante';
             
             return {
                 id: agenda.idAgenda,
-                title: usuarioMap[agenda.idUsuario] || 'sin profesional',
+                title: nombreOcupante,
                 start: agenda.horainicio,
                 end: agenda.horaTermino,
                 backgroundColor: coloresPorEstado[estado] || '#94a3b8',
@@ -1003,14 +1077,10 @@ router.get('/info-box/:idBox/events', async (req, res) => {
                     idBox: agenda.idBox,
                     usuario_id: agenda.idUsuario,
                     idUsuario: agenda.idUsuario,
-                    nombreUsuario: usuarioMap[agenda.idUsuario] || 'sin profesional',
-                    tipo_id: agenda.idTipoConsulta,
-                    idTipoConsulta: agenda.idTipoConsulta,
-                    nombreTipoConsulta: tipoConsultaMap[agenda.idTipoConsulta] || 'sin tipo',
+                    nombreUsuario: nombreOcupante,
                     idEstado: estado,
                     nombreEstado: tipoEstadoMap[estado] || 'desconocido',
-                    observaciones: agenda.observaciones || '',
-                    idTipoProfesional: usuario?.idTipoProfesional || ''
+                    observaciones: agenda.observaciones || ''
                 }
             };
         });

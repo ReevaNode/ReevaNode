@@ -6,7 +6,7 @@ provider:
   runtime: nodejs20.x
   region: ${opt:region, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-  #role: ${env:LABROLE}
+  role: "arn:aws:iam::905418353372:role/LabRole"
   environment:
     USER_POOL_ID: { Ref: CognitoUserPool }
     USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }
@@ -15,6 +15,8 @@ provider:
     EMPRESAS_TABLE: { Ref: EmpresasTable }
     ESPACIOS_TABLE: { Ref: EspaciosTable }
     OCUPANTES_TABLE: { Ref: OcupantesTable }
+    ITEMS_TABLE: { Ref: ItemsTable }
+    ITEMS_MESAS_TABLE: { Ref: ItemsMesasTable }
   logs:
     httpApi: true
   httpApi:
@@ -376,6 +378,56 @@ resources:
           - Key: Service
             Value: ${self:service}
 
+    # === TABLA DE ITEMS (Catálogo de items por empresa) ===
+    ItemsTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${sls:stage}-items
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: empresaId
+            AttributeType: S
+          - AttributeName: itemId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: empresaId
+            KeyType: HASH
+          - AttributeName: itemId
+            KeyType: RANGE
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
+    # === TABLA DE ITEMS EN MESAS (Cantidad de items por mesa) ===
+    ItemsMesasTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${sls:stage}-items-mesas
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: mesaId
+            AttributeType: S
+          - AttributeName: itemId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: mesaId
+            KeyType: HASH
+          - AttributeName: itemId
+            KeyType: RANGE
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: Service
+            Value: ${self:service}
+
   # === OUTPUTS ===
   Outputs:
     UserPoolId:
@@ -419,6 +471,18 @@ resources:
       Value: { Ref: OcupantesTable }
       Export:
         Name: ${self:service}-${sls:stage}-OcupantesTableName
+
+    ItemsTableName:
+      Description: 'DynamoDB Items Table Name'
+      Value: { Ref: ItemsTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-ItemsTableName
+
+    ItemsMesasTableName:
+      Description: 'DynamoDB Items-Mesas Table Name'
+      Value: { Ref: ItemsMesasTable }
+      Export:
+        Name: ${self:service}-${sls:stage}-ItemsMesasTableName
 
     ApiEndpoint:
       Description: 'API Gateway Endpoint URL'

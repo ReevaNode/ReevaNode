@@ -1,9 +1,10 @@
 // routes/matrizBox.js
 import express from 'express';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import db from '../../db.js';
 import { retryWithBackoff, CircuitBreaker, SimpleCache } from '../utils/resilience.js';
 import Logger from '../utils/logger.js';
+import { config } from '../config/index.js';
 
 const router = express.Router();
 const logger = new Logger('MATRIZ_BOX');
@@ -20,7 +21,7 @@ const matrizCache = new SimpleCache({
   maxSize: 100
 });
 
-const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'aws-cognito-jwt-login-dev-espacios';
+const ESPACIOS_TABLE = config.dynamodb.tablas.espacios;
 
 // GET /matriz - vista de matriz de boxes
 router.get('/matriz', async (req, res) => {
@@ -84,13 +85,30 @@ router.get('/matriz', async (req, res) => {
 
         // Fallback en caso de fallo
         const fallbackMatrizData = async () => {
-            logger.error('⚠️ Usando fallback - DynamoDB no disponible');
+            logger.error('Usando fallback - DynamoDB no disponible');
             systemDegraded = true;
             return [];
         };
 
         // Ejecutar con Circuit Breaker
         const espacios = await matrizCircuitBreaker.execute(fetchMatrizData, fallbackMatrizData);
+
+        // Obtener todos los boxes para mapear estados
+        let boxStates = {};
+        try {
+            const boxCmd = new ScanCommand({ TableName: config.dynamodb.tablas.box });
+            const boxRes = await db.send(boxCmd);
+            const boxes = boxRes.Items || [];
+            
+            // Crear mapa de idBox -> idEstadoBox
+            boxes.forEach(box => {
+                boxStates[String(box.idBox)] = box.idEstadoBox || 1;
+            });
+            logger.info(`Cargados estados de ${boxes.length} boxes`);
+        } catch (err) {
+            logger.warn('Error cargando estados de boxes:', err.message);
+            // Continuar sin estados de box
+        }
 
         // Agrupar mesas por pasilloNombre
         const groupedByPasillo = {};
@@ -105,16 +123,30 @@ router.get('/matriz', async (req, res) => {
             // Agregar las mesas de este espacio
             if (espacio.mesas && Array.isArray(espacio.mesas)) {
                 espacio.mesas.forEach(mesa => {
+                    // Obtener el estado desde el mapa de boxes
+                    const estadoId = boxStates[String(mesa.id)] || 1;
+                    let estado = 'Libre';
+                    
+                    if (String(estadoId) === '4') {
+                        estado = 'Inhabilitado';
+                    } else if (String(estadoId) === '2') {
+                        estado = 'Paciente Ausente';
+                    } else if (String(estadoId) === '3') {
+                        estado = 'Paciente Esperando';
+                    } else if (String(estadoId) === '6') {
+                        estado = 'Finalizado';
+                    }
+                    
                     groupedByPasillo[pasilloNombre].push({
                         id: mesa.id,
                         nombre: mesa.nombre || `Mesa ${mesa.numero || '?'}`,
                         numero: mesa.numero,
-                        estado: 'Libre', // Por ahora, estado predeterminado
+                        estado: estado,
                         medico_nombre: null,
                         progreso_porcentaje: 0,
                         ocupacion_porcentaje: 0,
                         espacioId: espacio.espacioId,
-                        pasilloNombre: pasilloNombre  // Agregar el nombre del pasillo
+                        pasilloNombre: pasilloNombre
                     });
                 });
             }

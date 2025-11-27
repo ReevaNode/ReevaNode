@@ -9,8 +9,8 @@ import { retryWithBackoff, CircuitBreaker, SimpleCache } from '../utils/resilien
 const router = Router();
 const logger = new Logger('AGENDA');
 
-const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'aws-cognito-jwt-login-dev-espacios';
-const OCUPANTES_TABLE = process.env.OCUPANTES_TABLE || 'aws-cognito-jwt-login-dev-ocupantes';
+const ESPACIOS_TABLE = config.dynamodb.tablas.espacios;
+const OCUPANTES_TABLE = config.dynamodb.tablas.ocupantes;
 
 // inicializar Circuit Breaker y Cache para agenda
 const agendaCircuitBreaker = new CircuitBreaker({
@@ -101,10 +101,46 @@ async function getOcupantes(empresaId) {
     }
 }
 
+// helper para obtener información de una mesa específica por ID
+async function getBoxInfo(mesaId) {
+    try {
+        const espaciosCmd = new ScanCommand({
+            TableName: ESPACIOS_TABLE,
+            FilterExpression: 'attribute_exists(mesas)'
+        });
+        
+        const result = await db.send(espaciosCmd);
+        const espacios = result.Items || [];
+        
+        // Buscar la mesa en todos los espacios
+        for (const espacio of espacios) {
+            if (espacio.mesas && Array.isArray(espacio.mesas)) {
+                const mesa = espacio.mesas.find(m => String(m.id) === String(mesaId));
+                if (mesa) {
+                    return {
+                        id: mesa.id,
+                        nombre: mesa.nombre,
+                        numero: mesa.numero,
+                        pasilloNombre: espacio.pasilloNombre,
+                        espacioId: espacio.espacioId
+                    };
+                }
+            }
+        }
+        
+        logger.warn(`Mesa ${mesaId} no encontrada en ESPACIOS_TABLE`);
+        return null;
+    } catch (error) {
+        logger.error(`Error obteniendo info de mesa ${mesaId}:`, error);
+        return null;
+    }
+}
+
 // GET /agenda
 router.get('/agenda', async (req, res) => {
     const inicio = Date.now();
     const mesaId = req.query.box_number || '';  // Renombrado para claridad
+    const fechaSeleccionada = req.query.fecha || '';  // Fecha preservada después de agendar
     const cacheKey = `agenda_${mesaId}`;
     
     try {
@@ -116,7 +152,8 @@ router.get('/agenda', async (req, res) => {
                 ...cachedData,
                 user: req.session.user,
                 activePage: 'agenda',
-                fromCache: true
+                fromCache: true,
+                fechaSeleccionada: fechaSeleccionada
             });
         }
 
@@ -187,7 +224,7 @@ router.get('/agenda', async (req, res) => {
         };
 
         const fallbackAgendaData = async () => {
-            logger.error('⚠️ Usando fallback para agenda');
+            logger.error('Usando fallback para agenda');
             return {
                 mesas: [],
                 mesa: null,
@@ -306,8 +343,28 @@ router.get('/agenda', async (req, res) => {
         // 5) calcular disabled (estado de la mesa)
         let disabled = false;
         if (mesa) {
-            const estadoId = mesa.idEstadoBox || mesa.idestadobox || mesa.idEstado || mesa.idestado;
-            disabled = String(estadoId) === '4';
+            // Intentar obtener el estado desde la tabla BOX
+            try {
+                const boxCmd = new QueryCommand({
+                    TableName: config.dynamodb.tablas.box,
+                    KeyConditionExpression: 'idBox = :idBox',
+                    ExpressionAttributeValues: { ':idBox': String(mesa.id) }
+                });
+                const boxRes = await db.send(boxCmd);
+                const boxData = boxRes.Items?.[0];
+                
+                if (boxData && boxData.idEstadoBox) {
+                    disabled = String(boxData.idEstadoBox) === '4';
+                } else {
+                    // Fallback a mesa si no está en BOX
+                    const estadoId = mesa.idEstadoBox || mesa.idestadobox || mesa.idEstado || mesa.idestado;
+                    disabled = String(estadoId) === '4';
+                }
+            } catch (err) {
+                logger.warn('Error obteniendo estado de BOX, usando mesa fallback:', err.message);
+                const estadoId = mesa.idEstadoBox || mesa.idestadobox || mesa.idEstado || mesa.idestado;
+                disabled = String(estadoId) === '4';
+            }
         }
         
         // 6) calcular pct_ocupado / pct_libre
@@ -369,7 +426,8 @@ router.get('/agenda', async (req, res) => {
         res.render('agenda', {
             ...renderData,
             activePage: 'agenda',
-            fromCache: false
+            fromCache: false,
+            fechaSeleccionada: fechaSeleccionada
         });
     } catch (error) {
         logger.error('❌ Error cargando agenda', { 
@@ -387,7 +445,8 @@ router.get('/agenda', async (req, res) => {
                 ...cachedData,
                 user: req.session.user,
                 activePage: 'agenda',
-                fromCache: true
+                fromCache: true,
+                fechaSeleccionada: fechaSeleccionada
             });
         }
         
@@ -453,17 +512,19 @@ router.post('/add_evento/:mesaId', async (req, res) => {
         console.log('PutCommand item saved:', item);
         
         // emitir websocket
-        const boxInfo = await getBoxInfo(boxId);
+        const boxInfo = await getBoxInfo(mesaId);
         broadcastBoxUpdate({
-            box_id: String(boxId),
-            box_numero: boxInfo ? String(boxInfo.numero) : String(boxId),
+            box_id: String(mesaId),
+            box_numero: boxInfo ? String(boxInfo.numero) : String(mesaId),
             new_state: 2, // reservado
             new_state_text: 'Reservado',
             action: 'create'
         });
         
         if (req.headers['x-requested-with'] === 'XMLHttpRequest') return res.json({ ok: true });
-        return res.redirect('/agenda');
+        // Redirigir a agenda preservando la fecha
+        const fechaParam = fecha ? `?fecha=${encodeURIComponent(fecha)}` : '';
+        return res.redirect(`/agenda${fechaParam}`);
     } catch (err) {
         console.error('Error add_evento', err);
         if (req.headers['x-requested-with'] === 'XMLHttpRequest') return res.json({ ok: false, error: err.message });
@@ -627,18 +688,35 @@ router.get('/agenda/events', async (req, res) => {
         const startParam = req.query.start;
         const endParam = req.query.end;
         
-        // Traer agenda y profesionales SIN cache
+        // Obtener empresa activa desde el middleware
+        const empresaActiva = res.locals.empresaActiva;
+        if (!empresaActiva) {
+            return res.status(400).json({ error: 'No hay empresa activa' });
+        }
+        
+        const empresaId = empresaActiva.empresaId;
+        
+        // Traer agenda (sin cache para obtener datos frescos)
         const agendaCmd = new ScanCommand({ TableName: config.dynamodb.tablas.agenda });
         const agendaRes = await db.send(agendaCmd);
         const items = agendaRes.Items || [];
         
-        const profesRes = await db.send(new ScanCommand({ TableName: config.dynamodb.tablas.usuario }));
-        const profesionales = profesRes.Items || [];
+        // Traer ocupantes de la empresa 
+        const ocupantesCmd = new QueryCommand({
+            TableName: OCUPANTES_TABLE,
+            KeyConditionExpression: 'empresaId = :empresaId',
+            ExpressionAttributeValues: {
+                ':empresaId': empresaId
+            }
+        });
         
-        const profesionales_normalizados = profesionales.map(p => ({
-            id: String(p.idUsuario || p.idusuario || p.id || ''),
-            nombre: p.nombreProfesional || p.nombreprofesional || p.nombre || '',
-            especialidad: String(p.idTipoProfesional || p.idtipoprofesional || p.idtipoprofesional_id || '')
+        const ocupantesRes = await db.send(ocupantesCmd);
+        const ocupantes = ocupantesRes.Items || [];
+        
+        const ocupantes_normalizados = ocupantes.map(o => ({
+            id: String(o.ocupanteId || o.id || ''),
+            nombre: o.nombre || '',
+            activo: o.activo || 0
         }));
         
         const boxKey = boxNumber ? String(boxNumber) : null;
@@ -657,7 +735,7 @@ router.get('/agenda/events', async (req, res) => {
         };
         
         const eventosDelBox = items.filter(it => {
-            if (boxKey && String(it.idBox || it.idbox) !== boxKey) return false;
+            if (boxKey && String(it.mesaId || it.idBox || it.idbox) !== boxKey) return false;
             const s = it.horainicio;
             const e = it.horaTermino || it.horatermino;
             return intersectsRange(s, e);
@@ -672,8 +750,8 @@ router.get('/agenda/events', async (req, res) => {
             const start = ev.horainicio;
             const end = ev.horaTermino || ev.horatermino;
             
-            const prof = (profesionales_normalizados || []).find(pn => 
-                String(pn.id) === String(ev.idUsuario || ev.idusuario || ev.id)
+            const prof = (ocupantes_normalizados || []).find(o => 
+                String(o.id) === String(ev.idUsuario || ev.usuario_id || ev.idusuario)
             );
             
             return {
@@ -683,8 +761,6 @@ router.get('/agenda/events', async (req, res) => {
                 end: end || null,
                 extendedProps: {
                     usuario_id: prof ? pnSafe(prof, 'id') : '',
-                    especialidad: prof ? pnSafe(prof, 'especialidad') : '',
-                    tipo_id: ev.idTipoConsulta || ev.idtipoconsulta || '',
                     observaciones: ev.observaciones || ev.observacion || ev.detalle || ''
                 }
             };
@@ -703,10 +779,12 @@ router.get('/eliminar_evento/:eventoId', async (req, res) => {
     try {
         console.log('GET /eliminar_evento eventoId=', req.params.eventoId, 'user=', req.session && req.session.user ? req.session.user.id : null);
         const eventoId = req.params.eventoId;
+        const fecha = req.query.fecha || '';
         
         if (!eventoId) {
             req.flash && req.flash('error', 'eventoId faltante');
-            return res.redirect('/agenda');
+            const fechaParam = fecha ? `?fecha=${encodeURIComponent(fecha)}` : '';
+            return res.redirect(`/agenda${fechaParam}`);
         }
         
         let boxToRedirect = '';
@@ -736,10 +814,17 @@ router.get('/eliminar_evento/:eventoId', async (req, res) => {
             });
         }
         
-        if (boxToRedirect) return res.redirect(`/agenda?box_number=${encodeURIComponent(boxToRedirect)}`);
+        // Si es AJAX, responder con JSON
+        if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            return res.json({ ok: true });
+        }
+        
         return res.redirect('/agenda');
     } catch (err) {
         console.error('Error eliminar evento', err);
+        if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            return res.status(500).json({ ok: false, error: 'Error eliminando evento' });
+        }
         req.flash && req.flash('error', 'Error eliminando evento');
         return res.redirect('/agenda');
     }
@@ -750,7 +835,7 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
     try {
         const mesaId = req.params.mesaId;
         console.log('========================================');
-        console.log('🔄 POST /toggle_mantenimiento LLAMADO');
+        console.log('POST /toggle_mantenimiento LLAMADO');
         console.log('   mesaId:', mesaId);
         console.log('   user:', req.session && req.session.user ? req.session.user.id : null);
         console.log('   authenticated:', !!req.session?.user);
@@ -777,19 +862,34 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
             return res.redirect('/agenda');
         }
         
-        const current = mesa.idEstadoBox || mesa.idestadobox || mesa.idEstado || mesa.idestado || 1;
+        // Obtener el estado actual desde la tabla BOX
+        let boxActual = null;
+        try {
+            const boxCmd = new QueryCommand({
+                TableName: config.dynamodb.tablas.box,
+                KeyConditionExpression: 'idBox = :idBox',
+                ExpressionAttributeValues: { ':idBox': String(mesa.id) }
+            });
+            const boxRes = await db.send(boxCmd);
+            boxActual = boxRes.Items?.[0];
+        } catch (err) {
+            console.warn('No se pudo obtener box desde tabla BOX:', err.message);
+        }
+        
+        const current = boxActual?.idEstadoBox || mesa.idEstadoBox || 1;
         const nuevo = (String(current) === '4' || current === 4) ? 1 : 4;
         
         console.log('Mesa actual idEstado:', current, '(tipo:', typeof current, ') - nuevo estado:', nuevo);
+        console.log('Actualizando Box con idBox:', mesa.id);
         
         await db.send(new UpdateCommand({
             TableName: config.dynamodb.tablas.box,
-            Key: { idBox: box.idBox || box.idbox },
+            Key: { idBox: String(mesa.id) },
             UpdateExpression: 'SET idEstadoBox = :e',
-            ExpressionAttributeValues: { ':e': nuevo } // guardar como número
+            ExpressionAttributeValues: { ':e': nuevo } 
         }));
         
-        console.log('UpdateCommand enviado para box', box.idBox || box.idbox);
+        console.log('UpdateCommand enviado para box con idBox:', mesa.id);
         
         // Determinar el estado real del box (especialmente al habilitar)
         let estadoReal = {
@@ -805,14 +905,12 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
                 const agendasRes = await db.send(agendasCmd);
                 const agendas = agendasRes.Items || [];
                 
-                console.log('📋 Total de agendas encontradas:', agendas.length);
                 
                 // Cargar usuarios para obtener nombres de médicos
                 const usuariosCmd = new ScanCommand({ TableName: config.dynamodb.tablas.usuario });
                 const usuariosRes = await db.send(usuariosCmd);
                 const usuarios = usuariosRes.Items || [];
                 
-                console.log('👥 Total de usuarios encontrados:', usuarios.length);
                 
                 const usuarioMap = {};
                 usuarios.forEach(u => {
@@ -830,7 +928,7 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
                 // Filtrar agendas de este box del día de hoy
                 const agendasHoy = agendas.filter(agenda => {
                     const agendaBoxId = agenda.idBox || agenda.idbox;
-                    if (String(agendaBoxId) !== String(boxId)) return false;
+                    if (String(agendaBoxId) !== String(mesa.id)) return false;
                     
                     const inicio = new Date(agenda.horainicio || agenda.horaInicio);
                     return inicio >= hoy && inicio <= finHoy;
@@ -851,10 +949,6 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
                     const usuarioId = agendaActual.idUsuario || agendaActual.idusuario;
                     const medicoNombre = usuarioMap[usuarioId] || null;
                     
-                    console.log('📅 Agenda del día encontrada para box', boxId);
-                    console.log('   - Estado agenda:', estadoId, '(tipo:', typeof estadoId, ')');
-                    console.log('   - Médico:', medicoNombre);
-                    console.log('   - Hora inicio:', agendaActual.horainicio);
                     
                     // Mapear estado de agenda (comparar tanto string como número)
                     const estadoNum = parseInt(estadoId) || 1;
@@ -878,7 +972,7 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
                             estadoReal = { state: 1, text: 'Libre', medico: medicoNombre };
                     }
                 } else {
-                    console.log('No hay agenda activa para box', boxId, '- estado: Libre');
+                    console.log('No hay agenda activa para box', mesa.id, '- estado: Libre');
                     estadoReal = { state: 1, text: 'Libre', medico: null };
                 }
             } catch (err) {
@@ -891,18 +985,13 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
         
         // emitir websocket con el estado real
         broadcastBoxUpdate({
-            box_id: String(box.idBox || box.idbox),
-            box_numero: String(box.numero || box.idBox || box.idbox),
+            box_id: String(mesa.id),
             new_state: estadoReal.state,
             new_state_text: estadoReal.text,
             medico_nombre: estadoReal.medico,
             action: 'toggle_maintenance'
         });
         
-        console.log('✅ Toggle mantenimiento completado exitosamente');
-        
-        // Si es una llamada AJAX (fetch), devolver JSON
-        // Si es una llamada normal, hacer redirect
         const isAjax = req.headers['content-type']?.includes('application/json') || 
                        req.headers['accept']?.includes('application/json');
         
@@ -915,8 +1004,10 @@ router.post('/toggle_mantenimiento/:mesaId', async (req, res) => {
                 medico_nombre: estadoReal.medico
             });
         } else {
-            const redirectBox = box.idbox || box.idBox || box.numero || box.id || '';
-            return res.redirect(`/agenda?box_number=${encodeURIComponent(redirectBox)}`);
+            const redirectBox = mesa.id;
+            const parametrizacionLabels = res.locals.parametrizacionLabels || {};
+            const nivel2Singular = parametrizacionLabels.nivel2Singular?.toLowerCase() || 'mesa';
+            return res.redirect(`/agenda?${nivel2Singular}=${encodeURIComponent(redirectBox)}`);
         }
     } catch (err) {
         console.error('Error toggle mantenimiento', err);

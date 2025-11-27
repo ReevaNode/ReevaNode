@@ -299,9 +299,16 @@ function filterBoxes() {
             let matchEspecialidad = true;
             let matchEstado = true;
             
-            // filtro por numero
-            if (searchText && !boxNumero.includes(searchText)) {
-                matchSearch = false;
+            // filtro por numero - buscar en el texto completo
+            if (searchText) {
+                // Buscar en el data-numero completo o en números individuales
+                if (!boxNumero.includes(searchText)) {
+                    // Si no encuentra en el texto completo, intentar buscar solo números
+                    const numbersInBox = boxNumero.replace(/[^\d]/g, '');
+                    if (!numbersInBox.includes(searchText)) {
+                        matchSearch = false;
+                    }
+                }
             }
             
             // filtro por especialidad

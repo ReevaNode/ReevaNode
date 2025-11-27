@@ -302,6 +302,30 @@ body.theme-dark .btn-agregar-ocupante-editar:hover {
   background: linear-gradient(135deg, #8b3f78 0%, #6c2d5e 100%);
 }
 
+body.theme-dark .elementos-input-wrapper input {
+  background-color: rgba(15, 23, 42, 0.8);
+  border-color: rgba(71, 85, 105, 0.6);
+  color: #e5e7eb;
+}
+
+body.theme-dark .elementos-input-wrapper input:focus {
+  border-color: #f5d0fe;
+  box-shadow: 0 0 0 3px rgba(245, 208, 254, 0.15);
+  background-color: rgba(15, 23, 42, 0.95);
+}
+
+body.theme-dark .elementos-input-wrapper input::placeholder {
+  color: #64748b;
+}
+
+body.theme-dark .btn-agregar-elemento-editar {
+  background: linear-gradient(135deg, #9b4f88 0%, #7c3d6e 100%);
+}
+
+body.theme-dark .btn-agregar-elemento-editar:hover {
+  background: linear-gradient(135deg, #8b3f78 0%, #6c2d5e 100%);
+}
+
 body.theme-dark .ocupante-item-editar {
   background: rgba(55, 65, 81, 0.6);
   border-left-color: #f5d0fe;
@@ -313,6 +337,20 @@ body.theme-dark .ocupante-item-editar:hover {
 }
 
 body.theme-dark .ocupante-item-editar span {
+  color: #f3f4f6 !important;
+}
+
+body.theme-dark .elemento-item-editar {
+  background: rgba(55, 65, 81, 0.6);
+  border-left-color: #f5d0fe;
+  border-left-width: 3px;
+}
+
+body.theme-dark .elemento-item-editar:hover {
+  background: rgba(75, 85, 99, 0.75);
+}
+
+body.theme-dark .elemento-item-editar span {
   color: #f3f4f6 !important;
 }
 
@@ -847,7 +885,54 @@ body.theme-dark .espacio-form-input input:focus {
   transform: translateY(-2px);
 }
 
+.elementos-input-wrapper {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.elementos-input-wrapper input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  transition: border-color 0.3s ease;
+}
+
+.elementos-input-wrapper input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(168, 85, 184, 0.1);
+}
+
+.btn-agregar-elemento-editar {
+  width: 44px;
+  height: 44px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.btn-agregar-elemento-editar:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
 #ocupantes-lista-editar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+#elementos-lista-editar {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
@@ -866,6 +951,23 @@ body.theme-dark .espacio-form-input input:focus {
 }
 
 .ocupante-item-editar:hover {
+  background: #e5e7eb;
+}
+
+/* ===== ESTILOS PARA ELEMENTOS ===== */
+.elemento-item-editar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+  animation: slideIn 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.elemento-item-editar:hover {
   background: #e5e7eb;
 }
 

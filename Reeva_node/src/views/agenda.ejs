@@ -61,14 +61,14 @@
     <% } %>
     
     <!-- Seleccion de mesa -->
-    <form method="get" class="flex gap-4 mb-8 items-end">
-      <div>
-        <label for="box_number" class="block text-sm font-medium mb-1">
+    <div class="flex flex-col sm:flex-row gap-4 mb-8 sm:items-end sm:justify-between items-start">
+      <div class="max-w-xs">
+        <label for="box_number" class="block text-sm font-medium mb-2 text-gray-700">
           <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'Mesa' %>
         </label>
         <select id="box_number" name="box_number"
-                class="w-full border rounded px-3 py-2 focus:border-primary focus:ring-primary bg-white">
-          <option value="" <%= mesa ? 'disabled' : 'selected' %>>
+                class="border-2 border-gray-300 rounded-lg px-4 py-2 pr-10 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-50 bg-white font-medium text-gray-800 cursor-pointer transition-all duration-200 hover:border-gray-400">
+          <option value="">
             Selecciona <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa' %>
           </option>
           <% mesas.forEach(m => { %>
@@ -79,32 +79,27 @@
           <% }) %>
         </select>
       </div>
-      <button type="submit" class="bg-primary text-white px-4 py-2 rounded-button">Seleccionar</button>
-    </form>
-    
-    <!-- Boton habilitar/inhabilitar -->
-    <% if (mesa) { %>
-      <button id="toggleMantBtn"
-        class="<% if (disabled) { %>bg-green-600 hover:bg-green-700<% } else { %>bg-red-600 hover:bg-red-700<% } %> text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
-        onclick="openMantModal()">
-        <% if (disabled) { %>
-          <i class="ri-play-circle-line text-lg"></i>
-          <span>Habilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa' %></span>
-        <% } else { %>
-          <i class="ri-stop-circle-line text-lg"></i>
-          <span>Inhabilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa' %></span>
-        <% } %>
-      </button>
-    <% } else { %>
-      <button disabled class="opacity-50 cursor-not-allowed bg-gray-400 text-white px-6 py-3 rounded-button mt-6" data-i18n="agenda.noBoxSelected">
-        <%= __("agenda.noBoxSelected") %>
-      </button>
-    <% } %>
+      
+      <!-- Boton habilitar/inhabilitar que baja en móviles pequeños pero mantiene su tamaño -->
+      <% if (mesa) { %>
+        <button id="toggleMantBtn"
+          class="<% if (disabled) { %>bg-green-600 hover:bg-green-700<% } else { %>bg-red-600 hover:bg-red-700<% } %> text-white px-6 py-3 rounded-button flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
+          onclick="openMantModal()">
+          <% if (disabled) { %>
+            <i class="ri-play-circle-line text-lg"></i>
+            <span>Habilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa' %></span>
+          <% } else { %>
+            <i class="ri-stop-circle-line text-lg"></i>
+            <span>Inhabilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa' %></span>
+          <% } %>
+        </button>
+      <% } %>
+    </div>
     
     <!-- Modal Agregar Evento -->
     <div id="eventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
       <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-        <h3 class="text-2xl font-medium text-center mb-8">Agendamiento</h3>
+        <h3 class="text-2xl font-medium text-center mb-8">Agregar Evento</h3>
         <div id="timeRangeInfo" class="hidden mb-4 p-3 rounded bg-blue-50 text-blue-700 text-sm border border-blue-200">
           <i class="ri-information-line"></i>
           <span data-i18n="agenda.loadingTimeInfo"><%= __("agenda.loadingTimeInfo") %></span>
@@ -140,7 +135,7 @@
           </div>
           <div>
             <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label>
-            <input type="date" name="fecha" class="w-full border rounded p-2" required />
+            <input type="date" name="fecha" value="<%= fechaSeleccionada %>" class="w-full border rounded p-2" required />
           </div>
           <div>
             <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label>
@@ -164,10 +159,23 @@
             <span>Inhabilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa' %></span>
           <% } %>
         </h3>
-        <form method="post" action="/toggle_mantenimiento/<%= mesa.id %>" class="space-y-4">
+        <p class="text-center text-gray-600 mb-6">
+          <% 
+            const nivel2Name = singularizar(parametrizacionLabels?.nivel2Plural) || 'mesa';
+            const esFemenino = nivel2Name.toLowerCase().endsWith('a');
+            const articulo = esFemenino ? 'esta' : 'este';
+          %>
+          <% if (disabled) { %>
+            <span>¿Está seguro que desea habilitar <%= articulo %> <%= nivel2Name %>?</span>
+          <% } else { %>
+            <span>¿Está seguro que desea inhabilitar <%= articulo %> <%= nivel2Name %>?</span>
+          <% } %>
+        </p>
+        <form id="mantForm" class="space-y-4">
+          <div id="mantError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
           <div class="flex justify-between">
             <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="closeMantModal()" data-i18n="agenda.cancelBtn"><%= __("agenda.cancelBtn") %></button>
-            <button type="submit" class="px-6 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded">
+            <button type="submit" id="mantSubmitBtn" class="px-6 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded">
               <span data-i18n="<%= disabled ? 'agenda.confirmEnable' : 'agenda.confirmDisable' %>">
                 <%= disabled ? __("agenda.confirmEnable") : __("agenda.confirmDisable") %>
               </span>
@@ -198,28 +206,6 @@
             <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.endTimeLabel"><%= __("agenda.endTimeLabel") %></label><input type="time" name="horafin" id="editHoraFin" class="w-full border rounded p-2" required /></div>
           </div>
           <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label><input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required /></div>
-          <div>
-            <label class="block text-sm text-gray-600 mb-2"
-                   data-i18n="agenda.consultationTypeLabel">
-              <%= __("agenda.consultationTypeLabel") %>
-            </label>
-
-            <select name="idTipoConsulta"
-                    id="editTipoConsulta"
-                    class="w-full border rounded p-2"
-                    required>
-
-              <option value="" disabled selected data-i18n="agenda.selectConsultationPlaceholder">
-                <%= __("agenda.selectConsultationPlaceholder") %>
-              </option>
-
-              <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
-                <option value="<%= tipo.id %>">
-                  <%= tipo.translationKey ? __('consultationTypes.' + tipo.translationKey) : tipo.nombre %>
-                </option>
-              <% }) %>
-            </select>
-          </div>
           <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label><textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea></div>
           <div class="flex justify-between">
             <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn" data-i18n="agenda.deleteBtn"><%= __("agenda.deleteBtn") %></button>
@@ -303,6 +289,22 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
+// Cambiar automáticamente la mesa cuando se selecciona en el dropdown
+document.addEventListener('DOMContentLoaded', function() {
+  const boxNumberSelect = document.getElementById('box_number');
+  if (boxNumberSelect) {
+    boxNumberSelect.addEventListener('change', function(e) {
+      const mesaId = this.value;
+      if (mesaId) {
+        // Navegar a la nueva mesa
+        window.location.href = `/agenda?box_number=${encodeURIComponent(mesaId)}`;
+      }
+    });
+  }
+});
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function() {
   const eventoModal = document.getElementById('eventoModal');
   const mantModal   = document.getElementById('mantModal');
@@ -328,9 +330,84 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // Manejador del formulario de mantenimiento (Habilitar/Inhabilitar)
+  const mantForm = document.getElementById('mantForm');
+  if (mantForm) {
+    mantForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const mesaId = '<%= mesa.id %>';
+      const mantSubmitBtn = document.getElementById('mantSubmitBtn');
+      const mantError = document.getElementById('mantError');
+      const toggleMantBtn = document.getElementById('toggleMantBtn');
+      
+      // Limpiar errores previos
+      if (mantError) {
+        mantError.classList.add('hidden');
+        mantError.textContent = '';
+      }
+      
+      try {
+        mantSubmitBtn.disabled = true;
+        
+        const response = await fetch(`/toggle_mantenimiento/${mesaId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Error al actualizar el estado');
+        }
+        
+        // Cerrar el modal
+        window.closeMantModal();
+        
+        // Actualizar el botón dinámicamente
+        if (toggleMantBtn) {
+          const isNowDisabled = data.nuevo_estado === 4;
+          
+          // Limpiar clases anteriores completamente
+          toggleMantBtn.className = 'text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg';
+          
+          // Agregar las nuevas clases según el estado
+          if (isNowDisabled) {
+            // Estado: Inhabilitado -> mostrar "Habilitar" (verde)
+            toggleMantBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            toggleMantBtn.innerHTML = '<i class="ri-play-circle-line text-lg"></i><span>Habilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || "mesa" %></span>';
+          } else {
+            // Estado: Habilitado -> mostrar "Inhabilitar" (rojo)
+            toggleMantBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            toggleMantBtn.innerHTML = '<i class="ri-stop-circle-line text-lg"></i><span>Inhabilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || "mesa" %></span>';
+          }
+        }
+        
+        console.log('✅ Estado actualizado correctamente');
+        
+      } catch (error) {
+        console.error('Error:', error);
+        if (mantError) {
+          mantError.classList.remove('hidden');
+          mantError.textContent = error.message || 'Error al actualizar el estado';
+        }
+      } finally {
+        mantSubmitBtn.disabled = false;
+      }
+    });
+  }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('calendar');
   const eventos = <%- eventos_json || '[]' %>;
   const userLang = '<%= userLang || "es" %>';
+  const fechaSeleccionada = '<%= fechaSeleccionada %>';
   
   // Textos traducidos
   const texts = {
@@ -343,6 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridDay',
+    initialDate: fechaSeleccionada || new Date(),
     locale: userLang === 'en' ? 'en' : 'es',
     timeZone: 'local',
     height: 'auto',
@@ -518,7 +596,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('DOMContentLoaded', function() {
     try {
       fillProfesionalSelect(profesionalSelect);
-      const editProfesionalSelect = document.getElementById('editProfesionalSelect');
       fillProfesionalSelect(editProfesionalSelect);
     } catch (e) { console.warn('Error rellenando selects de ocupantes', e); }
   });
@@ -527,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 const editEventoModal = document.getElementById('editEventoModal');
 const editEventoForm = document.getElementById('editEventoForm');
+const editProfesionalSelect = document.getElementById('editProfesionalSelect');
 function pad(num) {
   return num.toString().padStart(2, '0');
 }
@@ -553,26 +631,6 @@ function openEditEventoModal(evento) {
   document.getElementById('editHoraFin').value = toLocalTimeString(evento.end);
   document.getElementById('editFecha').value = evento.start.toISOString().slice(0,10);
   
-  (function() {
-    const tipoSelect = document.getElementById('editTipoConsulta');
-    if (!tipoSelect) return;
-    
-    Array.from(tipoSelect.options).forEach(o => o.selected = false);
-    const placeholder = Array.from(tipoSelect.options).find(o => o.value === '' || o.value == null);
-    if (placeholder) placeholder.selected = true;
-    
-    const tipoId = (evento.extendedProps && evento.extendedProps.tipo_id != null)
-      ? String(evento.extendedProps.tipo_id)
-      : '';
-    if (tipoId) {
-      const match = Array.from(tipoSelect.options).find(o => o.value === tipoId);
-      if (match) {
-        match.selected = true;
-        tipoSelect.value = tipoId;
-      }
-    }
-  })();
-  
   document.getElementById('editObservaciones').value = evento.extendedProps.observaciones || '';
   editEventoForm.action = `/editar_evento/${evento.id}`;
   editEventoModal.classList.remove('hidden');
@@ -582,19 +640,34 @@ editEventoModal.addEventListener('click', e => {
   if (e.target === editEventoModal) editEventoModal.classList.add('hidden');
 });
 
-document.getElementById('deleteEventoBtn').onclick = function() {
+document.getElementById('deleteEventoBtn').onclick = async function() {
   const eventoId = document.getElementById('editEventoId').value;
   const confirmMsg = userLang === 'en' 
     ? 'Are you sure you want to delete this event?' 
     : '¿Seguro que quieres eliminar este evento?';
   if (confirm(confirmMsg)) {
-    window.location.href = `/eliminar_evento/${eventoId}`;
+    try {
+      const resp = await fetch(`/eliminar_evento/${eventoId}`, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (resp.ok) {
+        editEventoModal.classList.add('hidden');
+        await refreshCalendarEvents();
+      } else {
+        const errorMsg = userLang === 'en' ? 'Error deleting event' : 'Error al eliminar el evento';
+        alert(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error eliminando evento:', error);
+      const errorMsg = userLang === 'en' ? 'Error deleting event' : 'Error al eliminar el evento';
+      alert(errorMsg);
+    }
   }
 };
 </script>
 
 <script>
-  const editProfesionalSelect = document.getElementById('editProfesionalSelect');
   // Los ocupantes se cargan directamente sin filtro de especialidad
 </script>
 
@@ -1420,7 +1493,9 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // recargar si hay cambios (el usuario verá los cambios en el calendario)
       console.log('✓ recargando calendario en 500ms...');
-      setTimeout(() => window.location.reload(), 500);
+      const fecha = fechaSeleccionada || '';
+      const fechaParam = fecha ? `?fecha=${encodeURIComponent(fecha)}` : '';
+      setTimeout(() => window.location.href = `/agenda${fechaParam}`, 500);
     } catch (err) {
       console.error('❌ error parseando mensaje websocket:', err);
     }

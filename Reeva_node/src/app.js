@@ -123,7 +123,6 @@ app.use("/", requireAuth, loadParametrizacion, dashboardRouter);
 app.use("/", requireAuth, loadParametrizacion, adminBDDRouter);
 app.use("/", requireAuth, loadParametrizacion, agendaRouter);
 app.use("/", requireAuth, loadParametrizacion, matrizBoxRouter);
-app.use("/", languageRouter);
 app.use("/", requireAuth, loadParametrizacion, infoBoxRouter);
 app.use("/", requireAuth, loadParametrizacion, parametrizacionRouter);
 app.use("/", languageRouter);

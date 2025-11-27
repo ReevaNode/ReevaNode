@@ -35,6 +35,11 @@
         <div class="progress-line"></div>
         <div class="progress-step" data-step="4">
           <div class="step-circle">4</div>
+          <span class="step-label">Elementos</span>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="5">
+          <div class="step-circle">5</div>
           <span class="step-label">Vista Previa</span>
         </div>
       </div>
@@ -111,6 +116,19 @@
                 >
                 <div class="form-help">Si no lo defines, se usará "Ocupante" por defecto</div>
               </div>
+
+              <div class="form-group">
+                <label>
+                  Nivel 4 (Elementos adicionales)
+                  <span class="optional">(opcional)</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="input-nivel4"
+                  placeholder="Ej: Instrumento, Item, Material..." 
+                >
+                <div class="form-help">Si no lo defines, no habrá Nivel 4</div>
+              </div>
             </div>
 
           </div>
@@ -155,8 +173,34 @@
           </div>
         </div>
 
-        <!-- ===== PASO 4: VISTA PREVIA ===== -->
+        <!-- ===== PASO 4: ELEMENTOS (NIVEL 4) ===== -->
         <div class="paso-content" id="paso-4">
+          <h2 class="paso-titulo"><i style="margin-right: 0.5rem;"></i><span id="titulo-paso4-elementos">Elementos</span></h2>
+          <p class="paso-descripcion">Agrega los elementos disponibles en tu empresa</p>
+
+          <div class="nombres-form">
+            <div class="form-group">
+              <div style="display: flex; gap: 0.75rem;">
+                <input 
+                  type="text" 
+                  id="nuevo-elemento"
+                  placeholder="Ej: Bisturí, Silla, Balanza..." 
+                  class="flex-1"
+                >
+                <button type="button" class="btn-agregar-elemento" id="btn-agregar-elemento">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="elementos-lista" id="elementos-lista">
+              <!-- Se llenarán dinámicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PASO 5: VISTA PREVIA ===== -->
+        <div class="paso-content" id="paso-5">
           <h2 class="paso-titulo">Vista Previa</h2>
           <p class="paso-descripcion">Revisa tu configuración</p>
 
@@ -191,6 +235,10 @@
     </div>
   </div>
 
+  <script>
+    // Pasar countEmpresas al manager de parametrización
+    window.countEmpresas = <%= countEmpresas %>;
+  </script>
   <script src="/js/parametrizacion.js"></script>
   <%- include('footer') %>
 </body>

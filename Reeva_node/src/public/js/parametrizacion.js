@@ -3,20 +3,43 @@
 class ParametrizacionManager {
   constructor() {
     this.pasoActual = 1;
-    this.totalPasos = 4;
+    this.totalPasos = 5;
     this.configuracion = {
       nombreEmpresa: '',
       nombreNivel1: '',
       nombreNivel2: '',
       nombreNivel3: '', // Ocupante
+      nombreNivel4: '', // Item/Instrumento (nuevo)
       espacios: [],
-      ocupantes: []
+      ocupantes: [],
+      elementos: []
     };
     
     const urlParams = new URLSearchParams(window.location.search);
     this.desde = urlParams.get('desde') || null;
     
+    // Si no tiene empresas, bloquear retroceso del navegador
+    this.noTieneEmpresas = window.countEmpresas === 0;
+    if (this.noTieneEmpresas) {
+      this.bloquearRetroceso();
+    }
+    
     this.init();
+  }
+
+  bloquearRetroceso() {
+    // Agregar entrada al historial
+    window.history.pushState(null, document.title, window.location.href);
+
+    // Interceptar popstate para bloquear retroceso
+    window.addEventListener('popstate', (e) => {
+      e.preventDefault();
+      // Volver a empujar para mantener en la misma página
+      window.history.pushState(null, document.title, window.location.href);
+      
+      // Mostrar alerta
+      alert('Debes crear una empresa antes de poder salir de este formulario.');
+    });
   }
 
   init() {
@@ -24,7 +47,6 @@ class ParametrizacionManager {
     this.actualizarNavegacion();
   }
 
-  // Generar ID corto (123)
   generarIdCorto() {
     return String(Math.floor(Math.random() * 1000)).padStart(3, '0');
   }
@@ -51,6 +73,10 @@ class ParametrizacionManager {
       this.configuracion.nombreNivel3 = e.target.value;
     });
 
+    document.getElementById('input-nivel4')?.addEventListener('input', (e) => {
+      this.configuracion.nombreNivel4 = e.target.value;
+    });
+
     // Agregar espacio
     document.getElementById('btn-agregar-espacio')?.addEventListener('click', () => {
       this.agregarEspacio();
@@ -64,6 +90,17 @@ class ParametrizacionManager {
     document.getElementById('nuevo-ocupante')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         this.agregarOcupante();
+      }
+    });
+
+    // Agregar elemento
+    document.getElementById('btn-agregar-elemento')?.addEventListener('click', () => {
+      this.agregarElemento();
+    });
+
+    document.getElementById('nuevo-elemento')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.agregarElemento();
       }
     });
 
@@ -129,6 +166,8 @@ class ParametrizacionManager {
     } else if (numeroPaso === 3) {
       this.renderizarOcupantesLista();
     } else if (numeroPaso === 4) {
+      this.renderizarElementosLista();
+    } else if (numeroPaso === 5) {
       this.renderizarVistaPrevia();
     }
   }
@@ -152,11 +191,13 @@ class ParametrizacionManager {
     const nivel1Input = document.getElementById('input-nivel1');
     const nivel2Input = document.getElementById('input-nivel2');
     const nivel3Input = document.getElementById('input-nivel3');
+    const nivel4Input = document.getElementById('input-nivel4');
     
     if (empresaInput) empresaInput.value = this.configuracion.nombreEmpresa;
     if (nivel1Input) nivel1Input.value = this.configuracion.nombreNivel1;
     if (nivel2Input) nivel2Input.value = this.configuracion.nombreNivel2;
     if (nivel3Input) nivel3Input.value = this.configuracion.nombreNivel3;
+    if (nivel4Input) nivel4Input.value = this.configuracion.nombreNivel4;
   }
 
   // ===== VALIDACIONES =====
@@ -237,10 +278,43 @@ class ParametrizacionManager {
       espacioId: `esp-${this.generarIdCorto()}`,
       numero: this.configuracion.espacios.length + 1,
       pasilloNombre: '',
-      mesas: []
+      mesas: [],
+      isNew: true
     };
 
     this.configuracion.espacios.push(nuevoEspacio);
+    this.renderizarEspacios();
+    
+    setTimeout(() => {
+      const input = document.getElementById(`nuevo-espacio-nombre-${nuevoEspacio.espacioId}`);
+      if (input) input.focus();
+    }, 100);
+  }
+
+  confirmarNuevoEspacio(espacioId) {
+    const espacio = this.configuracion.espacios.find(e => e.espacioId === espacioId);
+    if (!espacio) return;
+
+    const input = document.getElementById(`nuevo-espacio-nombre-${espacioId}`);
+    const nombre = input ? input.value.trim() : '';
+
+    if (!nombre) {
+      alert('Por favor ingresa un nombre');
+      return;
+    }
+
+    espacio.pasilloNombre = nombre;
+    espacio.isNew = false;
+    this.renderizarEspacios();
+  }
+
+  cancelarNuevoEspacio(espacioId) {
+    this.configuracion.espacios = this.configuracion.espacios.filter(e => e.espacioId !== espacioId);
+    
+    this.configuracion.espacios.forEach((espacio, index) => {
+      espacio.numero = index + 1;
+    });
+
     this.renderizarEspacios();
   }
 
@@ -316,35 +390,61 @@ class ParametrizacionManager {
       return;
     }
 
-    container.innerHTML = this.configuracion.espacios.map(espacio => `
-      <div class="espacio-card">
-        <div class="espacio-header">
-          <div class="espacio-titulo-editable">
-            <div class="espacio-numero">${espacio.numero}</div>
-            <input 
-              type="text" 
-              class="espacio-nombre-input"
-              placeholder="Nombre ${nombreNivel1}..." 
-              value="${espacio.pasilloNombre}"
-              oninput="parametrizacion.actualizarNombreEspacio('${espacio.espacioId}', this.value)"
-            >
-            <button class="btn-editar-nombre" title="Editar nombre">
-              <i class="fas fa-pencil-alt"></i>
-            </button>
+    container.innerHTML = this.configuracion.espacios.map(espacio => {
+      if (espacio.isNew) {
+        const esFemenino = nombreNivel1.toLowerCase().endsWith('a');
+        const articulo = esFemenino ? 'Nueva' : 'Nuevo';
+        return `
+          <div class="espacio-form-wrapper">
+            <div class="espacio-form">
+              <h4>${articulo} ${nombreNivel1}</h4>
+              <div class="espacio-form-input">
+                <input 
+                  type="text" 
+                  id="nuevo-espacio-nombre-${espacio.espacioId}"
+                  placeholder="Nombre ${nombreNivel1}..."
+                  autofocus
+                >
+                <button class="btn-confirmar-espacio" onclick="parametrizacion.confirmarNuevoEspacio('${espacio.espacioId}')">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button class="btn-cancelar-espacio" onclick="parametrizacion.cancelarNuevoEspacio('${espacio.espacioId}')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
           </div>
-          <button 
-            class="btn-eliminar-espacio" 
-            onclick="parametrizacion.eliminarEspacio('${espacio.espacioId}')"
-          >
-            <i class="fas fa-trash"></i>
-            Eliminar
-          </button>
-        </div>
+        `;
+      } else {
+        return `
+          <div class="espacio-card">
+            <div class="espacio-header">
+              <div class="espacio-titulo-editable">
+                <div class="espacio-numero">${espacio.numero}</div>
+                <input 
+                  type="text" 
+                  class="espacio-nombre-input"
+                  placeholder="Nombre ${nombreNivel1}..." 
+                  value="${espacio.pasilloNombre}"
+                  oninput="parametrizacion.actualizarNombreEspacio('${espacio.espacioId}', this.value)"
+                >
+                <button class="btn-editar-nombre" title="Editar nombre">
+                  <i class="fas fa-pencil-alt"></i>
+                </button>
+              </div>
+              <button 
+                class="btn-eliminar-espacio" 
+                onclick="parametrizacion.eliminarEspacio('${espacio.espacioId}')"
+              >
+                <i class="fas fa-trash"></i>
+                Eliminar
+              </button>
+            </div>
 
-        <div class="mesas-section">
-          ${espacio.mesas.length > 0 ? `
-            <div class="mesas-grid">
-              ${espacio.mesas.map(mesa => `
+            <div class="mesas-section">
+              ${espacio.mesas.length > 0 ? `
+                <div class="mesas-grid">
+                  ${espacio.mesas.map(mesa => `
                 <div class="mesa-card">
                   <button 
                     class="btn-eliminar-mesa" 
@@ -375,7 +475,9 @@ class ParametrizacionManager {
           </button>
         </div>
       </div>
-    `).join('');
+        `;
+      }
+    }).join('');
   }
 
   // ===== PASO 3: OCUPANTES =====
@@ -425,7 +527,54 @@ class ParametrizacionManager {
     `).join('');
   }
 
-  // ===== PASO 4: VISTA PREVIA =====
+  // ===== PASO 4: ELEMENTOS =====
+  agregarElemento() {
+    const inputNuevoElemento = document.getElementById('nuevo-elemento');
+    const nombre = inputNuevoElemento?.value.trim();
+
+    if (!nombre) {
+      alert('Por favor ingresa un nombre');
+      return;
+    }
+
+    this.configuracion.elementos.push({
+      id: `elem-${this.generarIdCorto()}`,
+      nombre
+    });
+
+    inputNuevoElemento.value = '';
+    this.renderizarElementosLista();
+  }
+
+  eliminarElemento(elementoId) {
+    this.configuracion.elementos = this.configuracion.elementos.filter(e => e.id !== elementoId);
+    this.renderizarElementosLista();
+  }
+
+  renderizarElementosLista() {
+    const container = document.getElementById('elementos-lista');
+    
+    if (!container) return;
+
+    if (this.configuracion.elementos.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = this.configuracion.elementos.map(elemento => `
+      <div class="elemento-item">
+        <div class="elemento-info">
+          <i class="fas fa-box"></i>
+          <span>${elemento.nombre}</span>
+        </div>
+        <button type="button" class="btn-eliminar-elemento" onclick="parametrizacion.eliminarElemento('${elemento.id}')">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  // ===== PASO 5: VISTA PREVIA =====
   renderizarVistaPrevia() {
     const previewContainer = document.getElementById('preview-final');
     
@@ -433,6 +582,7 @@ class ParametrizacionManager {
 
     const totalMesas = this.configuracion.espacios.reduce((sum, e) => sum + e.mesas.length, 0);
     const nivel3Display = this.configuracion.nombreNivel3 || 'Ocupante';
+    const nivel4Display = this.configuracion.nombreNivel4 || '';
 
     previewContainer.innerHTML = `
       <div class="preview-header">
@@ -443,6 +593,7 @@ class ParametrizacionManager {
           ${this.configuracion.espacios.length} ${this.configuracion.nombreNivel1}
           • ${totalMesas} ${this.configuracion.nombreNivel2}
           • ${this.configuracion.ocupantes.length} ${nivel3Display}
+          ${nivel4Display ? `• ${this.configuracion.elementos.length} ${nivel4Display}` : ''}
         </div>
       </div>
 
@@ -475,6 +626,22 @@ class ParametrizacionManager {
               <div class="preview-ocupante-card">
                 <i class="fas fa-user-circle"></i>
                 ${ocupante.nombre}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${nivel4Display && this.configuracion.elementos.length > 0 ? `
+        <div class="preview-elementos-section">
+          <h3 class="preview-elementos-title">
+            ${nivel4Display}s Disponibles (${this.configuracion.elementos.length})
+          </h3>
+          <div class="preview-elementos-grid">
+            ${this.configuracion.elementos.map(elemento => `
+              <div class="preview-elemento-card">
+                <i class="fas fa-cube"></i>
+                ${elemento.nombre}
               </div>
             `).join('')}
           </div>

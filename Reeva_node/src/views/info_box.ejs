@@ -4,6 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title data-i18n="infoBox.title">Reeva - <%= __("infoBox.title") %> <%= box.numero %></title>
+  
+  <%
+    // Función para singularizar palabras
+    const singularizar = (palabra) => {
+      if (!palabra || typeof palabra !== 'string') return palabra;
+      if (palabra.length > 4 && palabra.toLowerCase().endsWith('es')) {
+        const ultimaLetraAntes = palabra.charAt(palabra.length - 3).toLowerCase();
+        const vocales = ['a', 'e', 'i', 'o', 'u'];
+        if (!vocales.includes(ultimaLetraAntes)) {
+          return palabra.slice(0, -2);
+        }
+      }
+      if (palabra.toLowerCase().endsWith('s') && !palabra.toLowerCase().endsWith('es')) {
+        return palabra.slice(0, -1);
+      }
+      return palabra;
+    };
+  %>
+  
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
@@ -134,7 +153,7 @@
             <!-- Items del Box -->
             <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
                 <div class="flex items-center justify-between mb-4">
-                  <h2 class="text-lg font-medium text-gray-800" data-i18n="infoBox.boxElements2"><%= __("infoBox.boxElements2") %></h2>
+                  <h2 class="text-lg font-medium text-gray-800"><%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> del <%= parametrizacionLabels?.nivel2Singular || 'Box' %></h2>
                   <button id="editarItemsBtn" type="button" class="text-sm px-3 py-1.5 rounded-button bg-primary text-white hover:opacity-90" data-i18n="infoBox.editBtn"><%= __("infoBox.editBtn") %></button>
                 </div>
                 <div id="listaItemsBox" class="space-y-2">
@@ -236,14 +255,14 @@
 <div id="itemsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm overflow-auto p-4">
   <div class="items-panel bg-white rounded-2xl p-8 w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-2xl font-medium" data-i18n="infoBox.editElements"><%= __("infoBox.editElements") %></h3>
+      <h3 class="text-2xl font-medium">Editar <%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> <%= parametrizacionLabels?.nivel2Singular || 'Box' %></h3>
       <button id="cerrarItemsModal" class="text-gray-400 hover:text-gray-600">
         <i class="ri-close-line ri-2x"></i>
       </button>
     </div>
 
-    <div id="itemsLoading" class="text-center py-8 text-gray-500" data-i18n="infoBox.loading">
-      <%= __("infoBox.loading") %>
+    <div id="itemsLoading" class="text-center py-8 text-gray-500">
+      Cargando <%= parametrizacionLabels?.nivel4Plural || 'Elementos' %>...
     </div>
 
     <div id="itemsList" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
@@ -260,64 +279,25 @@
 <!-- Modal Editar -->
 <div id="editEventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
   <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
-    <h3 class="text-2xl font-medium text-center mb-8" data-i18n="infoBox.editEvent"><%= __("infoBox.editEvent") %></h3>
-    <form id="editEventoForm" method="post" action="" class="space-y-6">
-      <input type="hidden" id="editEventoId" name="eventoId" value="" />
-      <input type="hidden" id="editEstadoId" name="idEstado" value="" />
+    <h3 class="text-2xl font-medium text-center mb-8" data-i18n="agenda.editEventTitle"><%= __("agenda.editEventTitle") %></h3>
+    <form id="editEventoForm" method="post" action="">
+      <input type="hidden" name="evento_id" id="editEventoId" />
       <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
       <div>
-        <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.specialtyLabel"><%= __("agenda.specialtyLabel") %></label>
-        <select id="editEspecialidadSelect" class="w-full border rounded p-2" required>
-          <option value="" disabled selected data-i18n="agenda.selectSpecialtyPlaceholder"><%= __("agenda.selectSpecialtyPlaceholder") %></option>
-          <% (tipos_profesional_normalizados || []).forEach(tipo => { %>
-            <option value="<%= tipo.id %>" 
-                    data-i18n="<%= tipo.translationKey ? 'specialties.' + tipo.translationKey : '' %>">
-              <%= tipo.translationKey ? __('specialties.' + tipo.translationKey) : tipo.nombre %>
-            </option>
-          <% }) %>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.professional"><%= __("infoBox.professional") %></label>
+        <label class="block text-sm text-gray-600 mb-2"><%= parametrizacionLabels?.nivel3Plural || 'Profesionales' %></label>
         <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-          <option value="" disabled selected data-i18n="infoBox.selectProfessional"><%= __("infoBox.selectProfessional") %></option>
+          <!-- Las opciones se generan dinámicamente con JavaScript -->
         </select>
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.consultationType"><%= __("infoBox.consultationType") %></label>
-        <select id="editTipoConsulta" name="idTipoConsulta" class="w-full border rounded p-2" required>
-          <option value="" disabled selected data-i18n="infoBox.selectType"><%= __("infoBox.selectType") %></option>
-          <% (tipos_consulta_normalizados || []).forEach(tipo => { %>
-            <option value="<%= tipo.id %>">
-              <%= tipo.translationKey ? __('consultationTypes.' + tipo.translationKey) : tipo.nombre %>
-            </option>
-          <% }) %>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.date"><%= __("infoBox.date") %></label>
-        <input type="date" id="editFecha" name="fecha" class="w-full border rounded p-2" required />
       </div>
       <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.startTime"><%= __("infoBox.startTime") %></label>
-          <input type="time" id="editHoraInicio" name="horainicio" class="w-full border rounded p-2" required />
-        </div>
-        <div>
-          <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.endTime"><%= __("infoBox.endTime") %></label>
-          <input type="time" id="editHoraFin" name="horafin" class="w-full border rounded p-2" required />
-        </div>
+        <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.startTimeLabel"><%= __("agenda.startTimeLabel") %></label><input type="time" name="horainicio" id="editHoraInicio" class="w-full border rounded p-2" required /></div>
+        <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.endTimeLabel"><%= __("agenda.endTimeLabel") %></label><input type="time" name="horafin" id="editHoraFin" class="w-full border rounded p-2" required /></div>
       </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-2" data-i18n="infoBox.detailsObservations"><%= __("infoBox.detailsObservations") %></label>
-        <textarea id="editObservaciones" name="observaciones" rows="3" class="w-full border rounded p-2"></textarea>
-      </div>
-      <div class="flex justify-between gap-3">
-        <button id="deleteEventoBtn" type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" data-i18n="infoBox.delete"><%= __("infoBox.delete") %></button>
-        <div class="flex gap-3">
-          <button type="button" onclick="editEventoModal.classList.add('hidden')" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" data-i18n="infoBox.cancel"><%= __("infoBox.cancel") %></button>
-          <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="infoBox.saveChanges"><%= __("infoBox.saveChanges") %></button>
-        </div>
+      <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label><input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required /></div>
+      <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label><textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea></div>
+      <div class="flex justify-between">
+        <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn" data-i18n="agenda.deleteBtn"><%= __("agenda.deleteBtn") %></button>
+        <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="agenda.saveChanges"><%= __("agenda.saveChanges") %></button>
       </div>
     </form>
   </div>
@@ -347,7 +327,9 @@
 <script>
 const boxId = '<%= box.idBox || box.id %>';
 const eventos = <%- eventos_json %>;
+const ocupantes = <%- JSON.stringify(ocupantes_normalizados || []) %>;
 const userLang = '<%= userLang || "es" %>';
+const fechaSeleccionada = '<%= fechaSeleccionada %>';
 
 window.__i18n = {
   'infoBox.boxElements.mesa': '<%= __("infoBox.boxElements.mesa") %>',
@@ -503,6 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridDay',
+    initialDate: fechaSeleccionada || new Date(),
     locale: userLang === 'en' ? 'en' : 'es',
     timeZone: 'local',
     height: 'auto',
@@ -634,28 +617,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Script de Profesionales -->
 <script>
-  const profesionales = <%- JSON.stringify(profesionales_normalizados || []) %>;
-  console.log('PROFESIONALES desde servidor:', profesionales);
-  
   const selectProfPlaceholder = userLang === 'en' ? 'Select professional' : '— Selecciona profesional —';
   
-  function fillProfesionalSelect(selectEl, especialidadId) {
+  function fillProfesionalSelect(selectEl) {
     if (!selectEl) return;
     selectEl.innerHTML = `<option value="" disabled selected>${selectProfPlaceholder}</option>`;
-    profesionales.forEach(function(prof) {
-      if (!especialidadId || String(prof.especialidad) === String(especialidadId)) {
-        const option = document.createElement('option');
-        option.value = prof.id;
-        option.textContent = prof.nombre;
-        selectEl.appendChild(option);
-      }
+    ocupantes.forEach(function(ocupante) {
+      const opt = document.createElement('option');
+      opt.value = ocupante.id;
+      opt.textContent = ocupante.nombre || ('Ocupante ' + ocupante.id);
+      selectEl.appendChild(opt);
     });
   }
   
   document.addEventListener('DOMContentLoaded', function() {
     try {
       const editProfesionalSelect = document.getElementById('editProfesionalSelect');
-      fillProfesionalSelect(editProfesionalSelect, null);
+      fillProfesionalSelect(editProfesionalSelect);
     } catch (e) { console.warn('Error rellenando select de profesionales', e); }
   });
 </script>
@@ -677,49 +655,19 @@ function openEditEventoModal(evento) {
     err.classList.add('hidden');
   }
   
-  const editEspecialidadSelect = document.getElementById('editEspecialidadSelect');
   const editProfesionalSelect = document.getElementById('editProfesionalSelect');
+  const ocupanteActual = ocupantes.find(o => o.id == evento.extendedProps.usuario_id);
   
-  // Obtener profesional actual para saber su especialidad
-  const profesionalActual = profesionales.find(p => p.id == evento.extendedProps.usuario_id);
-  
-  // Pre-seleccionar especialidad del profesional actual (para que vea sus datos)
-  if (profesionalActual && editEspecialidadSelect) {
-    editEspecialidadSelect.value = profesionalActual.especialidad;
-    editEspecialidadSelect.dispatchEvent(new Event('change'));
-    
-    // Hacer que parezca deshabilitado visualmente
-    editEspecialidadSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-    editEspecialidadSelect.setAttribute('onclick', 'return false;');
-    editEspecialidadSelect.setAttribute('onkeydown', 'return false;');
-    
-    // Seleccionar el profesional actual DESPUÉS de filtrar por especialidad
-    setTimeout(() => {
-      editProfesionalSelect.value = profesionalActual.id;
-    }, 100);
+  if (ocupanteActual) {
+    editProfesionalSelect.value = ocupanteActual.id;
   } else {
     editProfesionalSelect.value = "";
   }
   
   document.getElementById('editEventoId').value = evento.id;
-  document.getElementById('editEstadoId').value = evento.extendedProps.idEstado || '2';
   document.getElementById('editHoraInicio').value = toLocalTimeString(evento.start);
   document.getElementById('editHoraFin').value = toLocalTimeString(evento.end);
   document.getElementById('editFecha').value = evento.start.toISOString().slice(0,10);
-  
-  // Pre-seleccionar tipo de consulta
-  const tipoSelect = document.getElementById('editTipoConsulta');
-  if (tipoSelect) {
-    const tipoId = (evento.extendedProps && evento.extendedProps.tipo_id != null)
-      ? String(evento.extendedProps.tipo_id)
-      : '';
-    
-    if (tipoId) {
-      tipoSelect.value = tipoId;
-    } else {
-      tipoSelect.value = '';
-    }
-  }
   
   document.getElementById('editObservaciones').value = evento.extendedProps.observaciones || '';
   editEventoForm.action = `/editar_evento/${evento.id}`;
@@ -727,14 +675,6 @@ function openEditEventoModal(evento) {
 }
 
 function closeEditEventoModal() {
-  // Re-habilitar especialidad select y limpiar restricciones
-  const editEspecialidadSelect = document.getElementById('editEspecialidadSelect');
-  if (editEspecialidadSelect) {
-    editEspecialidadSelect.disabled = false;
-    editEspecialidadSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-    editEspecialidadSelect.removeAttribute('onclick');
-    editEspecialidadSelect.removeAttribute('onkeydown');
-  }
   editEventoModal.classList.add('hidden');
 }
 
@@ -744,31 +684,26 @@ editEventoModal.addEventListener('click', e => {
 
 document.getElementById('deleteEventoBtn').onclick = async function() {
   const eventoId = document.getElementById('editEventoId').value;
-  const boxId = <%= box.idBox || box.idbox %>;
-  
-  const deleteConfirmMsg = userLang === 'en' 
+  const confirmMsg = userLang === 'en' 
     ? 'Are you sure you want to delete this event?' 
     : '¿Seguro que quieres eliminar este evento?';
-  const deleteErrorMsg = userLang === 'en'
-    ? 'Error deleting event'
-    : 'Error al eliminar el evento';
-  
-  if (confirm(deleteConfirmMsg)) {
+  if (confirm(confirmMsg)) {
     try {
-      const response = await fetch(`/eliminar_evento/${eventoId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+      const resp = await fetch(`/eliminar_evento/${eventoId}`, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
-      
-      if (response.ok) {
+      if (resp.ok) {
         closeEditEventoModal();
-        window.location.href = `/info-box/${boxId}`;
+        await refreshCalendarEvents();
       } else {
-        alert(deleteErrorMsg);
+        const errorMsg = userLang === 'en' ? 'Error deleting event' : 'Error al eliminar el evento';
+        alert(errorMsg);
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert(deleteErrorMsg);
+      console.error('Error eliminando evento:', error);
+      const errorMsg = userLang === 'en' ? 'Error deleting event' : 'Error al eliminar el evento';
+      alert(errorMsg);
     }
   }
 };

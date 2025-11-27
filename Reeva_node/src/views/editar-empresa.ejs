@@ -19,7 +19,7 @@
       <div>
         <h1><%= empresa.nombre %></h1>
         <p style="color: #999; margin: 0.5rem 0 0; font-size: 0.95rem;">
-          <%= empresa.nombreNivel1 %> • <%= empresa.nombreNivel2 %> • <%= empresa.nombreNivel3 %>
+          <%= empresa.nombreNivel1 %> • <%= empresa.nombreNivel2 %> • <%= empresa.nombreNivel3 %><% if (empresa.nombreNivel4) { %> • <%= empresa.nombreNivel4 %><% } %>
         </p>
       </div>
       <a href="javascript:history.back()" class="btn-volver">
@@ -38,6 +38,12 @@
         <i class="ri-user-line"></i>
         Ocupantes
       </button>
+      <% if (empresa.nombreNivel4) { %>
+      <button class="tab-button" onclick="cambiarTab('elementos')">
+        <i class="ri-checkbox-multiple-line"></i>
+        <%= empresa.nombreNivel4 %>
+      </button>
+      <% } %>
     </div>
 
     <!-- CONTENIDO TABS -->
@@ -72,6 +78,26 @@
       </div>
     </div>
 
+    <!-- TAB: ELEMENTOS/ITEMS -->
+    <% if (empresa.nombreNivel4) { %>
+    <div id="tab-elementos" class="tab-content">
+      <div class="seccion-editar">
+        <div class="elementos-input-wrapper">
+          <input 
+            type="text" 
+            id="nuevo-elemento-editar"
+            placeholder="Ej: Bisturí, Silla, Balanza..."
+          >
+          <button type="button" class="btn-agregar-elemento-editar" onclick="agregarElementoEditar()">
+            <i class="ri-add-line"></i>
+          </button>
+        </div>
+
+        <div id="elementos-lista-editar"></div>
+      </div>
+    </div>
+    <% } %>
+
   </div>
 
   <script>
@@ -82,6 +108,9 @@
     // Asegurar que ocupantes es un array
     if (!empresa.ocupantes) {
       empresa.ocupantes = [];
+    }
+    if (!empresa.items) {
+      empresa.items = [];
     }
     if (!empresa.espacios) {
       empresa.espacios = [];
@@ -103,19 +132,32 @@
     }
     empresa.ocupantes = Object.values(ocupantesUnicos);
 
+    const itemsUnicos = {};
+    for (const item of empresa.items) {
+      if (!itemsUnicos[item.itemId]) {
+        itemsUnicos[item.itemId] = item;
+      }
+    }
+    empresa.items = Object.values(itemsUnicos);
+
     console.log('Datos iniciales cargados:', {
       empresaId: empresa.empresaId,
       nombre: empresa.nombre,
       espacios: empresa.espacios ? empresa.espacios.length : 0,
-      ocupantes: empresa.ocupantes ? empresa.ocupantes.length : 0
+      ocupantes: empresa.ocupantes ? empresa.ocupantes.length : 0,
+      items: empresa.items ? empresa.items.length : 0
     });
     console.log('Espacios completos:', empresa.espacios);
     console.log('Ocupantes completos:', empresa.ocupantes);
+    console.log('Items completos:', empresa.items);
 
     // ===== INICIALIZAR =====
     document.addEventListener('DOMContentLoaded', () => {
       renderizarEspacios();
       renderizarOcupantes();
+      <% if (empresa.nombreNivel4) { %>
+      renderizarElementos();
+      <% } %>
     });
 
     // ===== FUNCIÓN PARA CAMBIAR TABS =====
@@ -211,13 +253,17 @@
       const container = document.getElementById('espacios-lista-editar');
       const nombreNivel1 = empresa.nombreNivel1 || 'Nivel 1';
       const nombreNivel2 = empresa.nombreNivel2 || 'Box';
+      
+      // Determinar si es femenino
+      const esFemenino = nombreNivel1.toLowerCase().endsWith('a');
+      const articulo = esFemenino ? 'Nueva' : 'Nuevo';
 
       // Crear un div temporal para el nuevo espacio
       const nuevoEspacioDiv = document.createElement('div');
       nuevoEspacioDiv.className = 'espacio-form-wrapper';
       nuevoEspacioDiv.innerHTML = `
         <div class="espacio-form">
-          <h4>Nuevo ${nombreNivel1}</h4>
+          <h4>${articulo} ${nombreNivel1}</h4>
           <div class="espacio-form-input">
             <input 
               type="text" 
@@ -566,6 +612,87 @@
         .catch(err => {
           console.error('Error al eliminar ocupante:', err);
           alert('Error al eliminar ocupante');
+        });
+      }
+    }
+
+    // ===== FUNCIONES PARA ELEMENTOS/ITEMS =====
+    function agregarElementoEditar() {
+      const inputNuevoElemento = document.getElementById('nuevo-elemento-editar');
+      const nombre = inputNuevoElemento?.value.trim();
+
+      if (!nombre) {
+        alert('Por favor ingresa un nombre');
+        return;
+      }
+
+      fetch(`/api/empresas/${empresaId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          empresa.items.push(data.item);
+          inputNuevoElemento.value = '';
+          renderizarElementos();
+          console.log('Elemento agregado:', data.item);
+        } else {
+          alert('Error al agregar elemento');
+          console.error('Error respuesta:', data);
+        }
+      })
+      .catch(err => {
+        console.error('Error al agregar elemento:', err);
+        alert('Error al agregar elemento');
+      });
+    }
+
+    function renderizarElementos() {
+      const container = document.getElementById('elementos-lista-editar');
+      const nivel4Name = empresa.nombreNivel4 || 'Elementos';
+      
+      if (!empresa.items || empresa.items.length === 0) {
+        container.innerHTML = `
+          <div class="lista-vacia">
+            <i class="ri-box-3-line"></i>
+            <p>No hay ${nivel4Name} registrados</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = empresa.items.map(item => `
+        <div class="elemento-item-editar" data-id="${item.itemId}">
+          <span style="font-weight: 500; color: #1a1a1a;">${item.nombre}</span>
+          <button type="button" class="btn-icon btn-icon-delete" onclick="eliminarElementoEditar('${item.itemId}')" title="Eliminar">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function eliminarElementoEditar(itemId) {
+      const nivel4Name = empresa.nombreNivel4 ? empresa.nombreNivel4.toLowerCase() : 'item';
+      if (confirm(`¿Eliminar este ${nivel4Name}?`)) {
+        fetch(`/api/empresas/${empresaId}/items/${itemId}`, {
+          method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            empresa.items = empresa.items.filter(i => i.itemId !== itemId);
+            renderizarElementos();
+            console.log('Item eliminado:', itemId);
+          } else {
+            alert('Error al eliminar item');
+            console.error('Error respuesta:', data);
+          }
+        })
+        .catch(err => {
+          console.error('Error al eliminar item:', err);
+          alert('Error al eliminar item');
         });
       }
     }

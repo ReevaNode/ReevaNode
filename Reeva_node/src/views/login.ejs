@@ -104,8 +104,26 @@
           localStorage.setItem("accessToken", data.accessToken);
           localStorage.setItem("refreshToken", data.refreshToken);
 
-          
-          window.location.href = "/bienvenida";
+          // Obtener conteo de empresas para decidir a dónde redirigir
+          try {
+            const empresasRes = await fetch("/api/empresas/count", {
+              method: "GET",
+              headers: { "Content-Type": "application/json" }
+            });
+            const empresasData = await empresasRes.json();
+
+            if (empresasData.success && empresasData.count >= 2) {
+              // Si tiene 2+ empresas, ir a seleccionar-empresa
+              window.location.href = "/seleccionar-empresa";
+            } else {
+              // Si tiene 0 o 1 empresa, ir a bienvenida
+              window.location.href = "/bienvenida";
+            }
+          } catch (err) {
+            console.error("Error al obtener empresas:", err);
+            // Por seguridad, si falla, ir a bienvenida
+            window.location.href = "/bienvenida";
+          }
         } else {
           errorMsg.textContent = data.error || "Error al iniciar sesión";
           errorMsg.style.display = "block";

@@ -133,7 +133,7 @@
                                              box.estado === 'Inhabilitado' ? 'ri-forbid-line' : 'ri-question-line';
                         %>
                             <a href="/info-box/<%= box.id %>" class="box-card <%= estadoClass %>" 
-                                 data-numero="<%= box.nombre.toLowerCase() %>" 
+                                 data-numero="<%= box.numero || box.nombre || '' %>" 
                                  data-especialidad="<%= especialidad.toLowerCase() %>" 
                                  data-estado="<%= box.estado.toLowerCase() %>">
                                 
@@ -162,13 +162,13 @@
                                         <svg class="medico-icon" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                         </svg>
-                                        <span class="medico-label"><%= box.medico_nombre || singularizar(parametrizacionLabels?.nivel3Plural) || 'Ocupante' %></span>
+                                        <span class="medico-label"><%= box.medico_nombre || parametrizacion?.nombreNivel3 || 'Ocupante' %></span>
                                     </div>
                                     <div class="medico-name">
                                         <% if (box.estado === 'Inhabilitado') { %>
                                             <span data-i18n="matrixBox.noAssigned"><%= __("matrixBox.noAssigned") %></span>
                                         <% } else { %>
-                                            <%= singularizar(parametrizacionLabels?.nivel3Plural) || 'Ocupante' %> <%= box.pasilloNombre || especialidad %>
+                                            <%= parametrizacion?.nombreNivel3 || 'Ocupante' %> <%= box.pasilloNombre || especialidad %>
                                         <% } %>
                                     </div>
                                 </div>
@@ -268,21 +268,23 @@ updateLastUpdateTime();
                 console.log('✓ websocket mensaje recibido:', data);
                 
                 const boxId = data.box_id;
-                const boxNumero = data.box_numero || boxId; // intentar con numero primero
                 const newState = data.new_state;
                 const newStateText = data.new_state_text;
                 
-                // buscar tarjeta del box (primero por numero, luego por id)
-                let boxCard = document.querySelector(`.box-card[data-numero="${boxNumero}"]`);
+                console.log(`🔍 Buscando box por ID: ${boxId}, nuevo estado: ${newStateText}`);
                 
-                // si no lo encuentra por numero, intentar con todos los boxes
+                // Buscar la tarjeta por el ID de la mesa (data-numero = box.id)
+                let boxCard = document.querySelector(`.box-card[data-numero="${boxId}"]`);
+                
                 if (!boxCard) {
-                    console.warn(`⚠ no se encontró con data-numero="${boxNumero}", buscando en todas las tarjetas...`);
+                    console.warn(`⚠ no se encontró box con ID=${boxId}, mostrando tarjetas disponibles:`);
                     const allCards = document.querySelectorAll('.box-card');
-                    allCards.forEach(card => {
-                        const cardNumero = card.getAttribute('data-numero');
-                        console.log(`   - tarjeta encontrada con data-numero="${cardNumero}"`);
+                    allCards.forEach((card, idx) => {
+                        const cardId = card.getAttribute('data-numero');
+                        console.log(`   [${idx}] data-numero="${cardId}"`);
                     });
+                } else {
+                    console.log(`✓ box encontrado con ID: ${boxId}`);
                 }
                 
                 
@@ -417,9 +419,9 @@ updateLastUpdateTime();
                     
                     // actualizar timestamp de última actualización
                     updateLastUpdateTime();
-                    console.log(`✅ tarjeta del box ${boxNumero} completamente actualizada`);
+                    console.log(`✅ tarjeta del box ${boxId} completamente actualizada`);
                 } else {
-                    console.error(`❌ no se encontró box-card con data-numero="${boxNumero}" (box_id="${boxId}")`);
+                    console.error(`❌ no se encontró box-card con data-numero="${boxId}"`);
                 }
             } catch (error) {
                 console.error('❌ error procesando mensaje websocket:', error);
