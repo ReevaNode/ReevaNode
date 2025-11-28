@@ -2,7 +2,7 @@
   "header": {
     "home": "Home",
     "dashboard": "Dashboard",
-    "boxMatrix": "Box Matrix",
+    "boxMatrix": "{nivel2Plural} Matrix",
     "agenda": "Schedule",
     "adminDB": "DB Admin",
     "profile": "Profile",
@@ -43,18 +43,17 @@
     "adding": "Adding…"
   },
   "welcome": {
-    "title": "Welcome to BoxCare",
-    "subtitle": "Your medical box management system.",
+    "title": "Welcome to {empresa}",
+    "subtitle": "Your {nivel2Plural} management system",
     "greeting": "Welcome",
     "question": "What would you like to do today?",
     "section": {
-      "firstSteps": "First Steps",
-      "info": "Relevant Information"
+      "firstSteps": "First Steps"
     },
     "cards": {
       "dashboard": {
         "title": "Dashboard",
-        "description": "Access key hospital statistics, performance metrics, quality indicators, and real-time reports.",
+        "description": "Access key statistics, performance metrics, quality indicators, and real-time reports.",
         "list": {
           "a": "Occupancy statistics",
           "b": "Care metrics",
@@ -63,55 +62,25 @@
         "button": "Go to Dashboard"
       },
       "matrix": {
-        "title": "Box Matrix",
-        "description": "View the status of each medical box, occupancy rate, and real-time availability.",
+        "title": "{nivel2} Matrix",
+        "description": "View the status of each {nivel2}, occupancy rate, and real-time availability.",
         "list": {
-          "a": "Status of each box",
+          "a": "Status of each {nivel2}",
           "b": "% occupancy",
           "c": "Immediate availability"
         },
-        "button": "View Box Matrix"
+        "button": "View {nivel2} Matrix"
       },
       "agenda": {
         "title": "Schedule",
-        "description": "Check the schedule for each box by day, week, or month. Plan and manage medical appointments.",
+        "description": "Check the schedule for each {nivel2} by day, week, or month. Plan and manage medical appointments.",
         "list": {
-          "a": "Box calendar",
+          "a": "{nivel2} calendar",
           "b": "Day/week/month view",
           "c": "Appointment management"
         },
         "button": "View Schedule"
       }
-    },
-    "appointment": {
-      "title": "Next Appointment",
-      "date": "Date:",
-      "hour": "Time:",
-      "type": "Consultation Type:",
-      "noAppointments": "No appointments scheduled",
-      "degraded": "The system is temporarily degraded",
-      "cache": "Showing data from cache"
-    },
-    "notifications": {
-      "title": "Notifications",
-      "items": {
-        "a": {
-          "title": "Medical staff meeting - August 19, 9:00 AM",
-          "desc": "Main conference room"
-        },
-        "b": {
-          "title": "COVID-19 protocol update",
-          "desc": "New guidelines available"
-        },
-        "c": {
-          "title": "System maintenance - September 18",
-          "desc": "From 10:00 PM to 11:30 PM"
-        }
-      }
-    },
-    "warning": {
-      "message": "System warning",
-      "cache": "Showing data from cache"
     }
   },
   "agenda": {
@@ -435,6 +404,9 @@
     "monthly": "Monthly",
     "boxElements2": "Box Elements",
     "editBtn": "Edit",
+    "daySummary": "Day Summary",
+    "agenda": "Schedule",
+    "schedulesDay": "Schedules for the Day",
     "noRecords": "No records.",
     "totalHours": "Total Hours",
     "admissions": "Admissions",

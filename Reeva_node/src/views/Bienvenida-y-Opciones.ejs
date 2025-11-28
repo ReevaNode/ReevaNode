@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoxCare - <%= __("welcome.greeting") %></title>
+  <title><%= __("welcome.greeting") %></title>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
     tailwind.config = {
@@ -35,11 +35,11 @@
     <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10 hero-gradient"></div>
     <div class="container mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row items-center relative z-20">
       <div class="w-full md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
-        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4" data-i18n="welcome.title">
-          <%= __("welcome.title") %>
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
+          <%= __("welcome.title").replace("{empresa}", nombreEmpresa) %>
         </h1>
-        <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0" data-i18n="welcome.subtitle">
-          <%= __("welcome.subtitle") %>
+        <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0">
+          <%= __("welcome.subtitle").replace("{nivel2Plural}", nombreNivel2Plural) %>
         </p>
       </div>
     </div>
@@ -99,24 +99,23 @@
               class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
               <i class="ri-grid-line ri-lg"></i>
             </div>
-            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.matrix.title">
-              <%= __("welcome.cards.matrix.title") %>
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2">
+              <%= __("welcome.cards.matrix.title").replace("{nivel2}", nombreNivel2Plural) %>
             </h3>
           </div>
           <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.matrix.description">
-              <%= __("welcome.cards.matrix.description") %>
+            <p class="text-gray-600 text-sm md:text-base mb-2">
+              <%= __("welcome.cards.matrix.description").replace("{nivel2}", nombreNivel2) %>
             </p>
             <ul class="space-y-1 text-primary text-sm md:text-base">
-              <li data-i18n="welcome.cards.matrix.list.a">• <%= __("welcome.cards.matrix.list.a") %></li>
+              <li>• <%= __("welcome.cards.matrix.list.a").replace("{nivel2}", nombreNivel2) %></li>
               <li data-i18n="welcome.cards.matrix.list.b">• <%= __("welcome.cards.matrix.list.b") %></li>
               <li data-i18n="welcome.cards.matrix.list.c">• <%= __("welcome.cards.matrix.list.c") %></li>
             </ul>
           </div>
           <a href="/matriz-box"
-            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base"
-            data-i18n="welcome.cards.matrix.button">
-            <%= __("welcome.cards.matrix.button") %>
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
+            <%= __("welcome.cards.matrix.button").replace("{nivel2}", nombreNivel2Plural) %>
           </a>
         </div>
 
@@ -132,11 +131,11 @@
             </h3>
           </div>
           <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.agenda.description">
-              <%= __("welcome.cards.agenda.description") %>
+            <p class="text-gray-600 text-sm md:text-base mb-2">
+              <%= __("welcome.cards.agenda.description").replace("{nivel2}", nombreNivel2) %>
             </p>
             <ul class="space-y-1 text-primary text-sm md:text-base">
-              <li data-i18n="welcome.cards.agenda.list.a">• <%= __("welcome.cards.agenda.list.a") %></li>
+              <li>• <%= __("welcome.cards.agenda.list.a").replace("{nivel2}", nombreNivel2) %></li>
               <li data-i18n="welcome.cards.agenda.list.b">• <%= __("welcome.cards.agenda.list.b") %></li>
               <li data-i18n="welcome.cards.agenda.list.c">• <%= __("welcome.cards.agenda.list.c") %></li>
             </ul>
@@ -151,120 +150,6 @@
     </div>
   </section>
 
-  <!-- Warning / Degraded -->
-  <% if (warningMessage) { %>
-  <section class="bg-yellow-50 border-l-4 border-yellow-400 py-4">
-    <div class="container mx-auto px-4">
-      <div class="flex items-center gap-3">
-        <i class="ri-error-warning-line text-2xl text-yellow-600"></i>
-        <div>
-          <p class="text-yellow-800 font-medium" data-i18n="welcome.warning.message"><%= warningMessage %></p>
-          <% if (fromCache) { %>
-          <p class="text-yellow-700 text-sm mt-1" data-i18n="welcome.warning.cache"><%= __("welcome.warning.cache") %></p>
-          <% } %>
-        </div>
-      </div>
-    </div>
-  </section>
-  <% } %>
-
-  <!-- Info Relevante -->
-  <section class="bg-gray-50 py-8 md:py-12">
-    <div class="container mx-auto px-4">
-      <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8" data-i18n="welcome.section.info">
-        <%= __("welcome.section.info") %>
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-2">
-        <!-- Próxima Cita -->
-        <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-          <div class="flex items-center mb-3 md:mb-4">
-            <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
-              <i class="ri-calendar-event-line ri-lg"></i>
-            </div>
-            <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2" data-i18n="welcome.appointment.title">
-              <%= __("welcome.appointment.title") %>
-            </h3>
-          </div>
-          <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-            <% if (next_appointment_date) { %>
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.date"><%= __("welcome.appointment.date") %></span>
-              <span class="font-medium text-sm md:text-base"><%= next_appointment_date %></span>
-            </div>
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.hour"><%= __("welcome.appointment.hour") %></span>
-              <span class="font-medium text-sm md:text-base"><%= next_appointment_time %></span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.type"><%= __("welcome.appointment.type") %></span>
-              <span class="font-medium text-sm md:text-base"><%= tipo_consulta %></span>
-            </div>
-            <% } else { %>
-            <div class="text-center py-4">
-              <i class="ri-calendar-close-line text-4xl text-gray-400 mb-2"></i>
-              <p class="text-gray-600 text-sm md:text-base" data-i18n="welcome.appointment.noAppointments">
-                <%= __("welcome.appointment.noAppointments") %>
-              </p>
-              <% if (systemDegraded) { %>
-              <p class="text-gray-500 text-xs mt-2" data-i18n="welcome.appointment.degraded">
-                <%= __("welcome.appointment.degraded") %>
-              </p>
-              <% } %>
-            </div>
-            <% } %>
-          </div>
-        </div>
-
-        <!-- Notificaciones -->
-        <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-          <div class="flex items-center mb-3 md:mb-4">
-            <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-primary">
-              <i class="ri-notification-3-line ri-lg"></i>
-            </div>
-            <h3 class="text-base md:text-lg font-semibold text-gray-800 ml-2" data-i18n="welcome.notifications.title">
-              <%= __("welcome.notifications.title") %>
-            </h3>
-          </div>
-          <ul class="space-y-3 md:space-y-4">
-            <li class="flex items-start">
-              <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
-              <div>
-                <p class="text-gray-800 text-sm md:text-base" data-i18n="welcome.notifications.items.a.title">
-                  <%= __("welcome.notifications.items.a.title") %>
-                </p>
-                <p class="text-xs md:text-sm text-gray-500" data-i18n="welcome.notifications.items.a.desc">
-                  <%= __("welcome.notifications.items.a.desc") %>
-                </p>
-              </div>
-            </li>
-            <li class="flex items-start">
-              <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2 flex-shrink-0"></div>
-              <div>
-                <p class="text-gray-800 text-sm md:text-base" data-i18n="welcome.notifications.items.b.title">
-                  <%= __("welcome.notifications.items.b.title") %>
-                </p>
-                <p class="text-xs md:text-sm text-gray-500" data-i18n="welcome.notifications.items.b.desc">
-                  <%= __("welcome.notifications.items.b.desc") %>
-                </p>
-              </div>
-            </li>
-            <li class="flex items-start">
-              <div class="w-2 h-2 rounded-full bg-primary mt-2 mr-2"></div>
-              <div>
-                <p class="text-gray-800 text-sm md:text-base" data-i18n="welcome.notifications.items.c.title">
-                  <%= __("welcome.notifications.items.c.title") %>
-                </p>
-                <p class="text-xs md:text-sm text-gray-500" data-i18n="welcome.notifications.items.c.desc">
-                  <%= __("welcome.notifications.items.c.desc") %>
-                </p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
   <%- include('footer') %>
 </body>
 </html>

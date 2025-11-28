@@ -115,7 +115,7 @@
 
             <!-- Resumen del Día Card -->
             <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
-              <h2 class="text-lg font-medium text-gray-800 mb-4">Resumen del Día</h2>
+              <h2 class="text-lg font-medium text-gray-800 mb-4"><%= __("infoBox.daySummary") %></h2>
               <div class="grid grid-cols-2 gap-4">
 
                 <!-- Horas Totales -->
@@ -125,7 +125,7 @@
                     <div class="text-3xl font-bold">
                       <%= horas_tot %>
                     </div>
-                    <div class="text-sm text-gray-600">Horas Totales</div>
+                    <div class="text-sm text-gray-600"><%= __("infoBox.totalHours") %></div>
                   </div>
                 </div>
 
@@ -136,7 +136,7 @@
                     <div class="text-3xl font-bold" id="agendasDelDia">
                       0
                     </div>
-                    <div class="text-sm text-gray-600">Agendas del Día</div>
+                    <div class="text-sm text-gray-600"><%= __("infoBox.schedulesDay") %></div>
                   </div>
                 </div>
 
@@ -174,7 +174,7 @@
 
   <!-- Calendario -->
   <section class="bg-white rounded-lg shadow-sm mt-6 md:mt-8 p-4 md:p-6">
-    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800">Agenda <%= box.numero %></h2></div>
+    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800"><%= __("infoBox.agenda") %> <%= box.numero %></h2></div>
     
     <!-- Banner instructivo -->
     <div id="instructionBanner" class="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg relative overflow-hidden">
@@ -207,7 +207,7 @@
 <div id="itemsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm overflow-auto p-4">
   <div class="items-panel bg-white rounded-2xl p-8 w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-2xl font-medium">Editar <%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> <%= box.numero %></h3>
+      <h3 class="text-2xl font-medium"><%= __("infoBox.editBtn") %> <%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> <%= box.numero %></h3>
       <button id="cerrarItemsModal" class="text-gray-400 hover:text-gray-600">
         <i class="ri-close-line ri-2x"></i>
       </button>
