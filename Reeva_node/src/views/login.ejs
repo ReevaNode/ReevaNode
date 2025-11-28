@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/css/login.css" /> 
 </head>
@@ -144,6 +147,46 @@
         btn.textContent = "Iniciar sesión";
       }
     });
+  </script>
+
+  <script>
+    // Bloquear retroceso del navegador en login
+    (function() {
+      let historyPushed = false;
+      
+      // Empujar estado al historial para detectar retroceso
+      if (!historyPushed) {
+        window.history.pushState({ type: 'login' }, null, window.location.href);
+        historyPushed = true;
+      }
+      
+      // Escuchar evento de retroceso
+      window.addEventListener('popstate', function(e) {
+        // Si intenta retroceder desde login, volver a empujar estado para quedarse en la página
+        window.history.pushState({ type: 'login' }, null, window.location.href);
+      });
+
+      // Verificar si hay sesión activa al cargar (evitar acceso directo a /login si ya está autenticado)
+      document.addEventListener('DOMContentLoaded', function() {
+        fetch('/auth/check-session', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.authenticated && data.user) {
+            // Si ya está autenticado, redirigir según cantidad de empresas
+            if (data.countEmpresas >= 2) {
+              window.location.href = '/seleccionar-empresa';
+            } else {
+              window.location.href = '/bienvenida';
+            }
+          }
+        })
+        .catch(err => console.error('Error verificando sesión:', err));
+      });
+    })();
   </script>
 </body>
 </html>

@@ -378,4 +378,59 @@ router.get("/logout", async (req, res) => {
   }
 });
 
+// check-session - Verificar si el usuario tiene sesión activa
+router.get("/check-session", async (req, res) => {
+  try {
+    if (req.session?.user) {
+      // Si hay sesión, obtener conteo de empresas
+      try {
+        const result = await docClient.send(new ScanCommand({
+          TableName: 'EmpresasTable',
+          FilterExpression: 'userEmail = :email',
+          ExpressionAttributeValues: {
+            ':email': req.session.user.email
+          },
+          ProjectionExpression: 'id'
+        }));
+
+        const countEmpresas = result.Items?.length || 0;
+
+        res.json({
+          authenticated: true,
+          user: {
+            email: req.session.user.email,
+            username: req.session.user.username,
+            id: req.session.user.id
+          },
+          countEmpresas: countEmpresas
+        });
+      } catch (err) {
+        console.error('Error obteniendo conteo de empresas:', err);
+        res.json({
+          authenticated: true,
+          user: {
+            email: req.session.user.email,
+            username: req.session.user.username,
+            id: req.session.user.id
+          },
+          countEmpresas: 0
+        });
+      }
+    } else {
+      res.json({
+        authenticated: false,
+        user: null,
+        countEmpresas: 0
+      });
+    }
+  } catch (error) {
+    console.error('Error en check-session:', error);
+    res.json({
+      authenticated: false,
+      user: null,
+      countEmpresas: 0
+    });
+  }
+});
+
 export default router;

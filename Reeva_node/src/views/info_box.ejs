@@ -278,24 +278,25 @@
 
 <!-- Modal Editar -->
 <div id="editEventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
-  <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl relative">
+    <button type="button" onclick="document.getElementById('editEventoModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-light leading-none"><i class="ri-close-line"></i></button>
     <h3 class="text-2xl font-medium text-center mb-8" data-i18n="agenda.editEventTitle"><%= __("agenda.editEventTitle") %></h3>
     <form id="editEventoForm" method="post" action="">
       <input type="hidden" name="evento_id" id="editEventoId" />
-      <div id="editError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
-      <div>
+      <div id="editError" class="hidden mb-6 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
+      <div class="mb-6">
         <label class="block text-sm text-gray-600 mb-2"><%= parametrizacionLabels?.nivel3Plural || 'Profesionales' %></label>
         <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
           <!-- Las opciones se generan dinámicamente con JavaScript -->
         </select>
       </div>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-6 mb-6">
         <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.startTimeLabel"><%= __("agenda.startTimeLabel") %></label><input type="time" name="horainicio" id="editHoraInicio" class="w-full border rounded p-2" required /></div>
         <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.endTimeLabel"><%= __("agenda.endTimeLabel") %></label><input type="time" name="horafin" id="editHoraFin" class="w-full border rounded p-2" required /></div>
       </div>
-      <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label><input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required /></div>
-      <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label><textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea></div>
-      <div class="flex justify-between">
+      <div class="mb-6"><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.dateLabel"><%= __("agenda.dateLabel") %></label><input type="date" name="fecha" id="editFecha" class="w-full border rounded p-2" required /></div>
+      <div class="mb-6"><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label><textarea name="observaciones" id="editObservaciones" rows="4" class="w-full border rounded p-2"></textarea></div>
+      <div class="flex justify-between gap-3">
         <button type="button" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700" id="deleteEventoBtn" data-i18n="agenda.deleteBtn"><%= __("agenda.deleteBtn") %></button>
         <button type="submit" class="px-6 py-2 bg-primary text-white rounded hover:bg-primary/90" data-i18n="agenda.saveChanges"><%= __("agenda.saveChanges") %></button>
       </div>

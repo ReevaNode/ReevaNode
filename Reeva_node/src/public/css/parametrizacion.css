@@ -1297,17 +1297,16 @@ body.theme-dark .spinner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.875rem 1rem;
-  background: var(--background);
-  border-radius: var(--radius);
-  border: 1px solid var(--border-color);
+  padding: 1rem 1.25rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
   transition: var(--transition);
   animation: slideIn 0.3s ease;
 }
 
 .ocupante-item:hover {
-  background: #f9f9f9;
-  border-color: var(--primary-color);
+  background: #e5e7eb;
 }
 
 .ocupante-info {
@@ -1374,17 +1373,16 @@ body.theme-dark .spinner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.875rem 1rem;
-  background: var(--background);
-  border-radius: var(--radius);
-  border: 1px solid var(--border-color);
+  padding: 1rem 1.25rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
   transition: var(--transition);
   animation: slideIn 0.3s ease;
 }
 
 .elemento-item:hover {
-  background: #f9f9f9;
-  border-color: var(--primary-color);
+  background: #e5e7eb;
 }
 
 .elemento-info {
@@ -1445,21 +1443,89 @@ body.theme-dark .spinner {
 .btn-agregar-elemento:active {
   transform: translateY(0);
 }
-}
 
 /* Modo oscuro */
 body.theme-dark .ocupante-item {
-  background: #2d3748;
-  border-color: #4a5568;
+  background: rgba(55, 65, 81, 0.6);
+  border-color: rgba(148, 163, 184, 0.3);
+  border-left: 3px solid #f5d0fe;
 }
 
 body.theme-dark .ocupante-item:hover {
-  background: #374151;
-  border-color: var(--primary-color);
+  background: rgba(75, 85, 99, 0.75);
+  border-color: #f5d0fe;
 }
 
 body.theme-dark .ocupante-info {
+  color: #f3f4f6;
+}
+
+body.theme-dark .elemento-item {
+  background: rgba(55, 65, 81, 0.6);
+  border-color: rgba(148, 163, 184, 0.3);
+  border-left: 3px solid #f5d0fe;
+}
+
+body.theme-dark .elemento-item:hover {
+  background: rgba(75, 85, 99, 0.75);
+  border-color: #f5d0fe;
+}
+
+body.theme-dark .elemento-info {
+  color: #f3f4f6;
+}
+
+body.theme-dark .btn-eliminar-elemento {
+  color: #fca5a5;
+}
+
+body.theme-dark .btn-eliminar-elemento:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+body.theme-dark .btn-agregar-elemento {
+  background: var(--primary-color);
+  color: white;
+}
+
+body.theme-dark .btn-agregar-elemento:hover {
+  background: var(--primary-hover);
+}
+
+body.theme-dark .btn-eliminar-ocupante {
+  color: #fca5a5;
+}
+
+body.theme-dark .btn-eliminar-ocupante:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Estilos para inputs flex en modo oscuro */
+body.theme-dark .form-group input.flex-1 {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.3);
   color: #e2e8f0;
+}
+
+body.theme-dark .form-group input.flex-1::placeholder {
+  color: #64748b;
+}
+
+body.theme-dark .form-group input.flex-1:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(155, 79, 136, 0.2);
+  background: #0f172a;
+}
+
+/* Contenedor nombres-form en paso 3 y 4 en modo oscuro */
+body.theme-dark .nombres-form {
+  background: #1f2937;
+  border-color: rgba(155, 79, 136, 0.3);
+}
+
+body.theme-dark .nombres-form .form-group {
+  margin-bottom: 1.5rem;
 }
 
 @keyframes slideIn {

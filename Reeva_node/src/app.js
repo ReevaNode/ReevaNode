@@ -14,6 +14,7 @@ import i18n from "./config/i18n.js";
 
 import requireAuth from "./middlewares/requireAuth.js";
 import loadParametrizacion from "./middlewares/loadParametrizacion.js";
+import noCache from "./middlewares/noCache.js";
 import { config, validarConfig } from "./config/index.js";
 import { loggerRequest, loggerError } from "./utils/logger.js";
 
@@ -55,6 +56,9 @@ app.use(session({
 }));
 
 app.use(flash());
+
+// Middleware de no-cache para proteger rutas autenticadas
+app.use(noCache);
 
 // middlewares
 app.use(cors({
