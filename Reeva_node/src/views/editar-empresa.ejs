@@ -574,14 +574,22 @@
       const container = document.getElementById('ocupantes-lista-editar');
       
       if (!empresa.ocupantes || empresa.ocupantes.length === 0) {
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.minHeight = '300px';
         container.innerHTML = `
-          <div class="lista-vacia">
-            <i class="ri-user-add-line"></i>
-            <p>No hay ocupantes registrados</p>
+          <div style="text-align: center;">
+            <i class="ri-user-add-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px; display: block;"></i>
+            <p style="font-size: 15px; font-weight: 600; color: #666; margin: 0;">No hay ocupantes registrados</p>
+            <p style="font-size: 13px; margin-top: 8px; color: #999;">Haz clic en <strong>+</strong> para agregar</p>
           </div>
         `;
         return;
       }
+      
+      container.style.display = '';
+      container.style.minHeight = '';
 
       container.innerHTML = empresa.ocupantes.map(ocupante => `
         <div class="ocupante-item-editar" data-id="${ocupante.ocupanteId}">
@@ -654,14 +662,23 @@
       const nivel4Name = empresa.nombreNivel4 || 'Elementos';
       
       if (!empresa.items || empresa.items.length === 0) {
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.minHeight = '300px';
         container.innerHTML = `
-          <div class="lista-vacia">
-            <i class="ri-box-3-line"></i>
-            <p>No hay ${nivel4Name} registrados</p>
+          <div style="text-align: center;">
+            <i class="ri-box-3-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px; display: block;"></i>
+            <p style="font-size: 15px; font-weight: 600; color: #666; margin: 0;">No hay ${nivel4Name} registrados</p>
+            <p style="font-size: 13px; margin-top: 8px; color: #999;">Haz clic en <strong>+</strong> para agregar</p>
           </div>
         `;
         return;
       }
+      
+      container.style.display = '';
+      container.style.minHeight = '';
+
 
       container.innerHTML = empresa.items.map(item => `
         <div class="elemento-item-editar" data-id="${item.itemId}">
@@ -697,5 +714,6 @@
       }
     }
   </script>
+  <%- include('footer') %>
 </body>
 </html>

@@ -24,7 +24,8 @@ const loadParametrizacion = async (req, res, next) => {
     const defaults = {
       nombreNivel1: 'Pasillo',
       nombreNivel2: 'Mesa',
-      nombreNivel3: 'Ocupante'
+      nombreNivel3: 'Ocupante',
+      nombreNivel4: 'Elemento'
     };
 
     // Si no hay usuario autenticado, pasar los valores por defecto
@@ -56,7 +57,8 @@ const loadParametrizacion = async (req, res, next) => {
       const parametrizacion = {
         nombreNivel1: empresaActiva.nombreNivel1 || defaults.nombreNivel1,
         nombreNivel2: empresaActiva.nombreNivel2 || defaults.nombreNivel2,
-        nombreNivel3: empresaActiva.nombreNivel3 || defaults.nombreNivel3
+        nombreNivel3: empresaActiva.nombreNivel3 || defaults.nombreNivel3,
+        nombreNivel4: empresaActiva.nombreNivel4 || defaults.nombreNivel4
       };
 
       res.locals.parametrizacion = parametrizacion;
@@ -79,7 +81,8 @@ const loadParametrizacion = async (req, res, next) => {
     const defaults = {
       nombreNivel1: 'Pasillo',
       nombreNivel2: 'Mesa',
-      nombreNivel3: 'Ocupante'
+      nombreNivel3: 'Ocupante',
+      nombreNivel4: 'Elemento'
     };
     res.locals.parametrizacion = defaults;
     res.locals.parametrizacionLabels = getParametrizacionLabels(defaults);

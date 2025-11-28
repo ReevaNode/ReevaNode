@@ -182,9 +182,10 @@ router.get('/mis-empresas', requireAuth, checkEmpresas, async (req, res) => {
     console.log(`Se obtuvieron ${empresas.length} empresas con espacios y ocupantes`);
     
     res.render('mis_empresas', {
-      user: req.user,
+      user: req.session?.user || req.user,
       empresas,
-      pageTitle: 'Mis Empresas'
+      pageTitle: 'Mis Empresas',
+      activePage: 'mis-empresas'
     });
   } catch (error) {
     console.error('Error al cargar mis empresas:', error);
@@ -272,10 +273,11 @@ router.get('/mis-empresas/editar/:empresaId', requireAuth, async (req, res) => {
     empresa.items = items;
 
     res.render('editar-empresa', {
-      user: req.user,
+      user: req.session?.user || req.user,
       empresa,
-      idToken: req.idToken || '',
-      mostrarHeader: true
+      idToken: req.session?.user?.idToken || '',
+      mostrarHeader: true,
+      activePage: 'editar-empresa'
     });
   } catch (error) {
     console.error('Error al cargar empresa para edición:', error);

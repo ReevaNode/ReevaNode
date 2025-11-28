@@ -36,8 +36,8 @@ router.get('/info-box/:idBox', async (req, res) => {
                                 ...encontrada,
                                 idBox: idBox,
                                 numero: encontrada.nombre,
-                                pasilloNombre: espacio.pasilloNombre,
-                                especialidad: espacio.pasilloNombre
+                                pasilloNombre: espacio.pasilloNombre || espacio.nombre,
+                                especialidad: encontrada.especialidad || espacio.nombre
                             };
                             break;
                         }
@@ -509,7 +509,7 @@ router.get('/info-box/:idBox', async (req, res) => {
         });
 
         res.render('info_box', {
-            user: req.user,
+            user: req.session?.user || req.user,
             box,
             hoy: hoy.toISOString().split('T')[0],
             fechaSeleccionada: fechaSeleccionada,
@@ -540,7 +540,8 @@ router.get('/info-box/:idBox', async (req, res) => {
             parametrizacionLabels: res.locals.parametrizacionLabels || {},
             userLang: req.session?.userLang || 'es',
             __: res.__,
-            activePage: 'infobox'
+            activePage: 'infobox',
+            AUTH_API_BASE: res.locals.AUTH_API_BASE
         });
 
     } catch (error) {

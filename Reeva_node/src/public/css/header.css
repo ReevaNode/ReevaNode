@@ -2,6 +2,15 @@
   content: "\f3c2"; 
 }
 
+.logo-reeva-header {
+  filter: none;
+  transition: filter 0.3s ease;
+}
+
+body.theme-dark .logo-reeva-header {
+  filter: brightness(0) invert(1);
+}
+
 body {
   font-family: 'Arial', sans-serif;
   background-color: #f9fafb;

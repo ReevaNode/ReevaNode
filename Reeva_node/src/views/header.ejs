@@ -43,7 +43,7 @@
   <div class="container mx-auto flex items-center justify-between">
     <!-- Logo a la izquierda -->
     <div class="flex items-center gap-4 flex-none">
-      <img src="/images/icono2.png" alt="Logo Hospital Padre Hurtado" class="w-32 h-auto object-contain" />
+      <img src="/images/reeva.png" alt="Logo Reeva" class="w-10 h-auto object-contain logo-reeva-header" />
     </div>
 
     <!-- Desktop Navigation -->
@@ -92,11 +92,11 @@
           <span class="font-medium" data-i18n="header.profile"><%= __("header.profile") %></span>
         </a>
         <div id="perfil-menu" class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg py-2 hidden" style="z-index: 9999;">
-          <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 text-primary font-semibold hover:bg-gray-50 transition-colors">
+          <a href="/bienvenida" class="flex items-center gap-2 px-4 py-3 <%= (typeof activePage !== 'undefined' && activePage === 'bienvenida') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %> hover:bg-gray-50 transition-colors">
             <i class="ri-user-line ri-lg"></i>
             <span class="font-medium" data-i18n="header.mySpace"><%= __("header.mySpace") %></span>
           </a>
-          <a href="/mis-empresas" class="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+          <a href="/mis-empresas" class="flex items-center gap-2 px-4 py-3 <%= (typeof activePage !== 'undefined' && activePage === 'mis-empresas') ? 'text-primary font-semibold' : 'text-gray-700 hover:text-primary' %> hover:bg-gray-50 transition-colors">
             <i class="ri-building-line ri-lg"></i>
             <span class="font-medium" data-i18n="header.myCompanies"><%= __("header.myCompanies") %></span>
           </a>

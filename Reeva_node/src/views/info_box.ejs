@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="infoBox.title">Reeva - <%= __("infoBox.title") %> <%= box.numero %></title>
+  <title>Información <%= box.numero %></title>
   
   <%
     // Función para singularizar palabras
@@ -98,14 +98,7 @@
               <div class="p-4">
                   <div class="text-4xl font-bold"><%= box.numero %></div>
                   <div class="text-sm font-semibold text-gray-700 mt-1">
-                      <span data-i18n="infoBox.boxNumber"><%= __("infoBox.boxNumber") %></span>
-                      <% if (box.especialidadTranslationKey) { %>
-                        <span data-i18n="specialties.<%= box.especialidadTranslationKey %>">
-                          <%= __('specialties.' + box.especialidadTranslationKey).toUpperCase() %>
-                        </span>
-                      <% } else { %>
-                        <%= box.especialidad.toUpperCase() %>
-                      <% } %>
+                      <%= box.pasilloNombre || 'N/A' %>
                   </div>
               </div>
           </div>
@@ -120,30 +113,30 @@
       <!-- Middle Column (span=2) -->
       <div class="space-y-6 md:col-span-2">
 
-            <!-- Pacientes atendidos Card -->
+            <!-- Resumen del Día Card -->
             <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
-              <h2 class="text-lg font-medium text-gray-800 mb-4" data-i18n="infoBox.patientsAttended"><%= __("infoBox.patientsAttended") %></h2>
+              <h2 class="text-lg font-medium text-gray-800 mb-4">Resumen del Día</h2>
               <div class="grid grid-cols-2 gap-4">
 
-                <!-- Diario -->
+                <!-- Horas Totales -->
                 <div class="flex items-center">
-                  <i class="ri-calendar-line ri-2x text-gray-700"></i>
+                  <i class="ri-time-line ri-2x text-gray-700"></i>
                   <div class="ml-4">
                     <div class="text-3xl font-bold">
-                      <%= total_diario %>
+                      <%= horas_tot %>
                     </div>
-                    <div class="text-sm text-gray-600" data-i18n="infoBox.daily"><%= __("infoBox.daily") %></div>
+                    <div class="text-sm text-gray-600">Horas Totales</div>
                   </div>
                 </div>
 
-                <!-- Mensual -->
+                <!-- Agendas Programadas -->
                 <div class="flex items-center">
-                  <i class="ri-calendar-line ri-2x text-gray-700"></i>
+                  <i class="ri-calendar-check-line ri-2x text-gray-700"></i>
                   <div class="ml-4">
-                    <div class="text-3xl font-bold">
-                      <%= mensual %>
+                    <div class="text-3xl font-bold" id="agendasDelDia">
+                      0
                     </div>
-                    <div class="text-sm text-gray-600" data-i18n="infoBox.monthly"><%= __("infoBox.monthly") %></div>
+                    <div class="text-sm text-gray-600">Agendas del Día</div>
                   </div>
                 </div>
 
@@ -153,7 +146,7 @@
             <!-- Items del Box -->
             <div class="bg-white rounded shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-6">
                 <div class="flex items-center justify-between mb-4">
-                  <h2 class="text-lg font-medium text-gray-800"><%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> del <%= parametrizacionLabels?.nivel2Singular || 'Box' %></h2>
+                  <h2 class="text-lg font-medium text-gray-800"><%= parametrizacionLabels?.nivel4Plural || parametrizacionLabels?.nivel4 || 'Instrumentos' %> <%= box.numero %></h2>
                   <button id="editarItemsBtn" type="button" class="text-sm px-3 py-1.5 rounded-button bg-primary text-white hover:opacity-90" data-i18n="infoBox.editBtn"><%= __("infoBox.editBtn") %></button>
                 </div>
                 <div id="listaItemsBox" class="space-y-2">
@@ -170,8 +163,6 @@
                           <span class="text-gray-700">x <%= item.cantidad %></span>
                         </div>
                       <% }) %>
-                    <% } else { %>
-                      <p class="text-sm text-gray-500" data-i18n="infoBox.noRecords"><%= __("infoBox.noRecords") %></p>
                     <% } %>
                 </div>
             </div>
@@ -179,33 +170,11 @@
       </div>
   </div>
 
-  <!-- Estadísticas rapidas -->
-  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-      <div class="bg-white rounded shadow-sm p-4 text-center">
-          <div class="text-2xl font-bold"><%= horas_tot %></div>
-          <div class="text-sm text-gray-600" data-i18n="infoBox.totalHours"><%= __("infoBox.totalHours") %></div>
-      </div>
-      <div class="bg-white rounded shadow-sm p-4 text-center">
-          <div class="text-2xl font-bold"><%= ingresos %></div>
-          <div class="text-sm text-gray-600" data-i18n="infoBox.admissions"><%= __("infoBox.admissions") %></div>
-      </div>
-      <div class="bg-white rounded shadow-sm p-4 text-center">
-          <div class="text-2xl font-bold"><%= controles %></div>
-          <div class="text-sm text-gray-600" data-i18n="infoBox.followups"><%= __("infoBox.followups") %></div>
-      </div>
-      <div class="bg-white rounded shadow-sm p-4 text-center">
-          <div class="text-2xl font-bold"><%= altas %></div>
-          <div class="text-sm text-gray-600" data-i18n="infoBox.discharges"><%= __("infoBox.discharges") %></div>
-      </div>
-      <div class="bg-white rounded shadow-sm p-4 text-center">
-          <div class="text-2xl font-bold"><%= gestiones %></div>
-          <div class="text-sm text-gray-600" data-i18n="infoBox.management"><%= __("infoBox.management") %></div>
-      </div>
-  </div>
+
 
   <!-- Calendario -->
   <section class="bg-white rounded-lg shadow-sm mt-6 md:mt-8 p-4 md:p-6">
-    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800" data-i18n="infoBox.boxSchedule"><%= __("infoBox.boxSchedule") %></h2></div>
+    <div class="mb-4 md:mb-6"><h2 class="text-xl md:text-2xl font-semibold text-gray-800">Agenda <%= box.numero %></h2></div>
     
     <!-- Banner instructivo -->
     <div id="instructionBanner" class="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg relative overflow-hidden">
@@ -234,28 +203,11 @@
     <div id="calendar" class="w-full min-h-[600px] md:min-h-[700px] overflow-auto"></div>
   </section>
 
-  <!-- toggle box (habilitar/inhabilitar) -->
-  <button
-    id="toggleMantBtn"
-    class="<%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
-    onclick="openMantModal()"
-  >
-    <% if (disabled) { %>
-      <i class="ri-play-circle-line text-lg"></i>
-      <span data-i18n="infoBox.enableBox"><%= __("infoBox.enableBox") %></span>
-    <% } else { %>
-      <i class="ri-stop-circle-line text-lg"></i>
-      <span data-i18n="infoBox.disableBox"><%= __("infoBox.disableBox") %></span>
-    <% } %>
-  </button>
-
-</main>
-
 <!-- Modal Items -->
 <div id="itemsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm overflow-auto p-4">
   <div class="items-panel bg-white rounded-2xl p-8 w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-2xl font-medium">Editar <%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> <%= parametrizacionLabels?.nivel2Singular || 'Box' %></h3>
+      <h3 class="text-2xl font-medium">Editar <%= parametrizacionLabels?.nivel4Plural || 'Elementos' %> <%= box.numero %></h3>
       <button id="cerrarItemsModal" class="text-gray-400 hover:text-gray-600">
         <i class="ri-close-line ri-2x"></i>
       </button>
@@ -304,26 +256,6 @@
   </div>
 </div>
 
-<!-- Modal Mantenimiento -->
-<div id="mantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
-  <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-xl">
-    <h3 class="text-2xl font-medium text-center mb-6" data-i18n="<%= disabled ? 'infoBox.enableBox' : 'infoBox.disableBox' %>">
-      <%= disabled ? __("infoBox.enableBox") : __("infoBox.disableBox") %>
-    </h3>
-    <p class="text-center text-gray-600 mb-6" data-i18n="<%= disabled ? 'infoBox.confirmEnable' : 'infoBox.confirmDisable' %>">
-      <%= disabled ? __("infoBox.confirmEnable") : __("infoBox.confirmDisable") %>
-    </p>
-    <div class="flex justify-between">
-      <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="closeMantModal()" data-i18n="infoBox.cancel">
-        <%= __("infoBox.cancel") %>
-      </button>
-      <button type="button" class="px-4 py-2 <%= disabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' %> text-white rounded" onclick="toggleMantenimiento()" data-i18n="infoBox.confirm">
-        <%= __("infoBox.confirm") %>
-      </button>
-    </div>
-  </div>
-</div>
-
 <%- include('footer') %>
 <script>
 const boxId = '<%= box.idBox || box.id %>';
@@ -331,6 +263,26 @@ const eventos = <%- eventos_json %>;
 const ocupantes = <%- JSON.stringify(ocupantes_normalizados || []) %>;
 const userLang = '<%= userLang || "es" %>';
 const fechaSeleccionada = '<%= fechaSeleccionada %>';
+
+// Calcular agendas del día
+document.addEventListener('DOMContentLoaded', () => {
+  const hoy = new Date();
+  const inicioHoy = new Date(hoy);
+  inicioHoy.setHours(0, 0, 0, 0);
+  const finHoy = new Date(hoy);
+  finHoy.setHours(23, 59, 59, 999);
+  
+  // Contar eventos que están en el rango de hoy
+  const agendasHoy = eventos.filter(evento => {
+    const inicio = new Date(evento.start);
+    return inicio >= inicioHoy && inicio <= finHoy;
+  }).length;
+  
+  const agendasElement = document.getElementById('agendasDelDia');
+  if (agendasElement) {
+    agendasElement.textContent = agendasHoy;
+  }
+});
 
 window.__i18n = {
   'infoBox.boxElements.mesa': '<%= __("infoBox.boxElements.mesa") %>',
@@ -343,52 +295,6 @@ window.__i18n = {
 
 // ===== FUNCIONES DE MANTENIMIENTO MODAL =====
 // Deben estar en el scope global para ser accesibles desde onclick
-function openMantModal() {
-  document.getElementById('mantModal').classList.remove('hidden');
-}
-
-function closeMantModal() {
-  document.getElementById('mantModal').classList.add('hidden');
-}
-
-function toggleMantenimiento() {
-  console.log('✓ Iniciando toggle mantenimiento para box:', boxId);
-  console.log('✓ URL completa:', `/toggle_mantenimiento/${boxId}`);
-  
-  fetch(`/toggle_mantenimiento/${boxId}`, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    credentials: 'same-origin'
-  })
-  .then(res => {
-    console.log('✓ Respuesta recibida - status:', res.status);
-    return res.json();
-  })
-  .then(data => {
-    console.log('✓ Datos recibidos:', data);
-    if (data.ok) {
-      console.log('✅ Toggle exitoso');
-      console.log('⏳ Cerrando modal y esperando actualización por WebSocket...');
-      closeMantModal();
-      // NO recargamos aquí - dejamos que el WebSocket recargue la página cuando reciba el mensaje
-      // Esto asegura que DynamoDB ya se haya actualizado antes de recargar
-    } else {
-      console.error('❌ Error del servidor:', data.error);
-      alert('Error al cambiar estado del box: ' + (data.error || 'Error desconocido'));
-      closeMantModal();
-    }
-  })
-  .catch(err => {
-    console.error('❌ Error toggle mantenimiento:', err);
-    alert('Error al cambiar estado del box');
-    closeMantModal();
-  });
-}
-// ===== FIN FUNCIONES DE MANTENIMIENTO =====
-
 // ECharts - Gráfico de ocupación
 document.addEventListener('DOMContentLoaded', () => {
   const chart = echarts.init(document.getElementById('estadoChart'));
@@ -984,6 +890,19 @@ itemsModal.addEventListener('click', e => { if(e.target === itemsModal) closeIte
 
 function renderItemsEditor(){
   itemsListEl.innerHTML = '';
+  
+  // Si no hay items, mostrar mensaje
+  if (!itemsData || itemsData.length === 0) {
+    const nivel4Plural = '<%= parametrizacionLabels?.nivel4Plural?.toLowerCase() || "elementos" %>';
+    itemsListEl.classList.add('hidden');
+    itemsListEl.innerHTML = `<p class="text-center py-8 text-gray-500">No hay ${nivel4Plural} registrados</p>`;
+    itemsListEl.classList.remove('hidden', 'grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-6');
+    itemsListEl.className = 'text-center py-8 text-gray-500';
+    return;
+  }
+  
+  itemsListEl.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+  
   itemsData.forEach(item => {
     const card = document.createElement('div');
     card.className = 'border rounded-md p-3 flex flex-col gap-2 bg-gray-50/60';

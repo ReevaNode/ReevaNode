@@ -130,13 +130,19 @@ export const getParametrizacionLabels = (parametrizacion = {}) => {
   const {
     nombreNivel1 = 'Pasillo',
     nombreNivel2 = 'Mesa',
-    nombreNivel3 = 'Ocupante'
+    nombreNivel3 = 'Ocupante',
+    nombreNivel4 = 'Instrumento'
   } = parametrizacion;
 
   return {
     nivel1Plural: pluralizar(nombreNivel1),
     nivel2Plural: pluralizar(nombreNivel2),
     nivel3Plural: pluralizar(nombreNivel3),
+    nivel4Plural: pluralizar(nombreNivel4),
+    nivel1Singular: nombreNivel1,
+    nivel2Singular: nombreNivel2,
+    nivel3Singular: nombreNivel3,
+    nivel4Singular: nombreNivel4,
     matrizLabel: getMatrizLabel(nombreNivel2),
     listadoLabel: getListadoLabel(nombreNivel2),
     gestionarLabel: getGestionarLabel(nombreNivel2)
