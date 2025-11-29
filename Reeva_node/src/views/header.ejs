@@ -30,7 +30,6 @@
         document.documentElement.classList.add('theme-light');
         document.body?.classList.add('theme-light');
       }
-      console.log('Tema aplicado inmediatamente:', finalTheme, '(servidor:', serverTheme, ')');
     } catch (e) {
       console.warn('Error al aplicar tema inicial:', e);
     }
@@ -309,7 +308,6 @@ const initLanguageSelector = () => {
     
     // Solo disparar evento si es accion del usuario
     if (isUserAction) {
-      console.log('Cambio manual de idioma detectado');
       document.dispatchEvent(new CustomEvent('reeva:language-change', { detail: { language: value } }));
     }
   };
@@ -469,7 +467,6 @@ const initPersonalizationPanel = () => {
     applyThemeHighlight(normalized);
     
     if (isUserAction) {
-      console.log('Cambio manual de tema detectado');
       document.dispatchEvent(new CustomEvent('reeva:theme-change', { detail: { theme: normalized } }));
     }
   };
@@ -564,16 +561,12 @@ const initPerfilMenu = () => {
   const perfilBtn = document.getElementById('perfil-btn');
   const perfilMenu = document.getElementById('perfil-menu');
   
-  console.log('Inicializando menú de perfil...', { perfilBtn, perfilMenu });
-  
   if (!perfilBtn || !perfilMenu) {
-    console.warn('No se encontraron elementos del menú de perfil');
     return;
   }
   
   // Prevenir multiples inicializaciones
   if (perfilBtn.dataset.menuInitialized === 'true') {
-    console.log('Menú de perfil ya inicializado');
     return;
   }
   perfilBtn.dataset.menuInitialized = 'true';
@@ -581,18 +574,15 @@ const initPerfilMenu = () => {
   perfilBtn.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Click en botón de perfil, estado actual:', perfilMenu.classList.contains('hidden'));
     
     const isHidden = perfilMenu.classList.contains('hidden');
     
     if (isHidden) {
       perfilMenu.classList.remove('hidden');
       perfilMenu.style.display = 'block';
-      console.log('Menú desplegado');
     } else {
       perfilMenu.classList.add('hidden');
       perfilMenu.style.display = 'none';
-      console.log('Menú ocultado');
     }
   });
   
@@ -602,8 +592,6 @@ const initPerfilMenu = () => {
       perfilMenu.style.display = 'none';
     }
   });
-  
-  console.log('Menú de perfil inicializado correctamente');
 };
 
 document.addEventListener('DOMContentLoaded', initPerfilMenu);

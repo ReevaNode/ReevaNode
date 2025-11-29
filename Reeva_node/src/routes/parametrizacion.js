@@ -602,6 +602,22 @@ router.delete('/api/empresas/:empresaId', requireAuth, async (req, res) => {
       }
     }
 
+    // Obtener y eliminar todos los items de ItemsTable
+    const resultItems = await docClient.send(new QueryCommand({
+      TableName: ITEMS_TABLE,
+      KeyConditionExpression: 'empresaId = :empresaId',
+      ExpressionAttributeValues: { ':empresaId': empresaId }
+    }));
+
+    if (resultItems.Items) {
+      for (const item of resultItems.Items) {
+        await docClient.send(new DeleteCommand({
+          TableName: ITEMS_TABLE,
+          Key: { empresaId, itemId: item.itemId }
+        }));
+      }
+    }
+
     console.log('Empresa y todos sus datos eliminados:', empresaId);
 
     // Si era activa, buscar otra empresa para activar

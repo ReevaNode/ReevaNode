@@ -24,7 +24,7 @@
       </div>
       <a href="javascript:history.back()" class="btn-volver">
         <i class="ri-arrow-left-line"></i>
-        Volver
+        <%= __("editCompany.back") %>
       </a>
     </div>
 
@@ -32,16 +32,16 @@
     <div class="tabs-container">
       <button class="tab-button active" onclick="cambiarTab('salas')">
         <i class="ri-layout-grid-line"></i>
-        Estructura
+        <%= __("editCompany.structure") %>
       </button>
       <button class="tab-button" onclick="cambiarTab('ocupantes')">
         <i class="ri-user-line"></i>
-        Ocupantes
+        <%= __("editCompany.occupants") %>
       </button>
       <% if (empresa.nombreNivel4) { %>
       <button class="tab-button" onclick="cambiarTab('elementos')">
         <i class="ri-checkbox-multiple-line"></i>
-        Elementos
+        <%= __("editCompany.elements") %>
       </button>
       <% } %>
     </div>
@@ -55,7 +55,7 @@
 
         <button class="btn-agregar-espacio" onclick="agregarEspacio()">
           <i class="ri-add-line"></i>
-          Agregar <%= empresa.nombreNivel1.toLowerCase() %>
+          <%= __("editCompany.addStructure").replace("{nivel1}", empresa.nombreNivel1.toLowerCase()) %>
         </button>
       </div>
     </div>
@@ -67,7 +67,7 @@
           <input 
             type="text" 
             id="nuevo-ocupante-editar"
-            placeholder="Ej: Juan García"
+            placeholder="<%= __("editCompany.addPlaceholder") %>"
           >
           <button type="button" class="btn-agregar-ocupante-editar" onclick="agregarOcupanteEditar()">
             <i class="ri-add-line"></i>
@@ -86,7 +86,7 @@
           <input 
             type="text" 
             id="nuevo-elemento-editar"
-            placeholder="Ej: Bisturí, Silla, Balanza..."
+            placeholder="<%= __("editCompany.elementPlaceholder") %>"
           >
           <button type="button" class="btn-agregar-elemento-editar" onclick="agregarElementoEditar()">
             <i class="ri-add-line"></i>
@@ -151,6 +151,19 @@
     console.log('Ocupantes completos:', empresa.ocupantes);
     console.log('Items completos:', empresa.items);
 
+    // Textos i18n para usar en funciones
+    const i18nTexts = {
+      delete: '<%- __("editCompany.delete") %>',
+      clickToAdd: '<%- __("editCompany.clickToAdd") %>',
+      noOccupants: '<%- __("editCompany.noOccupants") %>',
+      clickToPlusOccupant: '<%- __("editCompany.clickToPlusOccupant") %>',
+      noElements: '<%- __("editCompany.noElements") %>',
+      clickToPlusElement: '<%- __("editCompany.clickToPlusElement") %>',
+      deleteOccupant: '<%- __("editCompany.deleteOccupant") %>',
+      requireName: '<%- __("editCompany.requireName") %>',
+      requireNameLevel1: '<%- __("editCompany.requireNameLevel1") %>'
+    };
+
     // ===== INICIALIZAR =====
     document.addEventListener('DOMContentLoaded', () => {
       renderizarEspacios();
@@ -183,7 +196,7 @@
           <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
             <i class="ri-inbox-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px;"></i>
             <p style="font-size: 15px; font-weight: 600;">No hay ${nombreNivel1} configurados</p>
-            <p style="font-size: 13px; margin-top: 8px;">Haz clic en "Agregar" para comenzar</p>
+                <p style="font-size: 13px; margin-top: 8px;">${i18nTexts.clickToAdd}</p>
           </div>
         `;
         return;
@@ -206,11 +219,11 @@
               </button>
             </div>
             <button 
-              class="btn-eliminar-espacio" 
-              onclick="eliminarEspacio('${espacio.espacioId}')"
+              class=\"btn-eliminar-espacio\" 
+              onclick=\"eliminarEspacio('${espacio.espacioId}')\"
             >
-              <i class="fas fa-trash"></i>
-              Eliminar
+              <i class=\"fas fa-trash\"></i>
+              ${i18nTexts.delete}
             </button>
           </div>
 
@@ -242,7 +255,7 @@
               onclick="agregarMesa('${espacio.espacioId}')"
             >
               <i class="fas fa-plus"></i>
-              Agregar ${nombreNivel2}
+              <%= __("editCompany.addLevel2").replace("{nivel2}", empresa.nombreNivel2) %>
             </button>
           </div>
         </div>
@@ -301,7 +314,8 @@
       const nombre = input?.value.trim();
 
       if (!nombre) {
-        alert(`Por favor ingresa el nombre de ${empresa.nombreNivel1.toLowerCase()}`);
+        const msg = i18nTexts.requireNameLevel1.replace('{nivel1}', empresa.nombreNivel1.toLowerCase());
+        alert(msg);
         return;
       }
 
@@ -347,7 +361,10 @@
     }
 
     function eliminarEspacio(espacioId) {
-      if (confirm(`¿Eliminar este ${empresa.nombreNivel1.toLowerCase()}?`)) {
+      const confirmMsg = '<%= __("editCompany.confirmDeleteLevel1") %>'.replace('{nivel1}', empresa.nombreNivel1.toLowerCase());
+      const errorMsg = '<%= __("editCompany.errorDeleteLevel1") %>'.replace('{nivel1}', empresa.nombreNivel1.toLowerCase());
+      
+      if (confirm(confirmMsg)) {
         fetch(`/api/empresas/${empresaId}/espacios/${espacioId}`, {
           method: 'DELETE'
         })
@@ -358,13 +375,13 @@
             renderizarEspacios();
             console.log('Espacio eliminado:', espacioId);
           } else {
-            alert('Error al eliminar ' + empresa.nombreNivel1.toLowerCase());
+            alert(errorMsg);
             console.error('Error respuesta:', data);
           }
         })
         .catch(err => {
           console.error('Error al eliminar espacio:', err);
-          alert('Error al eliminar ' + empresa.nombreNivel1.toLowerCase());
+          alert(errorMsg);
         });
       }
     }
@@ -438,7 +455,10 @@
     }
 
     function eliminarMesa(espacioId, mesaId) {
-      if (confirm(`¿Eliminar esta ${empresa.nombreNivel2.toLowerCase()}?`)) {
+      const confirmMsg = '<%= __("editCompany.confirmDeleteLevel2") %>'.replace('{nivel2}', empresa.nombreNivel2.toLowerCase());
+      const errorMsg = '<%= __("editCompany.errorDeleteLevel2") %>'.replace('{nivel2}', empresa.nombreNivel2.toLowerCase());
+      
+      if (confirm(confirmMsg)) {
         const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
         if (!espacio) return;
 
@@ -461,7 +481,7 @@
             renderizarEspacios();
             console.log('Mesa eliminada del espacio:', espacioId);
           } else {
-            alert('Error al eliminar ' + empresa.nombreNivel2.toLowerCase());
+            alert(errorMsg);
             console.error('Error respuesta:', data);
             renderizarEspacios();
           }
@@ -537,7 +557,7 @@
       const nombre = input?.value.trim();
 
       if (!nombre) {
-        alert('Por favor ingresa un nombre');
+        alert(i18nTexts.requireName);
         return;
       }
 
@@ -581,8 +601,8 @@
         container.innerHTML = `
           <div style="text-align: center;">
             <i class="ri-user-add-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px; display: block;"></i>
-            <p style="font-size: 15px; font-weight: 600; color: #666; margin: 0;">No hay ocupantes registrados</p>
-            <p style="font-size: 13px; margin-top: 8px; color: #999;">Haz clic en <strong>+</strong> para agregar</p>
+            <p style="font-size: 15px; font-weight: 600; color: #666; margin: 0;">${i18nTexts.noOccupants}</p>
+            <p style="font-size: 13px; margin-top: 8px; color: #999;">${i18nTexts.clickToPlusOccupant}</p>
           </div>
         `;
         return;
@@ -594,7 +614,7 @@
       container.innerHTML = empresa.ocupantes.map(ocupante => `
         <div class="ocupante-item-editar" data-id="${ocupante.ocupanteId}">
           <span style="font-weight: 500; color: #1a1a1a;">${ocupante.nombre}</span>
-          <button type="button" class="btn-icon btn-icon-delete" onclick="eliminarOcupanteEditar('${ocupante.ocupanteId}')" title="Eliminar">
+          <button type="button" class="btn-icon btn-icon-delete" onclick="eliminarOcupanteEditar('${ocupante.ocupanteId}')" title="${i18nTexts.deleteOccupant}">
             <i class="ri-delete-bin-line"></i>
           </button>
         </div>
@@ -602,7 +622,10 @@
     }
 
     function eliminarOcupanteEditar(ocupanteId) {
-      if (confirm('¿Eliminar este ocupante?')) {
+      const confirmMsg = '<%- __("editCompany.confirmDeleteOccupant") %>';
+      const errorMsg = '<%- __("editCompany.errorDeleteOccupant") %>';
+      
+      if (confirm(confirmMsg)) {
         fetch(`/api/empresas/${empresaId}/ocupantes/${ocupanteId}`, {
           method: 'DELETE'
         })
@@ -613,13 +636,13 @@
             renderizarOcupantes();
             console.log('Ocupante eliminado:', ocupanteId);
           } else {
-            alert('Error al eliminar ocupante');
+            alert(errorMsg);
             console.error('Error respuesta:', data);
           }
         })
         .catch(err => {
           console.error('Error al eliminar ocupante:', err);
-          alert('Error al eliminar ocupante');
+          alert(errorMsg);
         });
       }
     }
@@ -630,7 +653,7 @@
       const nombre = inputNuevoElemento?.value.trim();
 
       if (!nombre) {
-        alert('Por favor ingresa un nombre');
+        alert(i18nTexts.requireName);
         return;
       }
 
@@ -666,11 +689,12 @@
         container.style.alignItems = 'center';
         container.style.justifyContent = 'center';
         container.style.minHeight = '300px';
+        const noElementsMsg = '<%= __("editCompany.noElements") %>'.replace('{elementos}', nivel4Name.toLowerCase());
         container.innerHTML = `
           <div style="text-align: center;">
             <i class="ri-box-3-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px; display: block;"></i>
-            <p style="font-size: 15px; font-weight: 600; color: #666; margin: 0;">No hay ${nivel4Name} registrados</p>
-            <p style="font-size: 13px; margin-top: 8px; color: #999;">Haz clic en <strong>+</strong> para agregar</p>
+            <p style="font-size: 15px; font-weight: 600; color: #666; margin: 0;">${noElementsMsg}</p>
+            <p style="font-size: 13px; margin-top: 8px; color: #999;">${i18nTexts.clickToPlusElement}</p>
           </div>
         `;
         return;
@@ -683,7 +707,7 @@
       container.innerHTML = empresa.items.map(item => `
         <div class="elemento-item-editar" data-id="${item.itemId}">
           <span style="font-weight: 500; color: #1a1a1a;">${item.nombre}</span>
-          <button type="button" class="btn-icon btn-icon-delete" onclick="eliminarElementoEditar('${item.itemId}')" title="Eliminar">
+          <button type="button" class="btn-icon btn-icon-delete" onclick="eliminarElementoEditar('${item.itemId}')" title="${i18nTexts.deleteOccupant}">
             <i class="ri-delete-bin-line"></i>
           </button>
         </div>
@@ -691,8 +715,11 @@
     }
 
     function eliminarElementoEditar(itemId) {
-      const nivel4Name = empresa.nombreNivel4 ? empresa.nombreNivel4.toLowerCase() : 'item';
-      if (confirm(`¿Eliminar este ${nivel4Name}?`)) {
+      const nivel4Name = empresa.nombreNivel4 ? empresa.nombreNivel4.toLowerCase() : 'elemento';
+      const confirmMsg = '<%= __("editCompany.confirmDeleteElement") %>'.replace('{elemento}', nivel4Name);
+      const errorMsg = '<%= __("editCompany.errorDeleteElement") %>'.replace('{elemento}', nivel4Name);
+      
+      if (confirm(confirmMsg)) {
         fetch(`/api/empresas/${empresaId}/items/${itemId}`, {
           method: 'DELETE'
         })
@@ -703,13 +730,13 @@
             renderizarElementos();
             console.log('Item eliminado:', itemId);
           } else {
-            alert('Error al eliminar item');
+            alert(errorMsg);
             console.error('Error respuesta:', data);
           }
         })
         .catch(err => {
           console.error('Error al eliminar item:', err);
-          alert('Error al eliminar item');
+          alert(errorMsg);
         });
       }
     }
