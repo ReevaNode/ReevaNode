@@ -11,7 +11,7 @@ const logger = new Logger('LOAD_PARAMETRIZACION');
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'aws-cognito-jwt-login-dev-empresas-new';
+const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'empresas-new';
 
 /**
  * Middleware que carga la parametrización activa del usuario

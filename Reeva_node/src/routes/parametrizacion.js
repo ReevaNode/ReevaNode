@@ -12,10 +12,10 @@ const router = express.Router();
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'aws-cognito-jwt-login-dev-empresas-new';
-const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'aws-cognito-jwt-login-dev-espacios';
-const OCUPANTES_TABLE = process.env.OCUPANTES_TABLE || 'aws-cognito-jwt-login-dev-ocupantes';
-const ITEMS_TABLE = process.env.ITEMS_TABLE || 'aws-cognito-jwt-login-dev-items';
+const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'empresas-new';
+const ESPACIOS_TABLE = process.env.ESPACIOS_TABLE || 'espacios';
+const OCUPANTES_TABLE = process.env.OCUPANTES_TABLE || 'ocupantes';
+const ITEMS_TABLE = process.env.ITEMS_TABLE || 'empresa-items';
 
 /**
  * GET /seleccionar-empresa
@@ -886,7 +886,7 @@ router.post('/api/empresas/:empresaId/items', requireAuth, async (req, res) => {
 router.delete('/api/empresas/:empresaId/items/:itemId', requireAuth, async (req, res) => {
   try {
     const { empresaId, itemId } = req.params;
-    const ITEMS_MESAS_TABLE = process.env.ITEMS_MESAS_TABLE || 'aws-cognito-jwt-login-dev-items-mesas';
+    const ITEMS_MESAS_TABLE = process.env.ITEMS_MESAS_TABLE || 'items-mesas';
 
     // 1. Eliminar item de ITEMS_TABLE
     await docClient.send(new DeleteCommand({

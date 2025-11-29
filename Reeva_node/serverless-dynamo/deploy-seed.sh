@@ -10,6 +10,29 @@ REGION="${AWS_REGION:-us-east-1}"
 cd "$ROOT_DIR"
 
 echo "[deploy] Desplegando stack serverless (stage=$STAGE, region=$REGION)..."
+echo "[deploy] Tablas a crear/asegurar en esta corrida:"
+cat <<'EOF'
+  - tipoprofesional
+  - tipousuario
+  - tipoconsulta
+  - tipoestado
+  - tipobox
+  - tipoitem
+  - personalizacion
+  - estadobox
+  - usuario
+  - box
+  - items           (inventario de box)
+  - agenda
+  - registroagenda
+  - items-mesas
+  - empresa-items   (nuevo catálogo por empresa)
+  - espacios
+  - ocupantes
+  - empresas-new
+  - users
+  - parameters-new
+EOF
 npx serverless deploy --stage "$STAGE" --region "$REGION"
 
 declare -a SEED_FUNCTIONS=(

@@ -4,7 +4,7 @@ import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'aws-cognito-jwt-login-dev-empresas-new';
+const EMPRESAS_TABLE = process.env.EMPRESAS_TABLE || 'empresas-new';
 
 async function checkEmpresas(req, res, next) {
   try {

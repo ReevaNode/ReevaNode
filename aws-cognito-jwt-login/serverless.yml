@@ -10,13 +10,13 @@ provider:
   environment:
     USER_POOL_ID: { Ref: CognitoUserPool }
     USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }
-    USER_TABLE: { Ref: UserTable }
-    PARAMETERS_TABLE: { Ref: CustomParametersTable }
-    EMPRESAS_TABLE: { Ref: EmpresasTable }
-    ESPACIOS_TABLE: { Ref: EspaciosTable }
-    OCUPANTES_TABLE: { Ref: OcupantesTable }
-    ITEMS_TABLE: { Ref: ItemsTable }
-    ITEMS_MESAS_TABLE: { Ref: ItemsMesasTable }
+    USER_TABLE: users
+    PARAMETERS_TABLE: parameters-new
+    EMPRESAS_TABLE: empresas-new
+    ESPACIOS_TABLE: espacios
+    OCUPANTES_TABLE: ocupantes
+    ITEMS_TABLE: empresa-items
+    ITEMS_MESAS_TABLE: items-mesas
   logs:
     httpApi: true
   httpApi:
@@ -253,181 +253,6 @@ resources:
         WriteAttributes:
           - email
 
-    # === DYNAMODB TABLE PARA USUARIOS ===
-    UserTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}-${sls:stage}-users
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: userId
-            AttributeType: S
-          - AttributeName: email
-            AttributeType: S
-        KeySchema:
-          - AttributeName: userId
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: EmailIndex
-            KeySchema:
-              - AttributeName: email
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
-    # === TABLA DE PARAMETROS DE PERSONALIZACION ===
-    CustomParametersTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      Properties:
-        TableName: ${self:service}-${sls:stage}-parameters-new
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: idUser
-            AttributeType: S
-        KeySchema:
-          - AttributeName: idUser
-            KeyType: HASH
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
-    # === TABLA DE EMPRESAS (Datos generales) ===
-    EmpresasTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      Properties:
-        TableName: ${self:service}-${sls:stage}-empresas-new
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: userId
-            AttributeType: S
-          - AttributeName: empresaId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: userId
-            KeyType: HASH
-          - AttributeName: empresaId
-            KeyType: RANGE
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
-    # === TABLA DE ESPACIOS (Pasillos y Mesas) ===
-    EspaciosTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      Properties:
-        TableName: ${self:service}-${sls:stage}-espacios
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: empresaId
-            AttributeType: S
-          - AttributeName: espacioId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: empresaId
-            KeyType: HASH
-          - AttributeName: espacioId
-            KeyType: RANGE
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
-    # === TABLA DE OCUPANTES ===
-    OcupantesTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      Properties:
-        TableName: ${self:service}-${sls:stage}-ocupantes
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: empresaId
-            AttributeType: S
-          - AttributeName: ocupanteId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: empresaId
-            KeyType: HASH
-          - AttributeName: ocupanteId
-            KeyType: RANGE
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
-    # === TABLA DE ITEMS (Catálogo de items por empresa) ===
-    ItemsTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      Properties:
-        TableName: ${self:service}-${sls:stage}-items
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: empresaId
-            AttributeType: S
-          - AttributeName: itemId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: empresaId
-            KeyType: HASH
-          - AttributeName: itemId
-            KeyType: RANGE
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
-    # === TABLA DE ITEMS EN MESAS (Cantidad de items por mesa) ===
-    ItemsMesasTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      Properties:
-        TableName: ${self:service}-${sls:stage}-items-mesas
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: mesaId
-            AttributeType: S
-          - AttributeName: itemId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: mesaId
-            KeyType: HASH
-          - AttributeName: itemId
-            KeyType: RANGE
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        Tags:
-          - Key: Environment
-            Value: ${sls:stage}
-          - Key: Service
-            Value: ${self:service}
-
   # === OUTPUTS ===
   Outputs:
     UserPoolId:
@@ -441,48 +266,6 @@ resources:
       Value: { Ref: CognitoUserPoolClient }
       Export:
         Name: ${self:service}-${sls:stage}-UserPoolClientId
-
-    UserTableName:
-      Description: 'DynamoDB User Table Name'
-      Value: { Ref: UserTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-UserTableName
-
-    ParametersTableName:
-      Description: 'DynamoDB Parameters Table Name'
-      Value: { Ref: CustomParametersTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-ParametersTableName
-
-    EmpresasTableName:
-      Description: 'DynamoDB Empresas Table Name'
-      Value: { Ref: EmpresasTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-EmpresasTableName
-
-    EspaciosTableName:
-      Description: 'DynamoDB Espacios Table Name'
-      Value: { Ref: EspaciosTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-EspaciosTableName
-
-    OcupantesTableName:
-      Description: 'DynamoDB Ocupantes Table Name'
-      Value: { Ref: OcupantesTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-OcupantesTableName
-
-    ItemsTableName:
-      Description: 'DynamoDB Items Table Name'
-      Value: { Ref: ItemsTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-ItemsTableName
-
-    ItemsMesasTableName:
-      Description: 'DynamoDB Items-Mesas Table Name'
-      Value: { Ref: ItemsMesasTable }
-      Export:
-        Name: ${self:service}-${sls:stage}-ItemsMesasTableName
 
     ApiEndpoint:
       Description: 'API Gateway Endpoint URL'
