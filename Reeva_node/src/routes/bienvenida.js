@@ -20,15 +20,25 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), checkEmpresas, 
     const nombreEmpresa = empresaActiva?.nombre || 'Empresa';
     
     logger.info(`Renderizando bienvenida para empresa: ${nombreEmpresa}`);
+    logger.info(`Parametrización cargada:`, res.locals.parametrizacion);
 
     // renderizar vista
     res.render("Bienvenida-y-Opciones", {
       user: req.session.user,
       activePage: 'bienvenida',
-      // parametrización
+      // parametrización desde middleware loadParametrizacion
       nombreEmpresa: nombreEmpresa,
-      nombreNivel2: req.parametrizacionLabels?.nombreNivel2 || 'Cama',
-      nombreNivel2Plural: req.parametrizacionLabels?.nombreNivel2Plural || 'Camas'
+      nombreNivel1: res.locals.parametrizacion?.nombreNivel1 || 'Pasillo',
+      nombreNivel2: res.locals.parametrizacion?.nombreNivel2 || 'Mesa',
+      nombreNivel3: res.locals.parametrizacion?.nombreNivel3 || 'Ocupante',
+      nombreNivel4: res.locals.parametrizacion?.nombreNivel4 || 'Elemento',
+      // Labels pluralizados
+      nombreNivel1Plural: res.locals.parametrizacionLabels?.nivel1Plural || 'Pasillos',
+      nombreNivel2Plural: res.locals.parametrizacionLabels?.nivel2Plural || 'Mesas',
+      nombreNivel3Plural: res.locals.parametrizacionLabels?.nivel3Plural || 'Ocupantes',
+      nombreNivel4Plural: res.locals.parametrizacionLabels?.nivel4Plural || 'Elementos',
+      // Pasar también la parametrización completa
+      parametrizacion: res.locals.parametrizacion
     });
 
   } catch (error) {
@@ -37,7 +47,16 @@ router.get("/bienvenida", requirePermission("bienvenidos.read"), checkEmpresas, 
     // Graceful Degradation: renderizar pagina con mensaje de error en logs
     res.render("Bienvenida-y-Opciones", {
       user: req.session.user,
-      activePage: 'bienvenida'
+      activePage: 'bienvenida',
+      nombreEmpresa: 'Empresa',
+      nombreNivel1: 'Pasillo',
+      nombreNivel2: 'Mesa',
+      nombreNivel3: 'Ocupante',
+      nombreNivel4: 'Elemento',
+      nombreNivel1Plural: 'Pasillos',
+      nombreNivel2Plural: 'Mesas',
+      nombreNivel3Plural: 'Ocupantes',
+      nombreNivel4Plural: 'Elementos'
     });
   }
 });

@@ -59,7 +59,7 @@
       <a href="/matriz" class="flex items-center gap-2 transition-colors <%= navStateClass('matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">
-          <%= __("header.boxMatrix").replace("{nivel2Plural}", parametrizacionLabels?.nombreNivel2Plural || 'Camas') %>
+          <%= __("header.boxMatrix").replace("{nivel2Plural}", (parametrizacionLabels && parametrizacionLabels.nivel2Plural) ? parametrizacionLabels.nivel2Plural : (nombreNivel2Plural || 'Mesas')) %>
         </span>
       </a>
       <a href="/agenda" class="flex items-center gap-2 transition-colors <%= navStateClass('agenda') %>">
@@ -149,7 +149,7 @@
       <a href="/matriz" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('matriz') %>">
         <i class="ri-grid-line ri-lg"></i>
         <span class="font-medium">
-          <%= __("header.boxMatrix").replace("{nivel2Plural}", parametrizacionLabels?.nombreNivel2Plural || 'Camas') %>
+          <%= __("header.boxMatrix").replace("{nivel2Plural}", (parametrizacionLabels && parametrizacionLabels.nivel2Plural) ? parametrizacionLabels.nivel2Plural : (nombreNivel2Plural || 'Mesas')) %>
         </span>
       </a>
       <a href="/agenda" class="flex items-center gap-3 transition-colors py-2 <%= navStateClass('agenda') %>">
