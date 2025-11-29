@@ -13,20 +13,22 @@
     <link rel="stylesheet" href="/css/admin_database.css">
     <link rel="stylesheet" href="/css/Bienvenida-y-Opciones.css" />
 </head>
-<body>
-    <%- include('header') %>
+<body class="min-h-screen flex flex-col bg-gray-50">
+    <%- include('header', { activePage: 'admin-bdd' }) %>
 
-    <div class="container">
+    <main class="admin-container flex-1 w-full mx-auto">
         <div id="alertSuccess" class="alert alert-success" style="display: none;"></div>
         <div id="alertError" class="alert alert-error" style="display: none;"></div>
 
-        <div class="models-grid">
-            <% tables.forEach(table => { %>
-                <div class="model-card" onclick="loadTable('<%= table.name %>')">
-                    <div class="model-name"><%= table.name %></div>
-                    <div class="model-count" data-i18n="adminDB.clickToView"><%= __("adminDB.clickToView") %></div>
-                </div>
-            <% }); %>
+        <div class="models-wrapper">
+          <div class="models-grid">
+              <% tables.forEach(table => { %>
+                  <div class="model-card" onclick="loadTable('<%= table.name %>')">
+                      <div class="model-name"><%= table.name %></div>
+                      <div class="model-count" data-i18n="adminDB.clickToView"><%= __("adminDB.clickToView") %></div>
+                  </div>
+              <% }); %>
+          </div>
         </div>
 
         <div id="contentArea" style="display: none;">
@@ -130,7 +132,7 @@
                 <div id="paginationControls" class="pagination-controls"></div>
             </div>
         </div>
-    </div>
+    </main>
 
     <div id="formModal" class="modal">
         <div class="modal-content">

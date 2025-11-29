@@ -11,17 +11,29 @@ body {
   color: #333;
 }
 
-.container {
-  max-width: 1400px;
+.admin-container {
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.models-wrapper {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
 }
 
 .models-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .model-card {

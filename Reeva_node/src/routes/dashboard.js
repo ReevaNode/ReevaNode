@@ -99,7 +99,7 @@ async function scanTable(tableName) {
   return items;
 }
 
-async function fetchBoxAggregates() {
+async function fetchBoxAggregates(selectedEmpresaId = null) {
   const tables = config.dynamodb.tablas;
   const boxTable = tables.box;
   const tipoBoxTable = tables.tipoBox;
@@ -107,13 +107,31 @@ async function fetchBoxAggregates() {
   const agendaTable = tables.agenda;
   const tipoEstadoTable = tables.tipoEstado;
 
-  const [boxesRaw, tiposRaw, estadosRaw, agendaRaw, tiposEstadoRaw] = await Promise.all([
+  const [boxesSource, tiposRawSource, estadosRaw, agendaRawSource, tiposEstadoSource] = await Promise.all([
     scanTable(boxTable),
     scanTable(tipoBoxTable),
     scanTable(estadoBoxTable),
     scanTable(agendaTable),
     scanTable(tipoEstadoTable),
   ]);
+
+  const filterByEmpresa = (items) => {
+    if (!selectedEmpresaId) return items;
+    if (!Array.isArray(items) || !items.length) return items;
+    const hasEmpresaField = items.some(
+      (it) => it.empresaId || it.companyId || it.idEmpresa
+    );
+    if (!hasEmpresaField) return items;
+    return items.filter((it) => {
+      const val = it.empresaId || it.companyId || it.idEmpresa;
+      return val && String(val) === String(selectedEmpresaId);
+    });
+  };
+
+  const boxesRaw = filterByEmpresa(boxesSource);
+  const tiposRaw = filterByEmpresa(tiposRawSource);
+  const agendaRaw = filterByEmpresa(agendaRawSource);
+  const tiposEstadoRaw = filterByEmpresa(tiposEstadoSource);
 
   const boxes = boxesRaw.map((box) => {
     const idBox = box.idBox ?? box.id;
@@ -874,7 +892,20 @@ function buildDashboardViewModel(data) {
 
 router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, next) => {
   try {
-    const boxSummary = await fetchBoxAggregates();
+    const empresasList = res.locals.empresasList || [];
+    const empresaActiva = res.locals.empresaActiva || null;
+    const primeraEmpresa = empresasList[0] || null;
+
+    let selectedEmpresaId = req.query.empresaId || empresaActiva?.empresaId || primeraEmpresa?.empresaId || null;
+
+    if (selectedEmpresaId && empresasList.length) {
+      const exists = empresasList.some((e) => String(e.empresaId) === String(selectedEmpresaId));
+      if (!exists) {
+        selectedEmpresaId = empresaActiva?.empresaId || primeraEmpresa?.empresaId || null;
+      }
+    }
+
+    const boxSummary = await fetchBoxAggregates(selectedEmpresaId);
     const boxUsagePeriodConfig = resolveBoxUsagePeriod(req.query.box_period);
     const specialtyUsagePeriodConfig = resolveBoxUsagePeriod(req.query.specialty_period);
     const boxUsage = computeBestBoxUsage(
@@ -995,6 +1026,10 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
     res.render("dashboard", {
       ...viewModel,
       user: req.session.user,
+      empresasList,
+      selectedEmpresaId,
+      selectedEmpresaNombre:
+        (empresasList.find((e) => String(e.empresaId) === String(selectedEmpresaId)) || empresaActiva || primeraEmpresa || {}).nombre || null,
     });
   } catch (error) {
     next(error);

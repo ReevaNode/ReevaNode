@@ -33,6 +33,7 @@ const loadParametrizacion = async (req, res, next) => {
       res.locals.parametrizacion = defaults;
       res.locals.parametrizacionLabels = getParametrizacionLabels(defaults);
       res.locals.empresaActiva = null;
+      res.locals.empresasList = [];
       return next();
     }
 
@@ -49,9 +50,10 @@ const loadParametrizacion = async (req, res, next) => {
 
     const result = await docClient.send(queryCommand);
     const empresas = result.Items || [];
+    res.locals.empresasList = empresas;
 
     // Buscar la empresa con activa = 1
-    const empresaActiva = empresas.find(e => e.activa === 1);
+    const empresaActiva = empresas.find(e => e.activa === 1 || e.activa === '1');
 
     if (empresaActiva) {
       const parametrizacion = {
@@ -71,6 +73,7 @@ const loadParametrizacion = async (req, res, next) => {
       res.locals.parametrizacion = defaults;
       res.locals.parametrizacionLabels = getParametrizacionLabels(defaults);
       res.locals.empresaActiva = null;
+      res.locals.empresasList = empresas;
       logger.warn(`No hay empresa activa para usuario ${userId}, usando valores por defecto`);
     }
 
@@ -87,6 +90,7 @@ const loadParametrizacion = async (req, res, next) => {
     res.locals.parametrizacion = defaults;
     res.locals.parametrizacionLabels = getParametrizacionLabels(defaults);
     res.locals.empresaActiva = null;
+    res.locals.empresasList = [];
     next();
   }
 };
