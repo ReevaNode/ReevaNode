@@ -20,6 +20,8 @@ export const singularizar = (palabra) => {
     return palabra;
   }
 
+  palabra = palabra.trim();
+  
   // Si termina en 'es' (más de 4 letras)
   if (palabra.length > 4 && palabra.toLowerCase().endsWith('es')) {
     const ultimaLetraAntes = palabra.charAt(palabra.length - 3).toLowerCase();
@@ -61,6 +63,7 @@ export const pluralizar = (palabra) => {
     return palabra;
   }
 
+  palabra = palabra.trim();
   const ultimaLetra = palabra.toLowerCase().charAt(palabra.length - 1);
   const vocales = ['a', 'e', 'i', 'o', 'u'];
 
