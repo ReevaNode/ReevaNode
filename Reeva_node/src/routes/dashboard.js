@@ -5,6 +5,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import { requirePermission } from "../middlewares/requirePermission.js";
 import db from "../../db.js";
 import { config } from "../config/index.js";
+import { getParametrizacionLabels } from "../utils/pluralize.js";
 
 dayjs.extend(customParseFormat);
 
@@ -905,6 +906,28 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
       }
     }
 
+    const selectedEmpresa =
+      (selectedEmpresaId && empresasList.find((e) => String(e.empresaId) === String(selectedEmpresaId))) ||
+      empresaActiva ||
+      primeraEmpresa ||
+      null;
+
+    const selectedParametrizacion = selectedEmpresa
+      ? {
+          nombreNivel1: selectedEmpresa.nombreNivel1 || "Pasillo",
+          nombreNivel2: selectedEmpresa.nombreNivel2 || "Box",
+          nombreNivel3: selectedEmpresa.nombreNivel3 || "Ocupante",
+          nombreNivel4: selectedEmpresa.nombreNivel4 || "Elemento",
+        }
+      : res.locals.parametrizacion || {
+          nombreNivel1: "Pasillo",
+          nombreNivel2: "Box",
+          nombreNivel3: "Ocupante",
+          nombreNivel4: "Elemento",
+        };
+
+    const selectedParametrizacionLabels = getParametrizacionLabels(selectedParametrizacion);
+
     const boxSummary = await fetchBoxAggregates(selectedEmpresaId);
     const boxUsagePeriodConfig = resolveBoxUsagePeriod(req.query.box_period);
     const specialtyUsagePeriodConfig = resolveBoxUsagePeriod(req.query.specialty_period);
@@ -1028,6 +1051,8 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
       user: req.session.user,
       empresasList,
       selectedEmpresaId,
+      parametrizacionSelected: selectedParametrizacion,
+      parametrizacionLabelsSelected: selectedParametrizacionLabels,
       selectedEmpresaNombre:
         (empresasList.find((e) => String(e.empresaId) === String(selectedEmpresaId)) || empresaActiva || primeraEmpresa || {}).nombre || null,
     });

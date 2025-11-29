@@ -185,6 +185,12 @@
 <body class="font-sans min-h-screen flex flex-col">
   <%- include('header', { activePage: 'dashboard' }) %>
   <main class="container mx-auto px-4 py-6 md:py-10 space-y-6 md:space-y-10 max-w-7xl w-full">
+    <% 
+      const paramSel = typeof parametrizacionSelected !== 'undefined' ? parametrizacionSelected : (typeof parametrizacion !== 'undefined' ? parametrizacion : {});
+      const labelsSel = typeof parametrizacionLabelsSelected !== 'undefined' ? parametrizacionLabelsSelected : (typeof parametrizacionLabels !== 'undefined' ? parametrizacionLabels : {});
+      const nivel2 = paramSel?.nombreNivel2 || labelsSel?.nivel2Singular || 'Box';
+      const nivel2Plural = labelsSel?.nivel2Plural || (nivel2.endsWith('s') ? nivel2 : `${nivel2}s`);
+    %>
     <input type="hidden" id="box-period-value" value="<%= selectedBoxPeriodValue %>">
     <input type="hidden" id="specialty-period-value" value="<%= selectedSpecialtyPeriodValue %>">
 
@@ -217,7 +223,7 @@
       <article class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-sm">
         <div class="flex justify-between items-center gap-4 md:gap-6">
           <div>
-            <p class="text-xs md:text-sm text-gray-500" data-i18n="dashboard.occupiedBoxes"><%= __('dashboard.occupiedBoxes') %></p>
+            <p class="text-xs md:text-sm text-gray-500"><%= `Total ${nivel2Plural} ocupados` %></p>
             <p class="text-4xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-none mt-1 md:mt-2 occupied-count"><%= occupiedValue %></p>
           </div>
           <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -228,7 +234,7 @@
       <article class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-sm">
         <div class="flex justify-between items-center gap-4 md:gap-6">
           <div>
-            <p class="text-xs md:text-sm text-gray-500" data-i18n="dashboard.availableBoxes"><%= __('dashboard.availableBoxes') %></p>
+            <p class="text-xs md:text-sm text-gray-500"><%= `${nivel2Plural} disponibles` %></p>
             <p class="text-4xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-none mt-1 md:mt-2 available-count"><%= availableValue %></p>
           </div>
           <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-green-100 text-green-600">
