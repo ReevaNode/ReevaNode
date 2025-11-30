@@ -93,6 +93,11 @@ export const config = {
     origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
   },
 
+  // API Gateway (Lambda endpoints)
+  api: {
+    authUrl: process.env.AUTH_API_BASE || 'http://localhost:3000',
+  },
+
   // Twilio (Chatbot WhatsApp)
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,

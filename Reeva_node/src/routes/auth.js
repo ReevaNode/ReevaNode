@@ -114,7 +114,10 @@ router.get("/login", (req, res) => {
   }
 
   const errorMsg = req.flash("error");
-  res.render("login", { error: errorMsg });
+  res.render("login", { 
+    error: errorMsg,
+    apiAuthUrl: config.api.authUrl
+  });
 });
 
 // redireccion raiz

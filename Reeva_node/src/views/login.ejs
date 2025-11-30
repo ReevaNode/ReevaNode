@@ -25,7 +25,7 @@
           <span>Iniciar sesión</span>
         </div>
 
-        <!-- FORMULARIO -->
+        <!-- FORMULARIO DE LOGIN -->
         <form id="loginForm">
           <% if (error && error.length > 0) { %>
             <p style="color:red;"><%= error[0] %></p>
@@ -59,12 +59,122 @@
 
         <!-- MENSAJE DE ERROR -->
         <p id="errorMsg" style="color: red; display: none; margin-top: 1rem;"></p>
+
+        <!-- ENLACE PARA ABRIR MODAL DE REGISTRO -->
+        <div class="register-link">
+          ¿No tienes cuenta? <button type="button" id="openRegisterModal">Regístrate aquí</button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- MODAL DE REGISTRO -->
+  <div class="modal-overlay" id="registerModal">
+    <div class="modal-content">
+      <button class="modal-close" id="closeModal">
+        <i class="bx bx-x"></i>
+      </button>
+      
+      <div class="modal-header">
+        <h2>Crear cuenta</h2>
+        <p>Únete a Reeva y comienza a configurar tu empresa</p>
+      </div>
+
+      <form id="registerForm">
+        <div class="input_box">
+          <input type="email" id="registerEmail" name="email" class="input-field" required />
+          <label for="registerEmail" class="label">Gmail</label>
+          <i class="bx bx-envelope icon"></i>
+        </div>
+
+        <div class="input_box">
+          <input type="password" id="registerPassword" name="password" class="input-field" required />
+          <label for="registerPassword" class="label">Contraseña</label>
+          <i class="bx bx-hide password-toggle" id="toggleRegisterPassword"></i>
+        </div>
+
+        <!-- Requisitos de contraseña -->
+        <div style="background: #f8f8f8; padding: 0.8rem; border-radius: 8px; margin-bottom: 1.2rem; font-size: 0.85rem; color: #666;">
+          <p style="margin-bottom: 0.5rem; font-weight: 600; color: #333;">La contraseña debe contener:</p>
+          <ul style="margin: 0; padding-left: 1.2rem; line-height: 1.6;">
+            <li id="req-length">Mínimo 8 caracteres</li>
+            <li id="req-number">Al menos 1 número</li>
+            <li id="req-upper">Al menos 1 mayúscula</li>
+            <li id="req-lower">Al menos 1 minúscula</li>
+            <li id="req-special">Al menos 1 carácter especial (!@#$%^&*)</li>
+          </ul>
+        </div>
+
+        <div class="input_box">
+          <input type="password" id="confirmPassword" name="confirmPassword" class="input-field" required />
+          <label for="confirmPassword" class="label">Confirmar contraseña</label>
+          <i class="bx bx-hide password-toggle" id="toggleConfirmPassword"></i>
+        </div>
+
+        <button type="submit" class="input-submit" id="registerBtn">
+          Crear cuenta
+        </button>
+      </form>
+
+      <p id="registerErrorMsg" style="color: red; display: none; margin-top: 1rem; text-align: center;"></p>
+    </div>
+  </div>
+
   <script>
-    // Mostrar/Ocultar contraseña
+    // URL de la API Gateway 
+    const API_AUTH_URL = '<%= apiAuthUrl %>';
+    
+    // ===== FUNCIÓN TOAST =====
+    function showToast(message, type = 'success', duration = 3000) {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        ${type === 'success' ? 'background-color: #4CAF50; color: white;' : 'background-color: #f44336; color: white;'}
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+    
+    // Estilos para animación
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
     const toggleIcon = document.getElementById("togglePassword");
     const passwordInput = document.getElementById("password");
     toggleIcon.onclick = () => {
@@ -147,10 +257,200 @@
         btn.textContent = "Iniciar sesión";
       }
     });
-  </script>
 
-  <script>
-    // Bloquear retroceso del navegador en login
+    // ===== FUNCIONALIDAD DEL MODAL =====
+    const modal = document.getElementById("registerModal");
+    const openModalBtn = document.getElementById("openRegisterModal");
+    const closeModalBtn = document.getElementById("closeModal");
+
+    // Abrir modal
+    openModalBtn.addEventListener("click", () => {
+      modal.classList.add("active");
+      document.body.style.overflow = "hidden"; // Prevenir scroll del body
+    });
+
+    // Función para limpiar el modal
+    function closeAndCleanModal() {
+      modal.classList.remove("active");
+      document.body.style.overflow = "auto";
+      
+      // Limpiar formulario
+      registerForm.reset();
+      
+      // Limpiar mensajes de error
+      registerErrorMsg.style.display = "none";
+      registerErrorMsg.textContent = "";
+      
+      // Limpiar validaciones visuales (quitar checks verdes)
+      document.querySelectorAll('.requirement-valid').forEach(el => {
+        el.classList.remove('requirement-valid');
+      });
+    }
+
+    // Cerrar modal con el botón X
+    closeModalBtn.addEventListener("click", closeAndCleanModal);
+
+    // Cerrar modal al hacer clic fuera del contenido
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        closeAndCleanModal();
+      }
+    });
+
+    // Toggle password en formulario de registro
+    const toggleRegisterPassword = document.getElementById("toggleRegisterPassword");
+    const registerPasswordInput = document.getElementById("registerPassword");
+    toggleRegisterPassword.onclick = () => {
+      if (registerPasswordInput.type === "password") {
+        registerPasswordInput.type = "text";
+        toggleRegisterPassword.classList.replace("bx-hide", "bx-show");
+      } else {
+        registerPasswordInput.type = "password";
+        toggleRegisterPassword.classList.replace("bx-show", "bx-hide");
+      }
+    };
+
+    const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    toggleConfirmPassword.onclick = () => {
+      if (confirmPasswordInput.type === "password") {
+        confirmPasswordInput.type = "text";
+        toggleConfirmPassword.classList.replace("bx-hide", "bx-show");
+      } else {
+        confirmPasswordInput.type = "password";
+        toggleConfirmPassword.classList.replace("bx-show", "bx-hide");
+      }
+    };
+
+    // Manejo del formulario de registro
+    const registerForm = document.getElementById("registerForm");
+    const registerErrorMsg = document.getElementById("registerErrorMsg");
+    const registerBtn = document.getElementById("registerBtn");
+
+    // Validación en tiempo real de la contraseña
+    const passwordField = document.getElementById("registerPassword");
+    
+    passwordField.addEventListener("input", () => {
+      const password = passwordField.value;
+      
+      // Validar longitud (mínimo 8)
+      const reqLength = document.getElementById("req-length");
+      if (password.length >= 8) {
+        reqLength.classList.add("requirement-valid");
+      } else {
+        reqLength.classList.remove("requirement-valid");
+      }
+      
+      // Validar número
+      const reqNumber = document.getElementById("req-number");
+      if (/\d/.test(password)) {
+        reqNumber.classList.add("requirement-valid");
+      } else {
+        reqNumber.classList.remove("requirement-valid");
+      }
+      
+      // Validar mayúscula
+      const reqUpper = document.getElementById("req-upper");
+      if (/[A-Z]/.test(password)) {
+        reqUpper.classList.add("requirement-valid");
+      } else {
+        reqUpper.classList.remove("requirement-valid");
+      }
+      
+      // Validar minúscula
+      const reqLower = document.getElementById("req-lower");
+      if (/[a-z]/.test(password)) {
+        reqLower.classList.add("requirement-valid");
+      } else {
+        reqLower.classList.remove("requirement-valid");
+      }
+      
+      // Validar carácter especial
+      const reqSpecial = document.getElementById("req-special");
+      if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        reqSpecial.classList.add("requirement-valid");
+      } else {
+        reqSpecial.classList.remove("requirement-valid");
+      }
+    });
+
+    // Función para validar contraseña completa
+    function validatePassword(password) {
+      const hasMinLength = password.length >= 8;
+      const hasNumber = /\d/.test(password);
+      const hasUpper = /[A-Z]/.test(password);
+      const hasLower = /[a-z]/.test(password);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+      
+      return hasMinLength && hasNumber && hasUpper && hasLower && hasSpecial;
+    }
+
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("registerEmail").value;
+      const password = document.getElementById("registerPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      // Validar que sea Gmail
+      if (!email.endsWith("@gmail.com")) {
+        registerErrorMsg.textContent = "Debes usar una cuenta de Gmail (@gmail.com)";
+        registerErrorMsg.style.display = "block";
+        return;
+      }
+
+      // Validar requisitos de contraseña
+      if (!validatePassword(password)) {
+        registerErrorMsg.textContent = "La contraseña no cumple con todos los requisitos";
+        registerErrorMsg.style.display = "block";
+        return;
+      }
+
+      // Validación de contraseñas coincidentes
+      if (password !== confirmPassword) {
+        registerErrorMsg.textContent = "Las contraseñas no coinciden";
+        registerErrorMsg.style.display = "block";
+        return;
+      }
+
+      registerBtn.disabled = true;
+      registerBtn.classList.add("loading");
+      registerBtn.innerHTML = "Creando cuenta... <span class='spinner'></span>";
+      registerErrorMsg.style.display = "none";
+
+      try {
+        // AQUÍ CONECTAS CON TU ENDPOINT DE REGISTRO
+        const res = await fetch(`${API_AUTH_URL}/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, confirmPassword }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          // Cerrar modal altiro
+          closeAndCleanModal();
+          
+          // Mostrar toast con email en minúsculas
+          const emailMinusculas = data.email || email.toLowerCase();
+          showToast(`¡Tu cuenta ${emailMinusculas} ha sido creada!`, 'success', 3000);
+        } else {
+          registerErrorMsg.textContent = data.message || data.error || "Error al crear la cuenta";
+          registerErrorMsg.style.display = "block";
+        }
+      } catch (err) {
+        console.error(err);
+        registerErrorMsg.textContent = "Error de conexión con el servidor";
+        registerErrorMsg.style.display = "block";
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.classList.remove("loading");
+        registerBtn.textContent = "Crear cuenta";
+      }
+    });
+
+    // ===== BLOQUEAR RETROCESO (SIN CAMBIOS) =====
     (function() {
       let historyPushed = false;
       
@@ -162,7 +462,6 @@
       
       // Escuchar evento de retroceso
       window.addEventListener('popstate', function(e) {
-        // Si intenta retroceder desde login, volver a empujar estado para quedarse en la página
         window.history.pushState({ type: 'login' }, null, window.location.href);
       });
 

@@ -6,54 +6,86 @@ provider:
   runtime: nodejs20.x
   region: ${opt:region, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-  role: ${env:LABROLE}
+  # === IAM ROLE STATEMENTS ===
+  # Define permisos específicos para los Lambdas (Least Privilege)
+  # role: ${env:LABROLE}
+  iamRoleStatements:
+    # COGNITO: Permisos para autenticación y gestión de usuarios
+    - Effect: Allow
+      Action:
+        - cognito-idp:AdminGetUser              # Obtener info de usuario
+        - cognito-idp:AdminSetUserAttributes    # Actualizar atributos
+        - cognito-idp:ListUsers                 # Listar usuarios (admin)
+        - cognito-idp:AdminUpdateUserAttributes # Actualizar atributos como admin
+        - cognito-idp:SignUp                    # NUEVO: Permitir registro (signup)
+        - cognito-idp:AdminConfirmSignUp        # NUEVO: Confirmar usuario automáticamente
+      Resource: !GetAtt CognitoUserPool.Arn
+    
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem      
+        - dynamodb:PutItem      
+        - dynamodb:UpdateItem   
+        - dynamodb:Query        
+        - dynamodb:Scan         
+      Resource: 
+        - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/users"                 
+        - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/parameters-new"         
   environment:
-    USER_POOL_ID: { Ref: CognitoUserPool }
-    USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }
-    USER_TABLE: users
-    PARAMETERS_TABLE: parameters-new
-    EMPRESAS_TABLE: empresas-new
-    ESPACIOS_TABLE: espacios
-    OCUPANTES_TABLE: ocupantes
-    ITEMS_TABLE: empresa-items
-    ITEMS_MESAS_TABLE: items-mesas
+    USER_POOL_ID: { Ref: CognitoUserPool }         
+    USER_POOL_CLIENT_ID: { Ref: CognitoUserPoolClient }  
+    
+    USER_TABLE: users                             
+    PARAMETERS_TABLE: parameters-new                
   logs:
     httpApi: true
+  
+  # === HTTP API: Configuración de API Gateway ===
   httpApi:
+    # CORS: Cross-Origin Resource Sharing
+    # SEGURIDAD: En PRODUCCIÓN cambiar '*' por dominios específicos
+    # Ej: allowedOrigins: ['https://miapp.com', 'https://www.miapp.com']
     cors:
       allowedOrigins:
-        - '*'
+        - '*'                    # TODO: Cambiar a dominios específicos en prod
       allowedHeaders:
-        - Content-Type
-        - Authorization
-        - X-Amz-Date
-        - X-Api-Key
-        - X-Amz-Security-Token
+        - Content-Type           
+        - Authorization          
+        - X-Amz-Date             
+        - X-Api-Key              
+        - X-Amz-Security-Token   
       allowedMethods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - OPTIONS
-      allowCredentials: false
-      maxAge: 3600
+        - GET                    
+        - POST                   
+        - PUT                   
+        - DELETE                 
+        - OPTIONS                
+      allowCredentials: false    
+      maxAge: 3600              
+    
     authorizers:
       cognitoJwt:
-        type: jwt
-        identitySource: $request.header.Authorization
+        type: jwt                
+        identitySource: $request.header.Authorization  
         issuerUrl:
           !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}"
         audience:
           - !Ref CognitoUserPoolClient
 
 functions:
-  # === AUTENTICACIÓN ===
   login:
     handler: src/handlers/login.login
     events:
       - httpApi:
           method: POST
           path: /auth/login
+
+  signup:
+    handler: src/handlers/signup.signup
+    events:
+      - httpApi:
+          method: POST
+          path: /auth/signup
 
   refresh:
     handler: src/handlers/refresh.refresh
@@ -62,7 +94,6 @@ functions:
           method: POST
           path: /auth/refresh
 
-  # === INFORMACIÓN DE USUARIO ===
   me:
     handler: src/handlers/me.me
     events:
@@ -70,7 +101,7 @@ functions:
           method: GET
           path: /me
           authorizer:
-            name: cognitoJwt
+            name: cognitoJwt      
   
   getAuthInfo:
     handler: src/handlers/permission.getAuthInfo
@@ -81,7 +112,6 @@ functions:
           authorizer:
             name: cognitoJwt
 
-  # === GESTIÓN DE PERMISOS Y ROLES (PÚBLICO) ===
   getPermissions:
     handler: src/handlers/permission.getPermissions
     events:
@@ -96,7 +126,6 @@ functions:
           method: GET
           path: /auth/roles
 
-  # === ADMINISTRACIÓN (REQUIERE AUTENTICACIÓN) ===
   assignRole:
     handler: src/handlers/permission.assignRole
     events:
@@ -124,7 +153,6 @@ functions:
           authorizer:
             name: cognitoJwt
   
-  # === PERSONALIZACION ===
   getPersonalization:
     handler: src/handlers/personalization.getPersonalization
     events:

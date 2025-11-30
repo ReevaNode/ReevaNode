@@ -134,7 +134,7 @@
                                              box.estado === 'Inhabilitado' ? 'ri-forbid-line' : 'ri-question-line';
                         %>
                             <a href="/info-box/<%= box.id %>" class="box-card <%= estadoClass %>" 
-                                 data-numero="<%= box.numero || box.nombre || '' %>" 
+                                 data-numero="<%= box.id %>" 
                                  data-especialidad="<%= especialidad.toLowerCase() %>" 
                                  data-estado="<%= box.estado.toLowerCase() %>">
                                 
@@ -278,12 +278,7 @@ updateLastUpdateTime();
                 let boxCard = document.querySelector(`.box-card[data-numero="${boxId}"]`);
                 
                 if (!boxCard) {
-                    console.warn(`⚠ no se encontró box con ID=${boxId}, mostrando tarjetas disponibles:`);
-                    const allCards = document.querySelectorAll('.box-card');
-                    allCards.forEach((card, idx) => {
-                        const cardId = card.getAttribute('data-numero');
-                        console.log(`   [${idx}] data-numero="${cardId}"`);
-                    });
+                    console.error(`❌ no se encontró box-card con data-numero="${boxId}"`);
                 } else {
                     console.log(`✓ box encontrado con ID: ${boxId}`);
                 }

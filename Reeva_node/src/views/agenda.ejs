@@ -365,28 +365,43 @@ document.addEventListener('DOMContentLoaded', function() {
           throw new Error(data.error || 'Error al actualizar el estado');
         }
         
-        // Cerrar el modal
-        window.closeMantModal();
+        // Actualizar el estado en el modal para que refleje el cambio
+        const modalTitle = document.getElementById('mantModalTitle');
+        const mantSubmitSpan = document.querySelector('#mantForm button[type="submit"] span[data-i18n]');
+        const isNowDisabled = data.nuevo_estado === 4;
         
-        // Actualizar el botón dinámicamente
-        if (toggleMantBtn) {
-          const isNowDisabled = data.nuevo_estado === 4;
-          
-          // Limpiar clases anteriores completamente
-          toggleMantBtn.className = 'text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg';
-          
-          // Agregar las nuevas clases según el estado
+        // Actualizar título del modal
+        if (modalTitle) {
+          const articulo = '<%= articulo %>';
+          const nivel2Name = '<%= nivel2Name %>';
           if (isNowDisabled) {
-            // Estado: Inhabilitado -> mostrar "Habilitar" (verde)
+            modalTitle.textContent = `¿Está seguro que desea habilitar ${articulo} ${nivel2Name}?`;
+          } else {
+            modalTitle.textContent = `¿Está seguro que desea inhabilitar ${articulo} ${nivel2Name}?`;
+          }
+        }
+        
+        // Actualizar botón de submit del modal
+        const confirmBtn = document.querySelector('#mantForm button[type="submit"]');
+        if (confirmBtn) {
+          confirmBtn.className = `px-6 py-2 ${isNowDisabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white rounded`;
+          confirmBtn.textContent = isNowDisabled ? '<%= __("agenda.confirmEnable") %>' : '<%= __("agenda.confirmDisable") %>';
+        }
+        
+        // Actualizar el botón de toggle principal
+        if (toggleMantBtn) {
+          toggleMantBtn.className = 'text-white px-6 py-3 rounded-button mt-6 flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg';
+          if (isNowDisabled) {
             toggleMantBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             toggleMantBtn.innerHTML = '<i class="ri-play-circle-line text-lg"></i><span>Habilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || "mesa" %></span>';
           } else {
-            // Estado: Habilitado -> mostrar "Inhabilitar" (rojo)
             toggleMantBtn.classList.add('bg-red-600', 'hover:bg-red-700');
             toggleMantBtn.innerHTML = '<i class="ri-stop-circle-line text-lg"></i><span>Inhabilitar <%= singularizar(parametrizacionLabels?.nivel2Plural) || "mesa" %></span>';
           }
         }
         
+        // Cerrar el modal después de actualizar
+        window.closeMantModal();
         console.log('✅ Estado actualizado correctamente');
         
       } catch (error) {
