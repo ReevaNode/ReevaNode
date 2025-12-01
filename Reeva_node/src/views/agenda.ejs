@@ -96,6 +96,8 @@
       <% } %>
     </div>
     
+    <% const capacidadMaxima = (mesa && Number(mesa.capacidad) > 0) ? Number(mesa.capacidad) : 1; %>
+    
     <!-- Modal Agregar Evento -->
     <div id="eventoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70 backdrop-blur-sm hidden overflow-auto p-4">
       <div class="bg-white rounded-2xl p-8 w-full max-w-lg mx-4 shadow-xl">
@@ -115,13 +117,33 @@
             <input type="text" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= mesa.pasilloNombre %>"/>
           </div>
           <div>
-            <label class="block text-sm text-gray-600 mb-2"><%= parametrizacionLabels?.nivel2Singular || 'Ocupante' %></label>
-            <select id="profesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>Selecciona <%= parametrizacionLabels?.nivel2Singular || 'ocupante' %></option>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-sm text-gray-600"><%= parametrizacionLabels?.nivel2Singular || 'Ocupante' %></label>
+              <span class="text-xs text-gray-500" id="ocupanteCounter">0 / <%= capacidadMaxima %></span>
+            </div>
+            <p class="text-xs text-gray-500 mb-2" id="ocupanteCapacidadInfo">
+              <% if ((userLang || 'es') === 'en') { %>
+                Select between 1 and <%= capacidadMaxima %> occupant<%= capacidadMaxima === 1 ? '' : 's' %>.
+              <% } else { %>
+                Selecciona entre 1 y <%= capacidadMaxima %> ocupante<%= capacidadMaxima === 1 ? '' : 's' %>.
+              <% } %>
+            </p>
+            <div id="ocupantesChecklist" data-capacidad="<%= capacidadMaxima %>" class="border rounded-lg p-3 max-h-56 overflow-y-auto space-y-2 bg-gray-50">
               <% (ocupantes_normalizados || []).forEach(ocupante => { %>
-                <option value="<%= ocupante.id %>"><%= ocupante.nombre %></option>
+                <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-white hover:shadow-sm rounded-lg px-2 py-1 transition">
+                  <input type="checkbox" class="ocupante-checkbox accent-primary" name="usuario_ids[]" value="<%= ocupante.id %>">
+                  <span><%= ocupante.nombre %></span>
+                </label>
               <% }) %>
-            </select>
+            </div>
+            <p class="text-[11px] text-gray-500 mt-1">
+              <% if ((userLang || 'es') === 'en') { %>
+                Click on each name to add or remove it from the selection.
+              <% } else { %>
+                Haz clic sobre cada nombre para agregarlo o quitarlo de la selección.
+              <% } %>
+            </p>
+            <p id="ocupanteLimitMsg" class="text-xs text-red-600 mt-1 hidden"></p>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -194,13 +216,26 @@
           <input type="hidden" name="evento_id" id="editEventoId" />
           <div id="editError" class="hidden mb-6 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
           <div class="mb-6">
-            <label class="block text-sm text-gray-600 mb-2"><%= parametrizacionLabels?.nivel3Plural || 'Profesionales' %></label>
-            <select id="editProfesionalSelect" name="usuario_id" class="w-full border rounded p-2" required>
-              <option value="" disabled selected>Selecciona <%= singularizar(parametrizacionLabels?.nivel3Plural) || 'profesional' %></option>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-sm text-gray-600"><%= parametrizacionLabels?.nivel3Plural || 'Ocupantes' %></label>
+              <span class="text-xs text-gray-500" id="editOcupanteCounter">0 / <%= capacidadMaxima %></span>
+            </div>
+            <div id="editOcupantesChecklist" data-capacidad="<%= capacidadMaxima %>" class="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-gray-50">
               <% (ocupantes_normalizados || []).forEach(ocupante => { %>
-                <option value="<%= ocupante.id %>"><%= ocupante.nombre %></option>
+                <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-white hover:shadow-sm rounded-lg px-2 py-1 transition">
+                  <input type="checkbox" class="edit-ocupante-checkbox accent-primary" name="usuario_ids[]" value="<%= ocupante.id %>">
+                  <span><%= ocupante.nombre %></span>
+                </label>
               <% }) %>
-            </select>
+            </div>
+            <p class="text-[11px] text-gray-500 mt-1">
+              <% if ((userLang || 'es') === 'en') { %>
+                Adjust the selection to add or remove occupants for this event.
+              <% } else { %>
+                Ajusta la selección para agregar o quitar ocupantes de este evento.
+              <% } %>
+            </p>
+            <p id="editOcupanteLimitMsg" class="text-xs text-red-600 mt-1 hidden"></p>
           </div>
           <div class="grid grid-cols-2 gap-6 mb-6">
             <div><label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.startTimeLabel"><%= __("agenda.startTimeLabel") %></label><input type="time" name="horainicio" id="editHoraInicio" class="w-full border rounded p-2" required /></div>
@@ -422,6 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('calendar');
   const eventos = <%- eventos_json || '[]' %>;
+  const ocupantes = <%- JSON.stringify(ocupantes_normalizados || []) %>;
   const userLang = '<%= userLang || "es" %>';
   const fechaSeleccionada = '<%= fechaSeleccionada %>';
   
@@ -591,36 +627,97 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-  const ocupantes = <%- JSON.stringify(ocupantes_normalizados || []) %>;
   const userLang = '<%= userLang || "es" %>';
-  console.log('OCUPANTES desde servidor:', ocupantes);
-  const profesionalSelect = document.getElementById('profesionalSelect');
   
-  const selectProfPlaceholder = userLang === 'en' ? 'Select professional' : '— Selecciona ocupante —';
-  
-  function fillProfesionalSelect(selectEl) {
-    if (!selectEl) return;
-    selectEl.innerHTML = `<option value="" disabled selected>${selectProfPlaceholder}</option>`;
-    ocupantes.forEach(function(ocupante) {
-      const opt = document.createElement('option');
-      opt.value = ocupante.id;
-      opt.textContent = ocupante.nombre || ('Ocupante ' + ocupante.id);
-      selectEl.appendChild(opt);
-    });
+  function initOcupanteChecklist({ wrapperId, counterId, limitMsgId }) {
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) return null;
+    const counterEl = document.getElementById(counterId);
+    const limitMsgEl = document.getElementById(limitMsgId);
+    const capacidad = Number(wrapper.dataset.capacidad || 1);
+    const getCheckboxes = () => Array.from(wrapper.querySelectorAll('input[type="checkbox"]'));
+    
+    const updateCounter = () => {
+      if (!counterEl) return;
+      const count = getCheckboxes().filter(cb => cb.checked).length;
+      counterEl.textContent = `${count} / ${capacidad}`;
+    };
+    
+    const showLimit = () => {
+      if (!limitMsgEl) return;
+      const msg = capacidad === 1
+        ? (userLang === 'en' ? 'Only one occupant is allowed for this room.' : 'Solo se permite un ocupante para esta sala.')
+        : (userLang === 'en'
+            ? `You can select up to ${capacidad} occupants.`
+            : `Puedes seleccionar hasta ${capacidad} ocupantes.`);
+      limitMsgEl.textContent = msg;
+      limitMsgEl.classList.remove('hidden');
+    };
+    
+    const hideLimit = () => limitMsgEl && limitMsgEl.classList.add('hidden');
+    
+    const handleChange = (event) => {
+      const selectedCount = getCheckboxes().filter(cb => cb.checked).length;
+      if (capacidad && selectedCount > capacidad) {
+        event.target.checked = false;
+        showLimit();
+      } else {
+        hideLimit();
+      }
+      updateCounter();
+    };
+    
+    getCheckboxes().forEach(cb => cb.addEventListener('change', handleChange));
+    updateCounter();
+    
+    return {
+      capacidad,
+      updateCounter,
+      reset() {
+        getCheckboxes().forEach(cb => cb.checked = false);
+        hideLimit();
+        updateCounter();
+      },
+      setSelected(ids = []) {
+        const idSet = new Set(ids.map(String));
+        getCheckboxes().forEach(cb => {
+          cb.checked = idSet.has(cb.value);
+        });
+        hideLimit();
+        updateCounter();
+      },
+      getSelected() {
+        return getCheckboxes().filter(cb => cb.checked).map(cb => cb.value);
+      }
+    };
   }
   
   document.addEventListener('DOMContentLoaded', function() {
-    try {
-      fillProfesionalSelect(profesionalSelect);
-      fillProfesionalSelect(editProfesionalSelect);
-    } catch (e) { console.warn('Error rellenando selects de ocupantes', e); }
+    const createChecklist = initOcupanteChecklist({
+      wrapperId: 'ocupantesChecklist',
+      counterId: 'ocupanteCounter',
+      limitMsgId: 'ocupanteLimitMsg'
+    });
+    
+    const editChecklist = initOcupanteChecklist({
+      wrapperId: 'editOcupantesChecklist',
+      counterId: 'editOcupanteCounter',
+      limitMsgId: 'editOcupanteLimitMsg'
+    });
+    
+    window.__agendaCreateChecklist = createChecklist;
+    window.__agendaEditChecklist = editChecklist;
+    window.__agendaGetSelectedOcupantes = () => createChecklist ? createChecklist.getSelected() : [];
+    window.__agendaResetOcupanteSelection = () => createChecklist && createChecklist.reset();
+    window.__agendaGetSelectedEditOcupantes = () => editChecklist ? editChecklist.getSelected() : [];
+    window.__agendaSetEditOcupantes = (ids) => editChecklist && editChecklist.setSelected(ids);
+    window.__agendaCapacidadMaxima = createChecklist?.capacidad || editChecklist?.capacidad || 1;
   });
 </script>
 
 <script>
 const editEventoModal = document.getElementById('editEventoModal');
 const editEventoForm = document.getElementById('editEventoForm');
-const editProfesionalSelect = document.getElementById('editProfesionalSelect');
 function pad(num) {
   return num.toString().padStart(2, '0');
 }
@@ -634,12 +731,11 @@ function openEditEventoModal(evento) {
     err.classList.add('hidden');
   }
   
-  const ocupanteActual = ocupantes.find(o => o.id == evento.extendedProps.usuario_id);
-  
-  if (ocupanteActual) {
-    editProfesionalSelect.value = ocupanteActual.id;
-  } else {
-    editProfesionalSelect.value = "";
+  const ocupantesSeleccionados = evento.extendedProps.usuario_ids && evento.extendedProps.usuario_ids.length
+    ? evento.extendedProps.usuario_ids
+    : (evento.extendedProps.usuario_id ? [evento.extendedProps.usuario_id] : []);
+  if (window.__agendaSetEditOcupantes) {
+    window.__agendaSetEditOcupantes(ocupantesSeleccionados);
   }
   
   document.getElementById('editEventoId').value = evento.id;
@@ -713,6 +809,17 @@ if (eventoForm) {
     e.preventDefault();
     const errorBox = document.getElementById('addError');
     if (errorBox) { errorBox.classList.add('hidden'); errorBox.textContent = ''; }
+    
+    const capacidadMaxima = window.__agendaCapacidadMaxima || 1;
+    const selectedOcupantes = typeof window.__agendaGetSelectedOcupantes === 'function'
+      ? window.__agendaGetSelectedOcupantes()
+      : Array.from(document.querySelectorAll('input[name="usuario_ids[]"]:checked')).map(cb => cb.value);
+    if (!selectedOcupantes.length) {
+      const minMsg = userLang === 'en' ? 'Select at least one occupant.' : 'Selecciona al menos un ocupante.';
+      if (errorBox) { errorBox.textContent = minMsg; errorBox.classList.remove('hidden'); }
+      return;
+    }
+    
     const addBtn = document.getElementById('addEventoBtn');
     const prevLabel = addBtn ? addBtn.textContent : '';
     const addingText = userLang === 'en' ? 'Adding…' : 'Agregando…';
@@ -755,6 +862,13 @@ editEventoForm.addEventListener('submit', async function(e) {
   const errorBox = document.getElementById('editError');
   errorBox.classList.add('hidden');
   errorBox.textContent = '';
+  const selectedEditOcupantes = window.__agendaGetSelectedEditOcupantes ? window.__agendaGetSelectedEditOcupantes() : [];
+  if (!selectedEditOcupantes.length) {
+    const msg = userLang === 'en' ? 'Select at least one occupant.' : 'Selecciona al menos un ocupante.';
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+    return;
+  }
   const formData = new FormData(editEventoForm);
   const params = new URLSearchParams();
   for (const pair of formData.entries()) params.append(pair[0], pair[1]);
@@ -1270,6 +1384,10 @@ function openEventoModalWithTime(fechaStart, fechaEnd) {
   if (err) {
     err.textContent = '';
     err.classList.add('hidden');
+  }
+  
+  if (window.__agendaResetOcupanteSelection) {
+    window.__agendaResetOcupanteSelection();
   }
   
   const tiempoStart = formatTimeForInput(fechaStart);

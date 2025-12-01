@@ -931,7 +931,7 @@ function buildDashboardViewModel(data) {
   };
 }
 
-router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, next) => {
+router.get("/dashboard-hospital", requirePermission("dashboard.read"), async (req, res, next) => {
   try {
     const empresasList = res.locals.empresasList || [];
     const empresaActiva = res.locals.empresaActiva || null;
@@ -1086,7 +1086,7 @@ router.get("/dashboard", requirePermission("dashboard.read"), async (req, res, n
       });
     }
 
-    res.render("dashboard", {
+    res.render("dashboard-hospital", {
       ...viewModel,
       user: req.session.user,
       empresasList,

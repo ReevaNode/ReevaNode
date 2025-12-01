@@ -549,6 +549,23 @@ body {
   box-shadow: 0 0 0 2px rgba(168, 85, 184, 0.1);
 }
 
+.mesa-capacidad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+.mesa-capacidad input {
+  width: 80px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
 .btn-eliminar-box,
 .btn-eliminar-mesa {
   position: absolute;

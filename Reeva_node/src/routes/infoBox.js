@@ -126,7 +126,7 @@ router.get('/info-box/:idBox', async (req, res) => {
             // Agendas del box (rango de ±1 año para el calendario)
             db.send(new ScanCommand({
                 TableName: 'agenda',
-                FilterExpression: 'idBox = :idBox AND horainicio >= :inicio AND horainicio <= :fin',
+                FilterExpression: '(idBox = :idBox OR mesaId = :idBox) AND horainicio >= :inicio AND horainicio <= :fin',
                 ExpressionAttributeValues: {
                     ':idBox': idBox,
                     ':inicio': inicioRango,
@@ -430,11 +430,11 @@ router.get('/info-box/:idBox', async (req, res) => {
                 id: agenda.idAgenda,
                 title: nombreOcupante,
                 start: agenda.horainicio,
-                end: agenda.horaTermino,
+                end: agenda.horaTermino || agenda.horatermino,
                 backgroundColor: coloresPorEstado[estado] || '#94a3b8',
                 borderColor: coloresPorEstado[estado] || '#94a3b8',
                 extendedProps: {
-                    idBox: agenda.idBox,
+                    idBox: agenda.idBox || agenda.mesaId,
                     usuario_id: agenda.idUsuario, // ← AGREGADO para compatibilidad
                     idUsuario: agenda.idUsuario,
                     nombreUsuario: nombreOcupante,
@@ -545,23 +545,13 @@ router.get('/info-box/:idBox', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en /info-box:', error);
-        return res.status(500).send(`
-            <!DOCTYPE html>
-            <html><head><title>Error</title>
-            <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-            </head><body class="bg-gray-50 flex items-center justify-center min-h-screen">
-            <div class="text-center p-8 max-w-2xl">
-                <h1 class="text-2xl font-bold mb-4 text-red-600">Error al cargar información del box</h1>
-                <p class="text-gray-600 mb-4">Ha ocurrido un error al procesar la solicitud.</p>
-                <details class="text-left bg-gray-100 p-4 rounded mb-6">
-                    <summary class="cursor-pointer font-medium">Detalles del error</summary>
-                    <pre class="text-xs mt-2 overflow-auto">${error.stack}</pre>
-                </details>
-                <a href="/matriz-box" class="px-6 py-2 bg-purple-600 text-white rounded-lg inline-block hover:bg-purple-700">Volver a la matriz</a>
-            </div>
-            </body></html>
-        `);
+        console.error('Error en /info-box:', { message: error.message, stack: error.stack });
+        // Responder con más detalle para depurar rápidamente
+        return res.status(500).json({ 
+            ok: false, 
+            error: error.message || 'Error interno del servidor',
+            stack: error.stack || null
+        });
     }
 });
 

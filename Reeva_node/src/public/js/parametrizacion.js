@@ -341,7 +341,8 @@ class ParametrizacionManager {
       const nuevaMesa = {
         id: `mesa-${this.generarIdCorto()}`,
         numero: espacio.mesas.length + 1,
-        nombre: ''
+        nombre: '',
+        capacidad: 1
       };
       espacio.mesas.push(nuevaMesa);
       this.renderizarEspacios();
@@ -369,6 +370,15 @@ class ParametrizacionManager {
         mesa.nombre = valor;
       }
     }
+  }
+
+  actualizarCapacidadMesa(espacioId, mesaId, valor) {
+    const espacio = this.configuracion.espacios.find(e => e.espacioId === espacioId);
+    if (!espacio) return;
+    const mesa = espacio.mesas.find(m => m.id === mesaId);
+    if (!mesa) return;
+    const cap = parseInt(valor, 10);
+    mesa.capacidad = Number.isFinite(cap) && cap > 0 ? cap : 1;
   }
 
   renderizarEspacios() {
@@ -445,7 +455,7 @@ class ParametrizacionManager {
               ${espacio.mesas.length > 0 ? `
                 <div class="mesas-grid">
                   ${espacio.mesas.map(mesa => `
-                <div class="mesa-card">
+                  <div class="mesa-card">
                   <button 
                     class="btn-eliminar-mesa" 
                     onclick="parametrizacion.eliminarMesa('${espacio.espacioId}', '${mesa.id}')"
@@ -461,6 +471,16 @@ class ParametrizacionManager {
                     value="${mesa.nombre}"
                     oninput="parametrizacion.actualizarNombreMesa('${espacio.espacioId}', '${mesa.id}', this.value)"
                   >
+                  <div class="mesa-capacidad">
+                    <i class="fas fa-user"></i>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value="${mesa.capacidad || 1}"
+                      oninput="parametrizacion.actualizarCapacidadMesa('${espacio.espacioId}', '${mesa.id}', this.value)"
+                      aria-label="Capacidad"
+                    >
+                  </div>
                 </div>
               `).join('')}
             </div>

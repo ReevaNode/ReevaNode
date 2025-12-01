@@ -44,12 +44,14 @@ async function getMesas(empresaId) {
             espacios.forEach(espacio => {
                 if (espacio.mesas && Array.isArray(espacio.mesas)) {
                     espacio.mesas.forEach(mesa => {
+                        const capacidad = Number(mesa.capacidad);
                         mesas.push({
                             id: mesa.id,
                             nombre: mesa.nombre,
                             numero: mesa.numero,
                             pasilloNombre: espacio.pasilloNombre,
-                            espacioId: espacio.espacioId
+                            espacioId: espacio.espacioId,
+                            capacidad: Number.isFinite(capacidad) && capacidad > 0 ? capacidad : 1
                         });
                     });
                 }
@@ -117,12 +119,14 @@ async function getBoxInfo(mesaId) {
             if (espacio.mesas && Array.isArray(espacio.mesas)) {
                 const mesa = espacio.mesas.find(m => String(m.id) === String(mesaId));
                 if (mesa) {
+                    const capacidad = Number(mesa.capacidad);
                     return {
                         id: mesa.id,
                         nombre: mesa.nombre,
                         numero: mesa.numero,
                         pasilloNombre: espacio.pasilloNombre,
-                        espacioId: espacio.espacioId
+                        espacioId: espacio.espacioId,
+                        capacidad: Number.isFinite(capacidad) && capacidad > 0 ? capacidad : 1
                     };
                 }
             }
@@ -134,6 +138,19 @@ async function getBoxInfo(mesaId) {
         logger.error(`Error obteniendo info de mesa ${mesaId}:`, error);
         return null;
     }
+}
+
+function extractUsuarioIds(eventItem) {
+    if (!eventItem) return [];
+    if (Array.isArray(eventItem.ocupantes)) return eventItem.ocupantes.map(id => String(id));
+    const rawList = eventItem.idUsuarios || eventItem.idusuarios;
+    if (Array.isArray(rawList)) return rawList.map(id => String(id));
+    const raw = eventItem.idUsuario || eventItem.idusuario || eventItem.id;
+    if (!raw) return [];
+    if (typeof raw === 'string') {
+        return raw.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [String(raw)];
 }
 
 // GET /agenda
@@ -313,26 +330,26 @@ router.get('/agenda', async (req, res) => {
             };
             
             eventos = eventosDelMesa.map(ev => {
-                // Leer usando AMBOS formatos (prioridad a camelCase)
                 const start = ev.horainicio;
                 const end = ev.horaTermino || ev.horatermino;
-                
-                // formatear a ISO local
                 const startIsoLocal = toLocalIsoString(start);
                 const endIsoLocal = toLocalIsoString(end);
-                
-                // encontrar ocupante usando la lista normalizada
-                const ocupante = (ocupantes_normalizados || []).find(o => 
-                    String(o.id) === String(ev.idUsuario || ev.idusuario || ev.id)
-                );
+                const usuarioIds = extractUsuarioIds(ev);
+                const nombres = usuarioIds.map(uid => {
+                    const encontrado = (ocupantes_normalizados || []).find(o => String(o.id) === String(uid));
+                    return encontrado ? encontrado.nombre : null;
+                }).filter(Boolean);
+                const titulo = nombres.length ? nombres.join(', ') : 'Sin ocupante';
                 
                 return {
                     id: ev.idAgenda || ev.idagenda,
-                    title: ocupante ? ocupante.nombre : 'Sin ocupante',
+                    title: titulo,
                     start: startIsoLocal,
                     end: endIsoLocal,
                     extendedProps: {
-                        usuario_id: ocupante ? ocupante.id : '',
+                        usuario_id: usuarioIds[0] || '',
+                        usuario_ids: usuarioIds,
+                        usuario_nombres: nombres,
                         tipo_id: ev.idTipoConsulta || ev.idtipoconsulta || '',
                         observaciones: ev.observaciones || ev.observacion || ev.detalle || ''
                     }
@@ -469,50 +486,59 @@ router.post('/add_evento/:mesaId', async (req, res) => {
         const mesaId = req.params.mesaId;
         const body = req.body || {};
         
-        const usuario_id = body.usuario_id || body.usuario || body.user_id || '';
+        const rawUsuarios = body.usuario_ids || body['usuario_ids[]'] || body.usuario_id || body.usuario || body.user_id || [];
+        let usuarioIds = Array.isArray(rawUsuarios) ? rawUsuarios : [rawUsuarios];
+        usuarioIds = usuarioIds.filter(Boolean).map(id => String(id));
+        
         const horainicio = body.horainicio || body.hora_inicio || '';
         const horafin = body.horafin || body.hora_fin || '';
         const fecha = body.fecha || '';
         const idTipoConsulta = body.idTipoConsulta || body.idTipo || body.tipo || '';
         const observaciones = body.observaciones || body.observacion || '';
         
-        if (!mesaId || !usuario_id || !horainicio || !horafin || !fecha) {
+        if (!mesaId || !usuarioIds.length || !horainicio || !horafin || !fecha) {
             const err = 'Faltan campos obligatorios';
             if (req.headers['x-requested-with'] === 'XMLHttpRequest') return res.json({ ok: false, error: err });
             req.flash && req.flash('error', err);
             return res.redirect('/agenda');
         }
         
-        const idAgenda = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        
-        function toLocalIso(date) {
-            const pad = (n) => String(n).padStart(2, '0');
-            return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+        const boxInfo = await getBoxInfo(mesaId);
+        const capacidadMesa = Number.isFinite(boxInfo?.capacidad) && boxInfo.capacidad > 0 ? boxInfo.capacidad : 1;
+        if (usuarioIds.length > capacidadMesa) {
+            const err = `La capacidad máxima de esta sala es ${capacidadMesa} ocupante${capacidadMesa === 1 ? '' : 's'}.`;
+            if (req.headers['x-requested-with'] === 'XMLHttpRequest') return res.json({ ok: false, error: err });
+            req.flash && req.flash('error', err);
+            return res.redirect('/agenda');
         }
+        
+        const pad = (n) => String(n).padStart(2, '0');
+        const formatDateTime = (date) => `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
         
         const inicioDate = new Date(`${fecha}T${horainicio}`);
         const finDate = new Date(`${fecha}T${horafin}`);
-        const horainicioIso = toLocalIso(inicioDate);
-        const horaTerminoIso = toLocalIso(finDate);
+        const horainicioIso = formatDateTime(inicioDate);
+        const horaTerminoIso = formatDateTime(finDate);
         
+        const empresaId = res.locals.empresaActiva?.empresaId || null;
+
+        const idAgenda = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const combinedUsuarios = usuarioIds.join(',');
         const item = {
             idAgenda,
-            mesaId: String(mesaId),
-            idBox: String(mesaId),  // Para compatibilidad hacia atrás
-            idUsuario: String(usuario_id),
+            idEmpresa: empresaId ? String(empresaId) : undefined,
+            idBox: String(mesaId),
+            idUsuario: combinedUsuarios,
             idTipoConsulta: idTipoConsulta || '',
             horainicio: horainicioIso,
-            horatermino: horaTerminoIso,    
-            horaTermino: horaTerminoIso,  
+            horaTermino: horaTerminoIso,
             observaciones: observaciones || '',
-            createdAt: new Date().toISOString(),
         };
         
         await db.send(new PutCommand({ TableName: config.dynamodb.tablas.agenda, Item: item }));
         console.log('PutCommand item saved:', item);
         
         // emitir websocket
-        const boxInfo = await getBoxInfo(mesaId);
         broadcastBoxUpdate({
             box_id: String(mesaId),
             box_numero: boxInfo ? String(boxInfo.numero) : String(mesaId),
@@ -540,7 +566,9 @@ router.post('/editar_evento/:eventoId', async (req, res) => {
         const eventoId = req.params.eventoId;
         const body = req.body || {};
         
-        const usuario_id = body.usuario_id || body.usuario || body.user_id || '';
+        const rawUsuarios = body.usuario_ids || body['usuario_ids[]'] || body.usuario_id || body.usuario || body.user_id || '';
+        let usuarioIds = Array.isArray(rawUsuarios) ? rawUsuarios : [rawUsuarios];
+        usuarioIds = usuarioIds.filter(Boolean).map(id => String(id));
         const horainicio = body.horainicio || body.hora_inicio || '';
         const horafin = body.horafin || body.hora_fin || '';
         const fecha = body.fecha || '';
@@ -557,7 +585,7 @@ router.post('/editar_evento/:eventoId', async (req, res) => {
         function toLocalIsoFromParts(fechaStr, timeStr) {
             if (!fechaStr || !timeStr) return undefined;
             const d = new Date(`${fechaStr}T${timeStr}`);
-            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
         }
         
         const horainicioIso = fecha && horainicio ? toLocalIsoFromParts(fecha, horainicio) : undefined;
@@ -568,10 +596,10 @@ router.post('/editar_evento/:eventoId', async (req, res) => {
         const exprAttrNames = {};
         const exprAttrValues = {};
         
-        if (usuario_id) { 
+        if (usuarioIds.length) { 
             updateExpr.push('#u = :u'); 
             exprAttrNames['#u'] = 'idUsuario'; 
-            exprAttrValues[':u'] = String(usuario_id); 
+            exprAttrValues[':u'] = usuarioIds.join(',');
         }
         if (idTipoConsulta) { 
             updateExpr.push('#t = :t'); 
@@ -584,9 +612,8 @@ router.post('/editar_evento/:eventoId', async (req, res) => {
             exprAttrValues[':hi'] = horainicioIso; 
         }
         if (horaTerminoIso) { 
-            updateExpr.push('#ht1 = :ht, #ht2 = :ht'); 
-            exprAttrNames['#ht1'] = 'horaTermino';   
-            exprAttrNames['#ht2'] = 'horatermino';  
+            updateExpr.push('#ht = :ht'); 
+            exprAttrNames['#ht'] = 'horaTermino';   
             exprAttrValues[':ht'] = horaTerminoIso; 
         }
         if (observaciones !== undefined) { 
@@ -690,16 +717,16 @@ router.get('/agenda/events', async (req, res) => {
         
         // Obtener empresa activa desde el middleware
         const empresaActiva = res.locals.empresaActiva;
-        if (!empresaActiva) {
-            return res.status(400).json({ error: 'No hay empresa activa' });
-        }
-        
-        const empresaId = empresaActiva.empresaId;
+        const empresaId = empresaActiva?.empresaId || null;
         
         // Traer agenda (sin cache para obtener datos frescos)
         const agendaCmd = new ScanCommand({ TableName: config.dynamodb.tablas.agenda });
         const agendaRes = await db.send(agendaCmd);
-        const items = agendaRes.Items || [];
+        let items = agendaRes.Items || [];
+        // Filtrar por empresa si tenemos idEmpresa almacenado
+        if (empresaId) {
+            items = items.filter(it => !it.idEmpresa || String(it.idEmpresa) === String(empresaId));
+        }
         
         // Traer ocupantes de la empresa 
         const ocupantesCmd = new QueryCommand({
@@ -749,18 +776,20 @@ router.get('/agenda/events', async (req, res) => {
         const eventos = eventosDelBox.map(ev => {
             const start = ev.horainicio;
             const end = ev.horaTermino || ev.horatermino;
-            
-            const prof = (ocupantes_normalizados || []).find(o => 
-                String(o.id) === String(ev.idUsuario || ev.usuario_id || ev.idusuario)
-            );
+            const usuarioIds = extractUsuarioIds(ev);
+            const nombres = usuarioIds.map(uid => {
+                const prof = (ocupantes_normalizados || []).find(o => String(o.id) === String(uid));
+                return prof ? prof.nombre : null;
+            }).filter(Boolean);
             
             return {
                 id: ev.idAgenda || ev.idagenda,
-                title: prof ? prof.nombre : 'Sin profesional',
+                title: nombres.length ? nombres.join(', ') : 'Sin profesional',
                 start: start || null,
                 end: end || null,
                 extendedProps: {
-                    usuario_id: prof ? pnSafe(prof, 'id') : '',
+                    usuario_id: usuarioIds[0] || '',
+                    usuario_ids: usuarioIds,
                     observaciones: ev.observaciones || ev.observacion || ev.detalle || ''
                 }
             };

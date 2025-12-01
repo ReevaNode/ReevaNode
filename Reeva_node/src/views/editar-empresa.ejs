@@ -123,6 +123,14 @@
       }
     }
     empresa.espacios = Object.values(espaciosUnicos);
+    // Normalizar capacidad en mesas
+    empresa.espacios.forEach(esp => {
+      if (Array.isArray(esp.mesas)) {
+        esp.mesas = esp.mesas.map(m => ({ ...m, capacidad: Number(m.capacidad) > 0 ? Number(m.capacidad) : 1 }));
+      } else {
+        esp.mesas = [];
+      }
+    });
 
     const ocupantesUnicos = {};
     for (const ocupante of empresa.ocupantes) {
@@ -245,6 +253,16 @@
                       value="${mesa.nombre}"
                       onblur="if(this.value.trim()) actualizarNombreMesa('${espacio.espacioId}', '${mesa.id}', this.value)"
                     >
+                    <div class="mesa-capacidad-input">
+                      <i class="ri-user-line"></i>
+                      <input 
+                        type="number" 
+                        min="1" 
+                        value="${mesa.capacidad || 1}"
+                        onblur="actualizarCapacidadMesa('${espacio.espacioId}', '${mesa.id}', this.value)"
+                        aria-label="Capacidad máxima"
+                      >
+                    </div>
                   </div>
                 `).join('')}
               </div>
@@ -439,7 +457,8 @@
 
       const nuevaMesa = {
         id: `mesa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        nombre: '' // Vacía, el usuario escribirá el nombre
+        nombre: '', // Vacía, el usuario escribirá el nombre
+        capacidad: 1
       };
 
       espacio.mesas.push(nuevaMesa);
@@ -547,6 +566,45 @@
       .catch(err => {
         console.error('Error al actualizar mesa:', err);
         alert('Error al actualizar ' + empresa.nombreNivel2.toLowerCase());
+        renderizarEspacios();
+      });
+    }
+
+    function actualizarCapacidadMesa(espacioId, mesaId, valor) {
+      const espacio = empresa.espacios.find(e => e.espacioId === espacioId);
+      if (!espacio) return;
+      const mesa = espacio.mesas.find(m => m.id === mesaId);
+      if (!mesa) return;
+
+      const capacidad = Math.max(1, parseInt(valor, 10) || 1);
+      mesa.capacidad = capacidad;
+
+      const payload = {
+        espacioId: espacioId,
+        pasilloNombre: espacio.pasilloNombre,
+        mesas: espacio.mesas.map(m => 
+          m.id === mesaId ? { ...m, capacidad } : m
+        )
+      };
+
+      fetch(`/api/empresas/${empresaId}/espacios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Capacidad actualizada para mesa:', mesaId);
+        } else {
+          alert('Error al actualizar capacidad');
+          console.error('Error respuesta:', data);
+          renderizarEspacios();
+        }
+      })
+      .catch(err => {
+        console.error('Error al actualizar capacidad:', err);
+        alert('Error al actualizar capacidad');
         renderizarEspacios();
       });
     }

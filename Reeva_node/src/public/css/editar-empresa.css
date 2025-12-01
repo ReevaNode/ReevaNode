@@ -994,6 +994,21 @@ body.theme-dark .espacio-form-input input:focus {
   justify-content: center;
 }
 
+.mesa-capacidad-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.mesa-capacidad-input input {
+  width: 80px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
 .modal-overlay.active {
   display: flex;
 }

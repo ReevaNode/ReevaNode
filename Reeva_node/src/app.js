@@ -22,6 +22,8 @@ import { loggerRequest, loggerError } from "./utils/logger.js";
 import authRouter from "./routes/auth.js";
 import bienvenidaRouter from "./routes/bienvenida.js";
 import dashboardRouter from "./routes/dashboard.js";
+import dashboardHospitalRouter from "./routes/dashboard-hospital.js";
+import dashboardEmpresaRouter from "./routes/dashboard-empresa.js";
 import adminBDDRouter from "./routes/adminBDD.js";
 import agendaRouter from "./routes/agenda.js";
 import matrizBoxRouter from "./routes/matrizBox.js";
@@ -124,6 +126,8 @@ app.get("/health", (req, res) => {
 app.use("/", authRouter);
 app.use("/", requireAuth, loadParametrizacion, bienvenidaRouter);
 app.use("/", requireAuth, loadParametrizacion, dashboardRouter);
+app.use("/", requireAuth, loadParametrizacion, dashboardHospitalRouter);
+app.use("/", requireAuth, loadParametrizacion, dashboardEmpresaRouter);
 app.use("/", requireAuth, loadParametrizacion, adminBDDRouter);
 app.use("/", requireAuth, loadParametrizacion, agendaRouter);
 app.use("/", requireAuth, loadParametrizacion, matrizBoxRouter);
