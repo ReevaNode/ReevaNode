@@ -44,7 +44,7 @@
   },
   "welcome": {
     "title": "Welcome to {empresa}",
-    "subtitle": "Your {nivel2Plural} management system",
+    "subtitle": "Your system to manage {nivel1Plural}, {nivel2Plural} and {nivel3Plural} in a centralized way",
     "greeting": "Welcome",
     "question": "What would you like to do today?",
     "section": {
@@ -53,31 +53,31 @@
     "cards": {
       "dashboard": {
         "title": "Dashboard",
-        "description": "Access key statistics, performance metrics, quality indicators, and real-time reports.",
+        "description": "View key metrics and performance of your {nivel2Plural} and the load of {nivel3Plural}.",
         "list": {
-          "a": "Occupancy statistics",
-          "b": "Care metrics",
-          "c": "Monthly reports"
+          "a": "Occupancy by {nivel2}",
+          "b": "Performance of {nivel3Plural}",
+          "c": "General trends"
         },
-        "button": "Go to Dashboard"
+        "button": "View Dashboard"
       },
       "matrix": {
-        "title": "{nivel2} Matrix",
-        "description": "View the status of each {nivel2}, occupancy rate, and real-time availability.",
+        "title": "{nivel2Plural}",
+        "description": "Check the status and availability of each {nivel2} within your {nivel1Plural}.",
         "list": {
           "a": "Status of each {nivel2}",
-          "b": "% occupancy",
-          "c": "Immediate availability"
+          "b": "Immediate availability",
+          "c": "Location by {nivel1}"
         },
-        "button": "View {nivel2} Matrix"
+        "button": "View {nivel2Plural}"
       },
       "agenda": {
         "title": "Schedule",
-        "description": "Check the schedule for each {nivel2} by day, week, or month. Plan and manage medical appointments.",
+        "description": "Organize appointments and shifts for your {nivel3Plural} in each {nivel2}.",
         "list": {
-          "a": "{nivel2} calendar",
-          "b": "Day/week/month view",
-          "c": "Appointment management"
+          "a": "Schedule by {nivel2}",
+          "b": "Day / week / month view",
+          "c": "Confirmations and availability"
         },
         "button": "View Schedule"
       }

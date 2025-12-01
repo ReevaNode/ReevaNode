@@ -36,11 +36,11 @@
     <div class="bg-gradient-to-r from-[#f8f9fa] to-transparent absolute inset-0 z-10 hero-gradient"></div>
     <div class="container mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row items-center relative z-20">
       <div class="w-full md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
-        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
-          Bienvenido a <%= nombreEmpresa || 'tu empresa' %>
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4" data-i18n="welcome.title">
+          <%= __('welcome.title').replace('{empresa}', nombreEmpresa || 'tu empresa') %>
         </h1>
-        <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0">
-          Tu sistema para gestionar <%= nombreNivel1Plural %>, <%= nombreNivel2Plural %> y <%= nombreNivel3Plural %> de forma centralizada.
+        <p class="text-gray-600 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0" data-i18n="welcome.subtitle">
+          <%= __('welcome.subtitle').replace('{nivel1Plural}', nombreNivel1Plural).replace('{nivel2Plural}', nombreNivel2Plural).replace('{nivel3Plural}', nombreNivel3Plural) %>
         </p>
       </div>
     </div>
@@ -52,16 +52,16 @@
   <section class="bg-white py-6 md:py-8">
     <div class="container mx-auto px-4">
       <div class="flex flex-col items-center text-center mb-6 md:mb-8">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-          Bienvenido/a, <%= (user && user.username) ? user.username : (user && user.email ? user.email : 'usuario') %>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2" data-i18n="welcome.greeting">
+          <%= __('welcome.greeting') %>, <%= (user && user.username) ? user.username : (user && user.email ? user.email : 'usuario') %>
         </h2>
-        <p class="text-gray-600 text-base md:text-lg mb-4 md:mb-6">
-          ¿Qué deseas hacer hoy?
+        <p class="text-gray-600 text-base md:text-lg mb-4 md:mb-6" data-i18n="welcome.question">
+          <%= __('welcome.question') %>
         </p>
       </div>
 
-      <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-left">
-        Primeros Pasos
+      <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-left" data-i18n="welcome.section.firstSteps">
+        <%= __('welcome.section.firstSteps') %>
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -72,24 +72,29 @@
               class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
               <i class="ri-dashboard-line ri-lg"></i>
             </div>
-            <h3 class="text-base md:text-lg font-semibold text-primary ml-2">
-              Dashboard
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.dashboard.title">
+              <%= __('welcome.cards.dashboard.title') %>
             </h3>
           </div>
           <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-            <p class="text-gray-600 text-sm md:text-base mb-2">
-              Visualiza métricas clave y rendimiento de tus <%= nombreNivel2Plural %> y la carga de <%= nombreNivel3Plural %>.
+            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.dashboard.description">
+              <%= __('welcome.cards.dashboard.description').replace('{nivel2Plural}', nombreNivel2Plural).replace('{nivel3Plural}', nombreNivel3Plural) %>
             </p>
             <ul class="space-y-1 text-primary text-sm md:text-base">
-              <li>• Ocupación por <%= nombreNivel2 %></li>
-              <li>• Rendimiento de <%= nombreNivel3Plural %></li>
-              <li>• Tendencias generales</li>
+              <li data-i18n="welcome.cards.dashboard.list.a">• <%= __('welcome.cards.dashboard.list.a').replace('{nivel2}', nombreNivel2) %></li>
+              <li data-i18n="welcome.cards.dashboard.list.b">• <%= __('welcome.cards.dashboard.list.b').replace('{nivel3Plural}', nombreNivel3Plural) %></li>
+              <li data-i18n="welcome.cards.dashboard.list.c">• <%= __('welcome.cards.dashboard.list.c') %></li>
             </ul>
           </div>
+<<<<<<< HEAD
           <a href="/dashboard-empresa"
             class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base"
+=======
+          <a href="/dashboard"
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base" data-i18n="welcome.cards.dashboard.button"
+>>>>>>> f3b5d2a4ea23410eb92b7284639c53f51e5af283
           >
-            Ver Dashboard
+            <%= __('welcome.cards.dashboard.button') %>
           </a>
         </div>
 
@@ -100,23 +105,23 @@
               class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
               <i class="ri-grid-line ri-lg"></i>
             </div>
-            <h3 class="text-base md:text-lg font-semibold text-primary ml-2">
-              <%= nombreNivel2Plural %>
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.matrix.title">
+              <%= __('welcome.cards.matrix.title').replace('{nivel2Plural}', nombreNivel2Plural) %>
             </h3>
           </div>
           <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-            <p class="text-gray-600 text-sm md:text-base mb-2">
-              Revisa el estado y la disponibilidad de cada <%= nombreNivel2 %> dentro de tus <%= nombreNivel1Plural %>.
+            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.matrix.description">
+              <%= __('welcome.cards.matrix.description').replace('{nivel2}', nombreNivel2).replace('{nivel1Plural}', nombreNivel1Plural) %>
             </p>
             <ul class="space-y-1 text-primary text-sm md:text-base">
-              <li>• Estado de cada <%= nombreNivel2 %></li>
-              <li>• Disponibilidad inmediata</li>
-              <li>• Ubicación por <%= nombreNivel1 %></li>
+              <li data-i18n="welcome.cards.matrix.list.a">• <%= __('welcome.cards.matrix.list.a').replace('{nivel2}', nombreNivel2) %></li>
+              <li data-i18n="welcome.cards.matrix.list.b">• <%= __('welcome.cards.matrix.list.b') %></li>
+              <li data-i18n="welcome.cards.matrix.list.c">• <%= __('welcome.cards.matrix.list.c').replace('{nivel1}', nombreNivel1) %></li>
             </ul>
           </div>
-          <a href="/matriz-box"
-            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base">
-            Ver <%= nombreNivel2Plural %>
+          <a href="/matriz"
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base" data-i18n="welcome.cards.matrix.button">
+            <%= __('welcome.cards.matrix.button').replace('{nivel2Plural}', nombreNivel2Plural) %>
           </a>
         </div>
 
@@ -127,24 +132,24 @@
               class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-primary/10 text-primary rounded-full">
               <i class="ri-calendar-2-line ri-lg"></i>
             </div>
-            <h3 class="text-base md:text-lg font-semibold text-primary ml-2">
-              Agenda
+            <h3 class="text-base md:text-lg font-semibold text-primary ml-2" data-i18n="welcome.cards.agenda.title">
+              <%= __('welcome.cards.agenda.title') %>
             </h3>
           </div>
           <div class="bg-primary/5 rounded p-3 md:p-4 mb-3 md:mb-4">
-            <p class="text-gray-600 text-sm md:text-base mb-2">
-              Organiza citas y turnos para tus <%= nombreNivel3Plural %> en cada <%= nombreNivel2 %>.
+            <p class="text-gray-600 text-sm md:text-base mb-2" data-i18n="welcome.cards.agenda.description">
+              <%= __('welcome.cards.agenda.description').replace('{nivel3Plural}', nombreNivel3Plural).replace('{nivel2}', nombreNivel2) %>
             </p>
             <ul class="space-y-1 text-primary text-sm md:text-base">
-              <li>• Agenda por <%= nombreNivel2 %></li>
-              <li>• Vista día / semana / mes</li>
-              <li>• Confirmaciones y disponibilidad</li>
+              <li data-i18n="welcome.cards.agenda.list.a">• <%= __('welcome.cards.agenda.list.a').replace('{nivel2}', nombreNivel2) %></li>
+              <li data-i18n="welcome.cards.agenda.list.b">• <%= __('welcome.cards.agenda.list.b') %></li>
+              <li data-i18n="welcome.cards.agenda.list.c">• <%= __('welcome.cards.agenda.list.c') %></li>
             </ul>
           </div>
           <a href="/agenda"
-            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base"
+            class="w-full bg-white border border-primary text-primary py-2 px-4 rounded-button hover:bg-primary/10 transition-colors text-center block font-semibold text-sm md:text-base" data-i18n="welcome.cards.agenda.button"
           >
-            Ver Agenda
+            <%= __('welcome.cards.agenda.button') %>
           </a>
         </div>
       </div>

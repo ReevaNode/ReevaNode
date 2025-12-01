@@ -44,40 +44,40 @@
   },
   "welcome": {
     "title": "Bienvenido a {empresa}",
-    "subtitle": "Tu sistema de gestión de {nivel2Plural}",
+    "subtitle": "Tu sistema para gestionar {nivel1Plural}, {nivel2Plural} y {nivel3Plural} de forma centralizada",
     "greeting": "Bienvenido/a",
-    "question": "¿Qué desea hacer hoy?",
+    "question": "¿Qué deseas hacer hoy?",
     "section": {
       "firstSteps": "Primeros Pasos"
     },
     "cards": {
       "dashboard": {
         "title": "Dashboard",
-        "description": "Accede a estadísticas clave, métricas de rendimiento, indicadores de calidad y reportes en tiempo real.",
+        "description": "Visualiza métricas clave y rendimiento de tus {nivel2Plural} y la carga de {nivel3Plural}.",
         "list": {
-          "a": "Estadísticas de ocupación",
-          "b": "Métricas de atención",
-          "c": "Reportes mensuales"
+          "a": "Ocupación por {nivel2}",
+          "b": "Rendimiento de {nivel3Plural}",
+          "c": "Tendencias generales"
         },
-        "button": "Ir a Dashboard"
+        "button": "Ver Dashboard"
       },
       "matrix": {
-        "title": "Matriz {nivel2}",
-        "description": "Visualiza el estado de cada {nivel2}, porcentaje de ocupación y disponibilidad en tiempo real.",
+        "title": "{nivel2Plural}",
+        "description": "Revisa el estado y la disponibilidad de cada {nivel2} dentro de tus {nivel1Plural}.",
         "list": {
           "a": "Estado de cada {nivel2}",
-          "b": "% de ocupación",
-          "c": "Disponibilidad inmediata"
+          "b": "Disponibilidad inmediata",
+          "c": "Ubicación por {nivel1}"
         },
-        "button": "Ver Matriz {nivel2}"
+        "button": "Ver {nivel2Plural}"
       },
       "agenda": {
         "title": "Agenda",
-        "description": "Consulta el calendario de cada {nivel2} por día, semana o mes. Programa y gestiona citas médicas.",
+        "description": "Organiza citas y turnos para tus {nivel3Plural} en cada {nivel2}.",
         "list": {
-          "a": "Calendario por {nivel2}",
-          "b": "Vista día/semana/mes",
-          "c": "Gestión de citas"
+          "a": "Agenda por {nivel2}",
+          "b": "Vista día / semana / mes",
+          "c": "Confirmaciones y disponibilidad"
         },
         "button": "Ver Agenda"
       }
