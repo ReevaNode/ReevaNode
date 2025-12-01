@@ -19,6 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
   <link rel="stylesheet" href="/css/header.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body class="font-sans min-h-screen flex flex-col">
   <%- include('header', { activePage: 'dashboard' }) %>
@@ -81,8 +82,345 @@
         </div>
       </article>
     </section>
+
+    <% if (dashboardData) { %>
+    <section class="bg-white border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg md:text-xl font-semibold text-gray-900">Filtros de operación</h2>
+        <p class="text-xs text-gray-500">Últimos 7 días · 08:00 a 19:00</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="filterPasillo" class="text-xs uppercase tracking-wide text-gray-500 mb-1 block"><%= labelsSel?.nivel1Singular || 'Pasillo' %></label>
+          <select id="filterPasillo" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></select>
+        </div>
+        <div>
+          <label for="filterMesa" class="text-xs uppercase tracking-wide text-gray-500 mb-1 block"><%= labelsSel?.nivel2Singular || 'Mesa' %></label>
+          <select id="filterMesa" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></select>
+        </div>
+        <div>
+          <label for="filterOcupante" class="text-xs uppercase tracking-wide text-gray-500 mb-1 block"><%= labelsSel?.nivel3Singular || 'Ocupante' %></label>
+          <select id="filterOcupante" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <article class="bg-white border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs uppercase text-gray-500 tracking-wide mb-1">Uso promedio por <%= labelsSel?.nivel2Plural || 'mesas' %></p>
+            <h3 class="text-lg font-semibold text-gray-900">Minutos agendados vs libres</h3>
+          </div>
+          <button id="resetFiltersBtn" class="text-xs font-semibold text-primary hover:underline">Restablecer</button>
+        </div>
+        <canvas id="utilizacionChart" height="220"></canvas>
+      </article>
+
+      <article class="bg-white border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs uppercase text-gray-500 tracking-wide mb-1">Top <%= labelsSel?.nivel3Plural || 'ocupantes' %></p>
+            <h3 class="text-lg font-semibold text-gray-900">Tiempo total reservado</h3>
+          </div>
+        </div>
+        <canvas id="ocupantesChart" height="220"></canvas>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <article class="bg-white border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs uppercase text-gray-500 tracking-wide mb-1">Promedio por <%= labelsSel?.nivel2Singular || 'mesa' %></p>
+            <h3 class="text-lg font-semibold text-gray-900">Duración de reservas</h3>
+          </div>
+        </div>
+        <canvas id="duracionChart" height="220"></canvas>
+      </article>
+
+      <article class="bg-white border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs uppercase text-gray-500 tracking-wide mb-1">Heatmap de ocupación</p>
+            <h3 class="text-lg font-semibold text-gray-900">Concurrencia por hora y día</h3>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-gray-500">
+            <span>Baja</span>
+            <div class="h-2.5 w-16 bg-gradient-to-r from-primary/10 to-primary rounded-full"></div>
+            <span>Alta</span>
+          </div>
+        </div>
+        <div id="heatmapGrid" class="overflow-auto">
+          <table class="w-full text-xs md:text-sm text-center">
+            <thead>
+              <tr>
+                <th class="text-left text-gray-500 font-medium p-2">Día / Hora</th>
+                <% for (let hour = 8; hour < 19; hour++) { %>
+                  <th class="text-gray-500 font-medium px-2 py-1"><%= hour %>:00</th>
+                <% } %>
+              </tr>
+            </thead>
+            <tbody id="heatmapBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+    <% } else { %>
+      <section class="bg-white border rounded-2xl md:rounded-3xl p-6 md:p-8 text-center text-gray-500 shadow-sm">
+        <p>No hay datos de agenda disponibles para esta empresa todavía.</p>
+      </section>
+    <% } %>
   </main>
 
   <%- include('footer') %>
+
+<% if (dashboardData) { %>
+<script>
+  const dashboardRaw = <%- dashboardData %>;
+  const ctxUtil = document.getElementById('utilizacionChart').getContext('2d');
+  const ctxOcup = document.getElementById('ocupantesChart').getContext('2d');
+  const ctxDur = document.getElementById('duracionChart').getContext('2d');
+  const pasilloSelect = document.getElementById('filterPasillo');
+  const mesaSelect = document.getElementById('filterMesa');
+  const ocupanteSelect = document.getElementById('filterOcupante');
+  const resetBtn = document.getElementById('resetFiltersBtn');
+  const heatmapBody = document.getElementById('heatmapBody');
+
+  const state = { pasillo: 'all', mesa: 'all', ocupante: 'all' };
+  const mesaMap = dashboardRaw.mesas.reduce((acc, mesa) => { acc[mesa.id] = mesa; return acc; }, {});
+  const horas = Array.from({ length: 11 }, (_, i) => 8 + i);
+  const diasOrden = [1,2,3,4,5,6,0];
+  const diasLabels = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const totalVentanaMin = dashboardRaw.jornadaMinutos * dashboardRaw.diasVentana;
+
+  function optionTemplate(value, label) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    return opt;
+  }
+
+  function populateFilters() {
+    pasilloSelect.innerHTML = '';
+    mesaSelect.innerHTML = '';
+    ocupanteSelect.innerHTML = '';
+    pasilloSelect.appendChild(optionTemplate('all', 'Todos'));
+    mesaSelect.appendChild(optionTemplate('all', 'Todas'));
+    ocupanteSelect.appendChild(optionTemplate('all', 'Todos'));
+
+    [...new Set(dashboardRaw.mesas.map(m => m.pasillo))].forEach(p => {
+      pasilloSelect.appendChild(optionTemplate(p, p));
+    });
+
+    dashboardRaw.mesas.forEach(m => {
+      const label = `${m.nombre} (${m.pasillo})`;
+      mesaSelect.appendChild(optionTemplate(m.id, label));
+    });
+
+    (dashboardRaw.ocupantes || []).forEach(o => {
+      ocupanteSelect.appendChild(optionTemplate(o.id, o.nombre));
+    });
+  }
+
+  function filterEvents() {
+    return dashboardRaw.eventos.filter(ev => {
+      if (state.pasillo !== 'all' && ev.pasillo !== state.pasillo) return false;
+      if (state.mesa !== 'all' && ev.mesaId !== state.mesa) return false;
+      if (state.ocupante !== 'all' && !(ev.ocupantes || []).includes(state.ocupante)) return false;
+      return true;
+    });
+  }
+
+  function buildUtilizationDataset() {
+    const events = filterEvents();
+    const totals = {};
+    events.forEach(ev => {
+      if (!mesaMap[ev.mesaId]) return;
+      totals[ev.mesaId] = (totals[ev.mesaId] || 0) + ev.duracion;
+    });
+
+    const entries = Object.entries(totals).map(([mesaId, minutos]) => ({
+      mesaId,
+      nombre: mesaMap[mesaId]?.nombre || mesaId,
+      pasillo: mesaMap[mesaId]?.pasillo || '',
+      minutos,
+    })).sort((a,b) => b.minutos - a.minutos).slice(0, 6);
+
+    return {
+      labels: entries.map(e => `${e.nombre}`),
+      agendados: entries.map(e => Math.round(e.minutos)),
+      libres: entries.map(e => Math.max(totalVentanaMin - e.minutos, 0)),
+    };
+  }
+
+  function buildOcupantesDataset() {
+    const events = filterEvents();
+    const totals = {};
+    events.forEach(ev => {
+      (ev.ocupantes || []).forEach(id => {
+        totals[id] = (totals[id] || 0) + ev.duracion;
+      });
+    });
+    const entries = Object.entries(totals).map(([id, minutos]) => {
+      const ocupante = dashboardRaw.ocupantes.find(o => o.id === id);
+      return { id, nombre: ocupante?.nombre || id, minutos };
+    }).sort((a,b) => b.minutos - a.minutos).slice(0, 6);
+
+    return {
+      labels: entries.map(e => e.nombre),
+      data: entries.map(e => Math.round(e.minutos)),
+    };
+  }
+
+  function buildDuracionDataset() {
+    const events = filterEvents();
+    const bucket = {};
+    events.forEach(ev => {
+      if (!bucket[ev.mesaId]) bucket[ev.mesaId] = { total: 0, count: 0 };
+      bucket[ev.mesaId].total += ev.duracion;
+      bucket[ev.mesaId].count += 1;
+    });
+    const entries = Object.entries(bucket)
+      .map(([mesaId, obj]) => ({
+        mesaId,
+        nombre: mesaMap[mesaId]?.nombre || mesaId,
+        avg: obj.count ? obj.total / obj.count : 0,
+      }))
+      .filter(e => e.avg > 0)
+      .sort((a,b) => b.avg - a.avg)
+      .slice(0, 6);
+
+    return {
+      labels: entries.map(e => e.nombre),
+      data: entries.map(e => Math.round(e.avg)),
+    };
+  }
+
+  function buildHeatmap() {
+    const events = filterEvents();
+    const matrix = {};
+    horas.forEach(hour => diasOrden.forEach(day => matrix[`${day}-${hour}`] = 0));
+    const totalMesas = Math.max(dashboardRaw.mesas.length, 1);
+
+    events.forEach(ev => {
+      const start = new Date(ev.inicio);
+      const end = new Date(ev.fin);
+      const localStartHour = Math.max(start.getHours(), 8);
+      const localEndHour = Math.min(end.getHours() + (end.getMinutes() > 0 ? 1 : 0), 19);
+      for (let hour = localStartHour; hour < localEndHour; hour++) {
+        if (hour < 8 || hour >= 19) continue;
+        const day = start.getDay();
+        const key = `${day}-${hour}`;
+        matrix[key] = (matrix[key] || 0) + 1;
+      }
+    });
+
+    return diasOrden.map(day => horas.map(hour => {
+      const value = matrix[`${day}-${hour}`] || 0;
+      return Math.min(Math.round((value / totalMesas) * 100), 100);
+    }));
+  }
+
+  const utilizacionChart = new Chart(ctxUtil, {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Agendado (min)', data: [], backgroundColor: '#B4447C' },
+      { label: 'Libre (min)', data: [], backgroundColor: '#E5E7EB' }
+    ]},
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      interaction: { mode: 'index', intersect: false },
+      scales: { x: { stacked: true }, y: { stacked: true } }
+    }
+  });
+
+  const ocupantesChart = new Chart(ctxOcup, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Minutos agendados', data: [], backgroundColor: '#6B7FD7' }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      indexAxis: 'y',
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+
+  const duracionChart = new Chart(ctxDur, {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Minutos promedio', data: [], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', tension: 0.3, fill: true }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  function renderHeatmap() {
+    const matrix = buildHeatmap();
+    heatmapBody.innerHTML = '';
+    diasOrden.forEach((dayIndex, idx) => {
+      const row = document.createElement('tr');
+      const dayCell = document.createElement('td');
+      dayCell.textContent = diasLabels[dayIndex];
+      dayCell.className = 'text-left font-medium text-gray-600 py-2 pr-3';
+      row.appendChild(dayCell);
+      matrix[idx].forEach(value => {
+        const cell = document.createElement('td');
+        const intensity = value / 100;
+        cell.style.backgroundColor = `rgba(180,68,124, ${Math.max(intensity, 0.08)})`;
+        cell.className = 'text-white text-xs md:text-sm py-2';
+        cell.textContent = value > 0 ? `${value}%` : '';
+        row.appendChild(cell);
+      });
+      heatmapBody.appendChild(row);
+    });
+  }
+
+  function refreshCharts() {
+    const utilData = buildUtilizationDataset();
+    utilizacionChart.data.labels = utilData.labels;
+    utilizacionChart.data.datasets[0].data = utilData.agendados;
+    utilizacionChart.data.datasets[1].data = utilData.libres;
+    utilizacionChart.update();
+
+    const ocupData = buildOcupantesDataset();
+    ocupantesChart.data.labels = ocupData.labels;
+    ocupantesChart.data.datasets[0].data = ocupData.data;
+    ocupantesChart.update();
+
+    const durData = buildDuracionDataset();
+    duracionChart.data.labels = durData.labels;
+    duracionChart.data.datasets[0].data = durData.data;
+    duracionChart.update();
+
+    renderHeatmap();
+  }
+
+  function handleFilterChange() {
+    state.pasillo = pasilloSelect.value;
+    state.mesa = mesaSelect.value;
+    state.ocupante = ocupanteSelect.value;
+    refreshCharts();
+  }
+
+  pasilloSelect.addEventListener('change', handleFilterChange);
+  mesaSelect.addEventListener('change', handleFilterChange);
+  ocupanteSelect.addEventListener('change', handleFilterChange);
+  resetBtn.addEventListener('click', () => {
+    state.pasillo = 'all';
+    state.mesa = 'all';
+    state.ocupante = 'all';
+    pasilloSelect.value = 'all';
+    mesaSelect.value = 'all';
+    ocupanteSelect.value = 'all';
+    refreshCharts();
+  });
+
+  populateFilters();
+  refreshCharts();
+</script>
+<% } %>
 </body>
 </html>
