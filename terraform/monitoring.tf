@@ -174,31 +174,6 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
   }
 }
 
-# Alarma: Task count muy bajo (menor que desired count)
-resource "aws_cloudwatch_metric_alarm" "ecs_task_count_low" {
-  alarm_name          = "${local.app_name}-ecs-task-count-low"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = "1"
-  metric_name         = "RunningTaskCount"
-  namespace           = "ECS/ContainerInsights"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "2" # Menos de 2 tareas corriendo
-  alarm_description   = "Alerta cuando hay menos de 2 tareas ECS corriendo"
-  treat_missing_data  = "breaching"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.app.name
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
-
-  tags = {
-    Name = "${local.app_name}-ecs-task-count-alarm"
-  }
-}
-
 # ==================== ALARMAS DE DYNAMODB ====================
 
 # Alarma: Errores de throttling (usuario)
@@ -317,9 +292,6 @@ ALARMAS ECS:
   
   2. High Memory: ${aws_cloudwatch_metric_alarm.ecs_memory_high.alarm_name}
      - Threshold: > 80% utilization
-  
-  3. Low Task Count: ${aws_cloudwatch_metric_alarm.ecs_task_count_low.alarm_name}
-     - Threshold: < 2 tareas corriendo
 
 ALARMAS DYNAMODB:
   1. Throttling: ${aws_cloudwatch_metric_alarm.dynamodb_user_throttle.alarm_name}
