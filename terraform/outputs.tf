@@ -37,27 +37,37 @@ output "cloudwatch_log_group" {
 }
 
 output "dynamodb_tables" {
-  description = "nombres de las tablas dynamodb creadas"
+  description = "nombres de las tablas dynamodb (existentes, creadas por serverless)"
   value = {
-    agenda           = aws_dynamodb_table.agenda.name
-    box              = aws_dynamodb_table.box.name
-    estadobox        = aws_dynamodb_table.estadobox.name
-    items            = aws_dynamodb_table.items.name
-    personalizacion  = aws_dynamodb_table.personalizacion.name
-    registroagenda   = aws_dynamodb_table.registroagenda.name
-    tipobox          = aws_dynamodb_table.tipobox.name
-    tipoconsulta     = aws_dynamodb_table.tipoconsulta.name
-    tipoestado       = aws_dynamodb_table.tipoestado.name
-    tipoitem         = aws_dynamodb_table.tipoitem.name
-    tipoprofesional  = aws_dynamodb_table.tipoprofesional.name
-    tipousuario      = aws_dynamodb_table.tipousuario.name
-    usuario          = aws_dynamodb_table.usuario.name
+    # tablas de catalogos/tipos
+    tipoprofesional = "tipoprofesional"
+    tipousuario     = "tipousuario"
+    tipoconsulta    = "tipoconsulta"
+    tipoestado      = "tipoestado"
+    tipobox         = "tipobox"
+    tipoitem        = "tipoitem"
+    personalizacion = "personalizacion"
+    estadobox       = "estadobox"
+    # tablas principales
+    usuario        = "usuario"
+    box            = "box"
+    items          = "items"
+    agenda         = "agenda"
+    registroagenda = "registroagenda"
+    # tablas de autenticacion y parametrizacion
+    users         = "users"
+    parameters    = "parameters-new"
+    empresas      = "empresas-new"
+    espacios      = "espacios"
+    ocupantes     = "ocupantes"
+    items_mesas   = "items-mesas"
+    empresa_items = "empresa-items"
   }
 }
 
 output "deployment_instructions" {
   description = "instrucciones para deployment"
-  value = <<EOF
+  value       = <<EOF
 
 === NEXT STEPS ===
 

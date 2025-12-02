@@ -3,14 +3,14 @@
 
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
-  
+
   # backend para state remoto (opcional, comentado por defecto)
   # backend "s3" {
   #   bucket = "reeva-terraform-state"
@@ -21,7 +21,7 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  
+
   default_tags {
     tags = {
       Project     = var.project_name
@@ -41,7 +41,7 @@ data "aws_availability_zones" "available" {
 
 locals {
   app_name = "${var.project_name}-${var.environment}"
-  
+
   common_tags = {
     Project     = var.project_name
     Environment = var.environment

@@ -4,11 +4,11 @@
 resource "aws_ecr_repository" "app" {
   name                 = "${local.app_name}-app"
   image_tag_mutability = "MUTABLE"
-  
+
   image_scanning_configuration {
     scan_on_push = true
   }
-  
+
   tags = {
     Name = "${local.app_name}-ecr"
   }
@@ -17,7 +17,7 @@ resource "aws_ecr_repository" "app" {
 # lifecycle policy para limpiar imagenes viejas
 resource "aws_ecr_lifecycle_policy" "app" {
   repository = aws_ecr_repository.app.name
-  
+
   policy = jsonencode({
     rules = [{
       rulePriority = 1

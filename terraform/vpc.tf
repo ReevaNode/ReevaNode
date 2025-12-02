@@ -6,7 +6,7 @@ resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  
+
   tags = {
     Name = "${local.app_name}-vpc"
   }
@@ -15,7 +15,7 @@ resource "aws_vpc" "main" {
 # internet gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  
+
   tags = {
     Name = "${local.app_name}-igw"
   }
@@ -24,12 +24,12 @@ resource "aws_internet_gateway" "main" {
 # subnets publicas (para alb y fargate sin nat)
 resource "aws_subnet" "public" {
   count = length(var.availability_zones)
-  
+
   vpc_id                  = aws_vpc.main.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
-  
+
   tags = {
     Name = "${local.app_name}-public-${var.availability_zones[count.index]}"
     Type = "public"
@@ -39,12 +39,12 @@ resource "aws_subnet" "public" {
 # route table para subnets publicas
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-  
+
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.main.id
   }
-  
+
   tags = {
     Name = "${local.app_name}-public-rt"
   }
@@ -53,7 +53,7 @@ resource "aws_route_table" "public" {
 # asociar subnets publicas con route table
 resource "aws_route_table_association" "public" {
   count = length(aws_subnet.public)
-  
+
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
@@ -63,7 +63,7 @@ resource "aws_security_group" "alb" {
   name        = "${local.app_name}-alb-sg"
   description = "security group para alb"
   vpc_id      = aws_vpc.main.id
-  
+
   ingress {
     description = "http"
     from_port   = 80
@@ -71,7 +71,7 @@ resource "aws_security_group" "alb" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   ingress {
     description = "https"
     from_port   = 443
@@ -79,7 +79,7 @@ resource "aws_security_group" "alb" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   egress {
     description = "allow all outbound"
     from_port   = 0
@@ -87,7 +87,7 @@ resource "aws_security_group" "alb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = {
     Name = "${local.app_name}-alb-sg"
   }
@@ -98,7 +98,7 @@ resource "aws_security_group" "fargate" {
   name        = "${local.app_name}-fargate-sg"
   description = "security group para fargate tasks"
   vpc_id      = aws_vpc.main.id
-  
+
   ingress {
     description     = "traffic from alb"
     from_port       = var.container_port
@@ -106,7 +106,7 @@ resource "aws_security_group" "fargate" {
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
-  
+
   egress {
     description = "allow all outbound"
     from_port   = 0
@@ -114,7 +114,7 @@ resource "aws_security_group" "fargate" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = {
     Name = "${local.app_name}-fargate-sg"
   }

@@ -1,0 +1,29 @@
+{
+    "TableNames": [
+        "agenda",
+        "aws-cognito-jwt-login-dev-empresas-new",
+        "aws-cognito-jwt-login-dev-espacios",
+        "aws-cognito-jwt-login-dev-ocupantes",
+        "aws-cognito-jwt-login-dev-parameters-new",
+        "aws-cognito-jwt-login-dev-users",
+        "box",
+        "empresa-items",
+        "empresas-new",
+        "espacios",
+        "estadobox",
+        "items",
+        "items-mesas",
+        "ocupantes",
+        "parameters-new",
+        "personalizacion",
+        "registroagenda",
+        "tipobox",
+        "tipoconsulta",
+        "tipoestado",
+        "tipoitem",
+        "tipoprofesional",
+        "tipousuario",
+        "users",
+        "usuario"
+    ]
+}

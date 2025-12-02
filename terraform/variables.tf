@@ -101,6 +101,12 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
+variable "session_secret" {
+  description = "session secret para express-session"
+  type        = string
+  sensitive   = true
+}
+
 # dominio (opcional)
 variable "domain_name" {
   description = "dominio personalizado (ej: reeva.com)"

@@ -4,7 +4,7 @@
 # role para fargate task execution
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${local.app_name}-ecs-task-execution"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -15,7 +15,7 @@ resource "aws_iam_role" "ecs_task_execution" {
       }
     }]
   })
-  
+
   tags = {
     Name = "${local.app_name}-ecs-task-execution-role"
   }
@@ -30,7 +30,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
 # role para fargate task (runtime)
 resource "aws_iam_role" "ecs_task" {
   name = "${local.app_name}-ecs-task"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -41,7 +41,7 @@ resource "aws_iam_role" "ecs_task" {
       }
     }]
   })
-  
+
   tags = {
     Name = "${local.app_name}-ecs-task-role"
   }
@@ -51,7 +51,7 @@ resource "aws_iam_role" "ecs_task" {
 resource "aws_iam_role_policy" "ecs_task_dynamodb" {
   name = "${local.app_name}-dynamodb-access"
   role = aws_iam_role.ecs_task.id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -67,21 +67,74 @@ resource "aws_iam_role_policy" "ecs_task_dynamodb" {
         "dynamodb:UpdateItem"
       ]
       Resource = [
-        aws_dynamodb_table.tipoprofesional.arn,
-        aws_dynamodb_table.tipousuario.arn,
-        aws_dynamodb_table.tipoconsulta.arn,
-        aws_dynamodb_table.tipoestado.arn,
-        aws_dynamodb_table.tipobox.arn,
-        aws_dynamodb_table.tipoitem.arn,
-        aws_dynamodb_table.personalizacion.arn,
-        aws_dynamodb_table.estadobox.arn,
-        aws_dynamodb_table.usuario.arn,
-        aws_dynamodb_table.box.arn,
-        aws_dynamodb_table.items.arn,
-        aws_dynamodb_table.agenda.arn,
-        aws_dynamodb_table.registroagenda.arn,
-        "${aws_dynamodb_table.agenda.arn}/index/*"
+        # Acceso a todas las tablas DynamoDB (wildcard ya que las tablas existen externamente)
+        "arn:aws:dynamodb:${var.aws_region}:*:table/tipoprofesional",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/tipousuario",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/tipoconsulta",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/tipoestado",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/tipobox",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/tipoitem",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/personalizacion",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/estadobox",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/usuario",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/box",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/items",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/agenda",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/registroagenda",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/users",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/parameters-new",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/empresas-new",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/espacios",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/ocupantes",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/items-mesas",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/empresa-items",
+        # indices globales
+        "arn:aws:dynamodb:${var.aws_region}:*:table/agenda/index/*",
+        "arn:aws:dynamodb:${var.aws_region}:*:table/users/index/*"
       ]
+    }]
+  })
+}
+
+# policy para cognito (autenticacion)
+resource "aws_iam_role_policy" "ecs_task_cognito" {
+  name = "${local.app_name}-cognito-access"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminSetUserAttributes",
+        "cognito-idp:ListUsers",
+        "cognito-idp:AdminUpdateUserAttributes",
+        "cognito-idp:SignUp",
+        "cognito-idp:AdminConfirmSignUp"
+      ]
+      # Cognito User Pool ARN - us-east-1_nGDzbmgag (creado manualmente, no por Terraform)
+      Resource = "arn:aws:cognito-idp:${var.aws_region}:*:userpool/${var.aws_region}_nGDzbmgag"
+    }]
+  })
+}
+
+# policy para sns (notificaciones)
+resource "aws_iam_role_policy" "ecs_task_sns" {
+  name = "${local.app_name}-sns-access"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "sns:Publish",
+        "sns:Subscribe",
+        "sns:CreateTopic",
+        "sns:ListTopics"
+      ]
+      Resource = "*"
     }]
   })
 }
@@ -90,7 +143,7 @@ resource "aws_iam_role_policy" "ecs_task_dynamodb" {
 resource "aws_iam_role_policy" "ecs_task_logs" {
   name = "${local.app_name}-logs-access"
   role = aws_iam_role.ecs_task.id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{

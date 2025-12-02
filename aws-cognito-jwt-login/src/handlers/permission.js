@@ -11,7 +11,8 @@ const PERMISSIONS = [
   "bienvenidos.read", "bienvenidos.write", 
   "box.read", "box.write",
   "dashboard.read", "dashboard.write",
-  "infobox.read", "infobox.write"
+  "infobox.read", "infobox.write",
+  "admin.database"
 ];
 
 const ROLES = {
@@ -20,7 +21,8 @@ const ROLES = {
     "dashboard.read", "dashboard.write", 
     "agenda.read", "agenda.write",
     "box.read", "box.write",
-    "infobox.read", "infobox.write"
+    "infobox.read", "infobox.write",
+    "admin.database"
   ],
   "gestorpasillo": [
     "bienvenidos.read", "bienvenidos.write",

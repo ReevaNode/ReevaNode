@@ -1,0 +1,4 @@
+[0m[1mvar.jwt_secret[0m
+  jwt secret para auth
+
+  [1mEnter a value:[0m [0m

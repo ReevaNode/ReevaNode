@@ -1,5 +1,5 @@
 service: aws-cognito-jwt-login
-frameworkVersion: '3'
+frameworkVersion: '4'
 
 provider:
   name: aws
