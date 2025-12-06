@@ -46,17 +46,44 @@ resource "aws_ecs_task_definition" "app" {
       protocol      = "tcp"
     }]
 
+    # SECRETS from AWS Secrets Manager
+    secrets = [
+      {
+        name      = "JWT_SECRET"
+        valueFrom = "${data.aws_secretsmanager_secret.app_secrets.arn}:JWT_SECRET::"
+      },
+      {
+        name      = "SESSION_SECRET"
+        valueFrom = "${data.aws_secretsmanager_secret.app_secrets.arn}:SESSION_SECRET::"
+      },
+      {
+        name      = "TWILIO_ACCOUNT_SID"
+        valueFrom = "${data.aws_secretsmanager_secret.app_secrets.arn}:TWILIO_ACCOUNT_SID::"
+      },
+      {
+        name      = "TWILIO_AUTH_TOKEN"
+        valueFrom = "${data.aws_secretsmanager_secret.app_secrets.arn}:TWILIO_AUTH_TOKEN::"
+      },
+      {
+        name      = "OPENAI_API_KEY"
+        valueFrom = "${data.aws_secretsmanager_secret.app_secrets.arn}:OPENAI_API_KEY::"
+      }
+    ]
+
+    # ENVIRONMENT VARIABLES
     environment = [
-      { name = "NODE_ENV", value = var.environment },
-      { name = "PORT", value = tostring(var.container_port) },
+      # AWS Configuration
       { name = "AWS_REGION", value = var.aws_region },
-      # Cognito configuration
-      { name = "USER_POOL_ID", value = "us-east-1_nGDzbmgag" },
-      { name = "USER_POOL_CLIENT_ID", value = "4997r28ubt0nnqkfv6lbjdspos" },
-      { name = "COGNITO_USER_POOL_ID", value = "us-east-1_nGDzbmgag" },
-      { name = "COGNITO_CLIENT_ID", value = "4997r28ubt0nnqkfv6lbjdspos" },
+      { name = "AWS_ACCOUNT_ID", value = data.aws_caller_identity.current.account_id },
+      
+      # Cognito Configuration (from Terraform outputs)
+      { name = "COGNITO_USER_POOL_ID", value = aws_cognito_user_pool.main.id },
+      { name = "COGNITO_CLIENT_ID", value = aws_cognito_user_pool_client.main.id },
       { name = "COGNITO_REGION", value = var.aws_region },
-      # Tablas DynamoDB (existentes, creadas por serverless)
+      { name = "USER_POOL_ID", value = aws_cognito_user_pool.main.id },
+      { name = "USER_POOL_CLIENT_ID", value = aws_cognito_user_pool_client.main.id },
+      
+      # DynamoDB Tables - Catalog/Type Tables
       { name = "TIPO_PROFESIONAL_TABLE", value = "tipoprofesional" },
       { name = "TIPO_USUARIO_TABLE", value = "tipousuario" },
       { name = "TIPO_CONSULTA_TABLE", value = "tipoconsulta" },
@@ -65,11 +92,15 @@ resource "aws_ecs_task_definition" "app" {
       { name = "TIPO_ITEM_TABLE", value = "tipoitem" },
       { name = "PERSONALIZACION_TABLE", value = "personalizacion" },
       { name = "ESTADO_BOX_TABLE", value = "estadobox" },
+      
+      # DynamoDB Tables - Main Tables
       { name = "USUARIO_TABLE", value = "usuario" },
       { name = "BOX_TABLE", value = "box" },
       { name = "ITEMS_TABLE", value = "empresa-items" },
       { name = "AGENDA_TABLE", value = "agenda" },
       { name = "REGISTRO_AGENDA_TABLE", value = "registroagenda" },
+      
+      # DynamoDB Tables - Auth & Customization
       { name = "USER_TABLE", value = "users" },
       { name = "PARAMETERS_TABLE", value = "parameters-new" },
       { name = "EMPRESAS_TABLE", value = "empresas-new" },
@@ -77,17 +108,41 @@ resource "aws_ecs_task_definition" "app" {
       { name = "OCUPANTES_TABLE", value = "ocupantes" },
       { name = "ITEMS_MESAS_TABLE", value = "items-mesas" },
       { name = "EMPRESA_ITEMS_TABLE", value = "empresa-items" },
-      # Twilio configuration
-      { name = "TWILIO_ACCOUNT_SID", value = var.twilio_account_sid },
-      { name = "TWILIO_AUTH_TOKEN", value = var.twilio_auth_token },
-      { name = "TWILIO_WHATSAPP_FROM", value = var.twilio_whatsapp_from },
-      # OpenAI configuration
-      { name = "OPENAI_API_KEY", value = var.openai_api_key },
-      # Security
-      { name = "JWT_SECRET", value = var.jwt_secret },
-      { name = "SESSION_SECRET", value = var.session_secret },
-      # Base URLs
-      { name = "CHATBOT_URL_BASE", value = "http://${aws_lb.main.dns_name}" }
+      
+      # Application Configuration
+      { name = "NODE_ENV", value = "production" },
+      { name = "PORT", value = tostring(var.container_port) },
+      { name = "STAGE", value = var.environment },
+      { name = "LOG_LEVEL", value = "info" },
+      
+      # Session Configuration
+      { name = "SESSION_MAX_AGE", value = "300000" },
+      { name = "SESSION_SAME_SITE", value = "lax" },
+      
+      # Rate Limiting
+      { name = "RATE_LIMIT_WINDOW_MS", value = "900000" },
+      { name = "RATE_LIMIT_MAX_REQUESTS", value = "100" },
+      
+      # Feature Flags
+      { name = "ENABLE_SNS_NOTIFICATIONS", value = "false" },
+      { name = "AUTO_PROVISION_USERS", value = "true" },
+      
+      # SNS Configuration
+      { name = "SNS_TOPIC_ARN", value = aws_sns_topic.alerts.arn },
+      
+      # Twilio Configuration (non-sensitive)
+      { name = "TWILIO_WHATSAPP_FROM", value = "whatsapp:+14155238886" },
+      { name = "TWILIO_VALIDATE_SIGNATURE", value = "false" },
+      
+      # OpenAI Configuration (non-sensitive)
+      { name = "OPENAI_MODEL", value = "gpt-4o-mini" },
+      { name = "OPENAI_TEMPERATURE", value = "0" },
+      { name = "OPENAI_MAX_TOKENS", value = "500" },
+      
+      # Chatbot Configuration
+      { name = "CHATBOT_ENABLED", value = "true" },
+      { name = "CHATBOT_NOTIFICATION_RECIPIENTS", value = "whatsapp:+56966565942" },
+      { name = "APP_URL", value = "http://${aws_lb.main.dns_name}" }
     ]
 
     logConfiguration = {

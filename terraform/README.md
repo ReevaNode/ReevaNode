@@ -1,272 +1,127 @@
-# Reeva - Terraform Infrastructure
+# Terraform - Infraestructura Reeva
 
-Infraestructura como codigo para desplegar Reeva en AWS Fargate.
+## Prerequisitos
 
-## Arquitectura
+### 1. Configurar AWS CLI
 
-- **ECS Fargate**: Container corriendo la app Node.js
-- **Application Load Balancer**: Endpoint publico (reemplaza ngrok)
-- **DynamoDB**: 13 tablas (agenda, box, usuarios, etc)
-- **ECR**: Repositorio privado para imagenes Docker
-- **VPC**: Networking aislado con subnets publicas
-- **CloudWatch**: Logs y monitoreo
-
-## Costos Estimados
-
-- Fargate Spot (1 replica): ~$7/mes
-- ALB: ~$8/mes
-- DynamoDB (free tier): $0-2/mes
-- **Total: ~$15-17/mes** (cubierto por creditos gratis)
-
-## Prerequisites
-
-1. AWS CLI configurado:
 ```bash
 aws configure
+# Access Key ID
+# Secret Access Key
+# Region: us-east-1
+# Output: json
+
+# Verificar
+aws sts get-caller-identity
 ```
 
-2. Terraform instalado:
+### 2. Crear secretos en AWS Secrets Manager
+
+Ver guía completa: [`SECRETS-SETUP.md`](./SECRETS-SETUP.md)
+
 ```bash
-# linux
-wget https://releases.hashicorp.com/terraform/1.9.0/terraform_1.9.0_linux_amd64.zip
-unzip terraform_1.9.0_linux_amd64.zip
-sudo mv terraform /usr/local/bin/
-terraform version
+# Generar JWT y SESSION secrets
+JWT_SECRET=$(openssl rand -hex 48)
+SESSION_SECRET=$(openssl rand -hex 32)
+
+# Crear secreto de aplicación
+aws secretsmanager create-secret \
+  --name dev-reeva-app-secrets \
+  --description "Secretos de la app Reeva" \
+  --secret-string "{
+    \"JWT_SECRET\": \"$JWT_SECRET\",
+    \"SESSION_SECRET\": \"$SESSION_SECRET\",
+    \"TWILIO_ACCOUNT_SID\": \"ACxxxxxxxx\",
+    \"TWILIO_AUTH_TOKEN\": \"xxxxxxxx\",
+    \"OPENAI_API_KEY\": \"sk-proj-xxxxx\"
+  }" \
+  --region us-east-1
+
+# Crear credenciales de admin
+aws secretsmanager create-secret \
+  --name dev-reeva-admin-credentials \
+  --description "Usuario admin inicial" \
+  --secret-string '{
+    "ADMIN_EMAIL": "admin@ejemplo.com",
+    "ADMIN_PASSWORD": "Password123!"
+  }' \
+  --region us-east-1
 ```
 
-3. Docker instalado y corriendo
+### 3. Desplegar infraestructura
 
-## Setup
-
-1. Copiar archivo de variables:
-```bash
-cd terraform/
-cp terraform.tfvars.example terraform.tfvars
-```
-
-2. Editar `terraform.tfvars` con tus credenciales:
-```hcl
-twilio_account_sid = "ACxxxxxxxxxx"
-twilio_auth_token = "xxxxxxxx"
-twilio_whatsapp_from = "whatsapp:+14155238886"
-openai_api_key = "sk-proj-xxxxxxxx"
-jwt_secret = "tu-secret-seguro"
-```
-
-3. Inicializar Terraform:
 ```bash
 terraform init
-```
-
-## Deployment
-
-### 1. Preview de cambios
-```bash
 terraform plan
-```
-
-### 2. Desplegar infraestructura
-```bash
 terraform apply
-# escribir "yes" cuando pregunte
 ```
 
-Esto crea:
-- VPC + Subnets + Security Groups
-- 13 tablas DynamoDB
-- ECS Cluster + Task Definition + Service
+---
+
+## Archivos principales
+
+- `main.tf` - Provider AWS
+- `variables.tf` - Variables
+- `outputs.tf` - Outputs
+- `secrets.tf` - Secrets Manager
+- `cognito.tf` - Autenticación
+- `dynamodb.tf` - 20 tablas
+- `vpc.tf` - Networking
+- `alb.tf` - Load balancer
+- `ecs.tf` - Containers
+- `iam.tf` - Permisos
+- `security_groups.tf` - Firewall
+- `cloudwatch.tf` - Monitoreo
+- `waf.tf` - Protección web
+
+---
+
+## Recursos creados
+
+- 20 tablas DynamoDB
+- Cognito User Pool + admin user
+- VPC completa
 - Application Load Balancer
-- ECR Repository
-- IAM Roles
-- CloudWatch Logs
-- Budget Alarm
+- ECS Cluster + Service
+- Security Groups + NACL
+- CloudWatch Alarms
+- WAF
+- VPC Endpoints
 
-**Tiempo estimado: 3-5 minutos**
+**Total: ~60-65 recursos**
 
-### 3. Build y push de imagen Docker
+---
 
-Copiar comandos del output de terraform o ejecutar:
+## Costos estimados
 
-```bash
-cd ../Reeva_node
+- ECS Fargate: ~$15-20/mes
+- ALB: ~$20/mes
+- DynamoDB: ~$5/mes
+- Secrets Manager: ~$1/mes
+- **Total: ~$45-50/mes**
 
-# login a ecr
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ECR_URL>
+---
 
-# build
-docker build -t reeva-dev .
-
-# tag
-docker tag reeva-dev:latest <ECR_URL>:latest
-
-# push
-docker push <ECR_URL>:latest
-```
-
-### 4. Force redeploy del servicio
+## Comandos útiles
 
 ```bash
-aws ecs update-service \
-  --cluster reeva-dev-cluster \
-  --service reeva-dev-service \
-  --force-new-deployment
-```
+# Ver outputs
+terraform output
 
-### 5. Verificar deployment
+# Ver cambios
+terraform plan
 
-```bash
-# ver logs en tiempo real
-aws logs tail /ecs/reeva-dev --follow
+# Aplicar cambios
+terraform apply
 
-# check service status
-aws ecs describe-services \
-  --cluster reeva-dev-cluster \
-  --services reeva-dev-service \
-  --query 'services[0].deployments'
-```
-
-### 6. Probar la app
-
-```bash
-# obtener ALB URL del output
-terraform output alb_url
-
-# health check
-curl http://<ALB-DNS>/health
-
-# test chatbot
-curl -X POST http://<ALB-DNS>/chatbot/test \
-  -H "Content-Type: application/json" \
-  -d '{"message": "hola"}'
-```
-
-### 7. Configurar Twilio Webhook
-
-1. Ir a Twilio Console > WhatsApp > Sandbox
-2. Webhook URL: `http://<ALB-DNS>/chatbot/webhook`
-3. Method: POST
-4. Guardar
-
-## Manageme
-
-nt
-
-### Ver logs
-```bash
-aws logs tail /ecs/reeva-dev --follow
-```
-
-### Escalar servicio
-```bash
-# escalar a 2 replicas
-aws ecs update-service \
-  --cluster reeva-dev-cluster \
-  --service reeva-dev-service \
-  --desired-count 2
-
-# pausar (0 replicas, no se cobra fargate)
-aws ecs update-service \
-  --cluster reeva-dev-cluster \
-  --service reeva-dev-service \
-  --desired-count 0
-```
-
-### Actualizar imagen
-```bash
-# rebuild y push
-docker build -t reeva-dev .
-docker tag reeva-dev:latest <ECR_URL>:latest
-docker push <ECR_URL>:latest
-
-# force redeploy
-aws ecs update-service \
-  --cluster reeva-dev-cluster \
-  --service reeva-dev-service \
-  --force-new-deployment
-```
-
-### Destruir TODO
-```bash
-# WARNING: elimina toda la infraestructura
+# Destruir todo
 terraform destroy
 ```
 
-## Variables de Entorno
+---
 
-El task definition inyecta automaticamente:
-- `NODE_ENV=dev`
-- `PORT=3001`
-- `AWS_REGION=us-east-1`
-- Todas las tablas DynamoDB
-- Credenciales de Twilio
-- API Key de OpenAI
-- JWT Secret
-- `CHATBOT_URL_BASE=http://<ALB-DNS>`
+## Documentación
 
-## Troubleshooting
-
-### Service no inicia
-```bash
-# ver eventos del service
-aws ecs describe-services \
-  --cluster reeva-dev-cluster \
-  --services reeva-dev-service \
-  --query 'services[0].events[:5]'
-
-# ver logs
-aws logs tail /ecs/reeva-dev --follow
-```
-
-### Health check failing
-```bash
-# verificar que /health responda
-curl http://<ALB-DNS>/health
-
-# ver target health
-aws elbv2 describe-target-health \
-  --target-group-arn <TARGET-GROUP-ARN>
-```
-
-### Costos muy altos
-```bash
-# ver costos actuales
-aws ce get-cost-and-usage \
-  --time-period Start=2025-01-01,End=2025-01-31 \
-  --granularity MONTHLY \
-  --metrics UnblendedCost
-
-# pausar servicio
-aws ecs update-service --desired-count 0
-```
-
-## Estructura de Archivos
-
-```
-terraform/
-├── main.tf              # provider config
-├── variables.tf         # variables
-├── outputs.tf           # outputs
-├── terraform.tfvars     # valores (NO commitear)
-├── vpc.tf              # networking
-├── ecr.tf              # container registry
-├── iam.tf              # roles y policies
-├── dynamodb.tf         # tablas
-├── alb.tf              # load balancer
-├── ecs.tf              # fargate
-└── budget.tf           # alertas de costo
-```
-
-## Security
-
-- **NO commitear `terraform.tfvars`** (contiene secrets)
-- Task execution role tiene minimos permisos
-- Security groups solo permiten trafico necesario
-- DynamoDB usa encryption at rest por defecto
-
-## Next Steps
-
-1. Agregar dominio personalizado (Route53 + ACM)
-2. HTTPS en ALB
-3. Auto-scaling basado en CPU
-4. Secrets Manager para credenciales
-5. CI/CD con GitHub Actions
+- [Guía de despliegue](../seguridad-nube/DEPLOYMENT-GUIDE.md)
+- [Configuración de secretos](./SECRETS-SETUP.md)
+- [Arquitectura](../seguridad-nube/ARQUITECTURA-EXPLICADA.md)

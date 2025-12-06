@@ -1,1 +1,378 @@
-# DynamoDB tables already exist (created by serverless framework)
+# dynamodb.tf
+# DynamoDB tables for Reeva Hospital application
+
+# ============================================
+# CATALOG/TYPE TABLES (8 tables)
+# ============================================
+
+resource "aws_dynamodb_table" "tipoprofesional" {
+  name         = "tipoprofesional"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idTipoProfesional"
+  
+  attribute {
+    name = "idTipoProfesional"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-tipoprofesional"
+  })
+}
+
+resource "aws_dynamodb_table" "tipousuario" {
+  name         = "tipousuario"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idTipoUsuario"
+  
+  attribute {
+    name = "idTipoUsuario"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-tipousuario"
+  })
+}
+
+resource "aws_dynamodb_table" "tipoconsulta" {
+  name         = "tipoconsulta"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idTipoConsulta"
+  
+  attribute {
+    name = "idTipoConsulta"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-tipoconsulta"
+  })
+}
+
+resource "aws_dynamodb_table" "tipoestado" {
+  name         = "tipoestado"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idTipoEstado"
+  
+  attribute {
+    name = "idTipoEstado"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-tipoestado"
+  })
+}
+
+resource "aws_dynamodb_table" "tipobox" {
+  name         = "tipobox"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idTipoBox"
+  
+  attribute {
+    name = "idTipoBox"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-tipobox"
+  })
+}
+
+resource "aws_dynamodb_table" "tipoitem" {
+  name         = "tipoitem"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idTipoItem"
+  
+  attribute {
+    name = "idTipoItem"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-tipoitem"
+  })
+}
+
+resource "aws_dynamodb_table" "personalizacion" {
+  name         = "personalizacion"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idPersonalizacion"
+  
+  attribute {
+    name = "idPersonalizacion"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-personalizacion"
+  })
+}
+
+resource "aws_dynamodb_table" "estadobox" {
+  name         = "estadobox"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idEstadoBox"
+  
+  attribute {
+    name = "idEstadoBox"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-estadobox"
+  })
+}
+
+# ============================================
+# MAIN TABLES (5 tables)
+# ============================================
+
+resource "aws_dynamodb_table" "usuario" {
+  name         = "usuario"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idUsuario"
+  
+  attribute {
+    name = "idUsuario"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-usuario"
+  })
+}
+
+resource "aws_dynamodb_table" "box" {
+  name         = "box"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idBox"
+  
+  attribute {
+    name = "idBox"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-box"
+  })
+}
+
+resource "aws_dynamodb_table" "items" {
+  name         = "items"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idItem"
+  
+  attribute {
+    name = "idItem"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-items"
+  })
+}
+
+resource "aws_dynamodb_table" "agenda" {
+  name         = "agenda"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idAgenda"
+  
+  attribute {
+    name = "idAgenda"
+    type = "S"
+  }
+  
+  attribute {
+    name = "horainicio"
+    type = "S"
+  }
+  
+  attribute {
+    name = "idUsuario"
+    type = "S"
+  }
+  
+  global_secondary_index {
+    name            = "HoraInicioIndex"
+    hash_key        = "horainicio"
+    projection_type = "ALL"
+  }
+  
+  global_secondary_index {
+    name            = "UsuarioIndex"
+    hash_key        = "idUsuario"
+    range_key       = "horainicio"
+    projection_type = "ALL"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-agenda"
+  })
+}
+
+resource "aws_dynamodb_table" "registroagenda" {
+  name         = "registroagenda"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idRegistroAgenda"
+  
+  attribute {
+    name = "idRegistroAgenda"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-registroagenda"
+  })
+}
+
+# ============================================
+# AUTH & CUSTOMIZATION TABLES (7 tables)
+# ============================================
+
+resource "aws_dynamodb_table" "users" {
+  name         = "users"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+  
+  attribute {
+    name = "email"
+    type = "S"
+  }
+  
+  global_secondary_index {
+    name            = "EmailIndex"
+    hash_key        = "email"
+    projection_type = "ALL"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-users"
+  })
+}
+
+resource "aws_dynamodb_table" "parameters" {
+  name         = "parameters-new"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "idUser"
+  
+  attribute {
+    name = "idUser"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-parameters"
+  })
+}
+
+resource "aws_dynamodb_table" "empresas" {
+  name         = "empresas-new"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  range_key    = "empresaId"
+  
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+  
+  attribute {
+    name = "empresaId"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-empresas"
+  })
+}
+
+resource "aws_dynamodb_table" "espacios" {
+  name         = "espacios"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "empresaId"
+  range_key    = "espacioId"
+  
+  attribute {
+    name = "empresaId"
+    type = "S"
+  }
+  
+  attribute {
+    name = "espacioId"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-espacios"
+  })
+}
+
+resource "aws_dynamodb_table" "ocupantes" {
+  name         = "ocupantes"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "empresaId"
+  range_key    = "ocupanteId"
+  
+  attribute {
+    name = "empresaId"
+    type = "S"
+  }
+  
+  attribute {
+    name = "ocupanteId"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-ocupantes"
+  })
+}
+
+resource "aws_dynamodb_table" "items_mesas" {
+  name         = "items-mesas"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "mesaId"
+  range_key    = "itemId"
+  
+  attribute {
+    name = "mesaId"
+    type = "S"
+  }
+  
+  attribute {
+    name = "itemId"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-items-mesas"
+  })
+}
+
+resource "aws_dynamodb_table" "empresa_items" {
+  name         = "empresa-items"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "empresaId"
+  range_key    = "itemId"
+  
+  attribute {
+    name = "empresaId"
+    type = "S"
+  }
+  
+  attribute {
+    name = "itemId"
+    type = "S"
+  }
+  
+  tags = merge(local.common_tags, {
+    Name = "${local.app_name}-empresa-items"
+  })
+}

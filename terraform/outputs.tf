@@ -92,3 +92,43 @@ output "deployment_instructions" {
 
 EOF
 }
+
+# ============================================
+# COGNITO OUTPUTS
+# ============================================
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_user_pool_arn" {
+  description = "Cognito User Pool ARN"
+  value       = aws_cognito_user_pool.main.arn
+}
+
+output "cognito_client_id" {
+  description = "Cognito User Pool Client ID"
+  value       = aws_cognito_user_pool_client.main.id
+}
+
+output "cognito_region" {
+  description = "Cognito region"
+  value       = var.aws_region
+}
+
+# ============================================
+# SECRETS MANAGER OUTPUTS
+# ============================================
+
+output "app_secrets_arn" {
+  description = "ARN of application secrets"
+  value       = data.aws_secretsmanager_secret.app_secrets.arn
+  sensitive   = true
+}
+
+output "admin_creds_arn" {
+  description = "ARN of admin credentials"
+  value       = data.aws_secretsmanager_secret.admin_creds.arn
+  sensitive   = true
+}

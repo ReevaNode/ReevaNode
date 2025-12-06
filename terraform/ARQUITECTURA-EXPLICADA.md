@@ -464,6 +464,7 @@ GET /?search=<script>alert('hack')</script>
 - `ecr:BatchGetImage` → Descargar imagen completa
 - `logs:CreateLogStream` → Crear stream de logs
 - `logs:PutLogEvents` → Escribir logs
+- `secretsmanager:GetSecretValue` → **Leer secrets de Secrets Manager**
 
 **Que NO puede hacer**: Modificar infraestructura, leer DynamoDB, borrar recursos, etc.
 
@@ -487,10 +488,9 @@ Acciones permitidas:
 - dynamodb:Query (buscar items)
 - dynamodb:Scan (escanear tabla)
 
-Recursos permitidos: SOLO estas tablas
-- arn:aws:dynamodb:us-east-1:*:table/usuario
-- arn:aws:dynamodb:us-east-1:*:table/agenda
-- arn:aws:dynamodb:us-east-1:*:table/box
+Recursos permitidos: SOLO estas 20 tablas
+- arn:aws:dynamodb:us-east-1:*:table/tipoprofesional
+- arn:aws:dynamodb:us-east-1:*:table/tipousuario
 - ... (20 tablas especificas)
 ```
 
@@ -500,9 +500,11 @@ Acciones permitidas:
 - cognito-idp:AdminGetUser
 - cognito-idp:AdminCreateUser
 - cognito-idp:AdminSetUserPassword
+- cognito-idp:AdminInitiateAuth
+- cognito-idp:AdminRespondToAuthChallenge
 
-Recursos permitidos: SOLO este User Pool
-- arn:aws:cognito-idp:us-east-1:*:userpool/us-east-1_nGDzbmgag
+Recursos permitidos: SOLO el User Pool creado por Terraform
+- arn:aws:cognito-idp:us-east-1:*:userpool/[USER_POOL_ID]
 ```
 
 **Que NO puede hacer**: 
@@ -513,6 +515,42 @@ Recursos permitidos: SOLO este User Pool
 - Acceder a S3, Lambda, EC2, etc (no tiene permisos)
 
 **Analogia**: Es como tener llave de tu departamento y el gym del edificio, pero no puedes entrar a otros departamentos ni a las oficinas administrativas.
+
+---
+
+### AWS Secrets Manager
+
+**Que es**: Servicio para guardar credenciales sensibles de forma segura.
+
+**Secrets almacenados**:
+
+**Secret 1: dev-reeva-app-secrets**
+- JWT_SECRET (firma de tokens JWT)
+- SESSION_SECRET (encriptacion de sesiones)
+- TWILIO_ACCOUNT_SID (credencial Twilio)
+- TWILIO_AUTH_TOKEN (credencial Twilio)
+- OPENAI_API_KEY (credencial OpenAI)
+
+**Secret 2: dev-reeva-admin-credentials**
+- ADMIN_EMAIL (email del usuario admin inicial)
+- ADMIN_PASSWORD (password temporal del admin)
+
+**Como funciona**:
+1. Secrets se crean ANTES de Terraform (manual, UNA VEZ)
+2. Terraform lee los secrets para crear usuario admin en Cognito
+3. ECS Task Execution Role tiene permiso para leer secrets
+4. Container recibe secrets como variables de entorno al iniciar
+5. Aplicacion Node.js usa los secrets (JWT_SECRET, etc)
+
+**Beneficios**:
+- Pro: Credenciales NUNCA en codigo fuente
+- Pro: Rotacion facil (cambias secret, reinicias container)
+- Pro: Auditoria completa (CloudTrail registra quien accede)
+- Pro: Encriptacion automatica (KMS)
+
+**Costo**: $0.40 por secret/mes = $0.80/mes total
+
+**Analogia**: Es como una caja fuerte donde guardas tus passwords. La caja fuerte tiene su propia llave (IAM permissions), y solo quien tiene la llave puede abrir y leer los passwords.
 
 ---
 
@@ -692,23 +730,47 @@ aws logs tail /ecs/reeva-dev --since 2h
 **Que es**: Base de datos NoSQL (sin SQL) serverless de AWS.
 
 **Configuracion**:
-- **Tablas**: 25 tablas
+- **Tablas**: 20 tablas (gestionadas por Terraform)
 - **Modo**: On-Demand (pagas por request, no por capacidad)
 - **Encryption**: SSE (Server-Side Encryption) con AWS Managed Keys
 
-**Tablas principales**:
+**Tablas de catalogo/tipo (8)**:
+- tipoprofesional
+- tipousuario
+- tipoconsulta
+- tipoestado (con seed automatico de 6 estados)
+- tipobox
+- tipoitem
+- personalizacion
+- estadobox
+
+**Tablas principales (5)**:
 - usuario
-- agenda
 - box
-- cita
-- medico
-- paciente
-- disponibilidad
-- ... (18 mas)
+- items
+- agenda (con indices GSI: HoraInicioIndex, UsuarioIndex)
+- registroagenda
 
-**Por que no esta en Terraform**: Las tablas ya existian con datos reales del proyecto. Si las pusieramos en Terraform, `terraform destroy` borraria todas las tablas y perderiamos los datos.
+**Tablas de autenticacion y parametrizacion (7)**:
+- users (con indice GSI: EmailIndex)
+- parameters-new
+- empresas-new
+- espacios
+- ocupantes
+- items-mesas
+- empresa-items
 
-**Alternativa**: Podrias importarlas con `terraform import`, pero es riesgoso.
+**Seed automatico**: La tabla `tipoestado` se puebla automaticamente con 6 estados despues de `terraform apply`:
+1. Libre (atendido=0, vino=0)
+2. Paciente Ausente (atendido=0, vino=0)
+3. Paciente Esperando (atendido=0, vino=1)
+4. En Atencion (atendido=1, vino=1)
+5. Inhabilitado (atendido=0, vino=0)
+6. Finalizado (atendido=0, vino=0)
+
+**Gestionado por Terraform**: Si. Todas las tablas estan definidas en `dynamodb.tf`. Puedes hacer `terraform destroy` y `terraform apply` para recrearlas desde cero (seed se ejecuta automaticamente).
+
+**Beneficio**: Infraestructura 100% reproducible. Si algo falla, puedes recrear toda la base de datos con un comando.
 
 ---
 
@@ -716,12 +778,26 @@ aws logs tail /ecs/reeva-dev --since 2h
 
 ### AWS Cognito User Pool
 
-**Que es**: Un servicio de autenticacion de usuarios (login/registro).
+**Que es**: Un servicio de autenticacion de usuarios (login/registro) gestionado por AWS.
 
 **Configuracion**:
-- **User Pool ID**: us-east-1_nGDzbmgag
+- **User Pool ID**: Generado automaticamente por Terraform
 - **Region**: us-east-1
-- **Client ID**: (configurado en variables de entorno del container)
+- **Client ID**: Generado automaticamente por Terraform
+- **Username**: Email (los usuarios usan su email para login)
+- **Password Policy**: Minimo 8 caracteres, 1 mayuscula, 1 minuscula, 1 numero
+
+**Grupo de administradores**:
+- **Nombre**: Admins
+- **Precedencia**: 1 (mayor prioridad)
+- **Descripcion**: Full access administrators
+
+**Usuario admin inicial**:
+- **Email**: Leido desde AWS Secrets Manager (`dev-reeva-admin-credentials`)
+- **Password**: Temporal (leido desde Secrets Manager)
+- **Creacion**: Automatica via Terraform
+- **Primer login**: Cognito obliga a cambiar password
+- **Permisos**: Miembro del grupo Admins
 
 **Como funciona**:
 1. Usuario ingresa email y password en tu app
@@ -731,7 +807,9 @@ aws logs tail /ecs/reeva-dev --since 2h
 5. Requests subsecuentes incluyen el token
 6. Backend valida el token con Cognito
 
-**Por que no esta en Terraform**: Igual que DynamoDB, ya existia del proyecto original.
+**Gestionado por Terraform**: Si. El User Pool, Client, grupo Admins y usuario admin se crean automaticamente con `terraform apply`. Las credenciales del admin vienen de Secrets Manager (seguro, no hardcoded).
+
+**Beneficio**: Al hacer `terraform destroy` + `terraform apply`, se recrea el User Pool completo con el admin funcional desde el primer momento.
 
 ---
 
@@ -914,19 +992,32 @@ aws ecs update-service \
 
 ---
 
-### Decision 3: DynamoDB y Cognito fuera de Terraform
+### Decision 3: DynamoDB y Cognito gestionados por Terraform
 
-**Alternativa**: Gestionar con Terraform
+**Estrategia actual**: Infraestructura 100% reproducible
 
-**Por que NO lo hicimos**:
-- Ya existian con datos reales del proyecto
-- `terraform destroy` borraria todo
-- Riesgo de perder datos
+**Como se gestiona**:
+- 20 tablas DynamoDB definidas en Terraform
+- Cognito User Pool completo en Terraform
+- Secrets Manager para credenciales (fuera de Terraform)
+- Script automatico de seed para tabla tipoestado
 
-**Trade-off**:
-- Pro: Datos seguros
-- Contra: Infraestructura no 100% reproducible
-- Contra: Dos fuentes de verdad (Terraform + Manual)
+**Beneficios**:
+- Pro: `terraform destroy` + `terraform apply` recrea TODO
+- Pro: Infraestructura como codigo completamente trazable
+- Pro: Seed automatico de datos iniciales
+- Pro: Facil de replicar en otros ambientes (staging, prod)
+
+**Trade-offs**:
+- Contra: Requiere import inicial de recursos existentes
+- Contra: Secrets deben crearse manualmente ANTES de Terraform
+- Mitigacion: Scripts automatizados para import y seed
+
+**Flujo de deployment**:
+1. Crear secrets en Secrets Manager (manual, UNA VEZ)
+2. `terraform apply` crea TODO (tablas, cognito, infra)
+3. Script seed puebla tabla tipoestado automaticamente
+4. Push imagen Docker + deploy a ECS
 
 ---
 

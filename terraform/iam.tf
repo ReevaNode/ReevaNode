@@ -111,10 +111,33 @@ resource "aws_iam_role_policy" "ecs_task_cognito" {
         "cognito-idp:ListUsers",
         "cognito-idp:AdminUpdateUserAttributes",
         "cognito-idp:SignUp",
-        "cognito-idp:AdminConfirmSignUp"
+        "cognito-idp:AdminConfirmSignUp",
+        "cognito-idp:AdminCreateUser",
+        "cognito-idp:AdminSetUserPassword",
+        "cognito-idp:AdminInitiateAuth",
+        "cognito-idp:AdminRespondToAuthChallenge"
       ]
-      # Cognito User Pool ARN - us-east-1_nGDzbmgag (creado manualmente, no por Terraform)
-      Resource = "arn:aws:cognito-idp:${var.aws_region}:*:userpool/${var.aws_region}_nGDzbmgag"
+      Resource = aws_cognito_user_pool.main.arn
+    }]
+  })
+}
+
+# policy para secrets manager (task execution role)
+resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
+  name = "${local.app_name}-task-execution-secrets"
+  role = aws_iam_role.ecs_task_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue"
+      ]
+      Resource = [
+        data.aws_secretsmanager_secret.app_secrets.arn,
+        data.aws_secretsmanager_secret.admin_creds.arn
+      ]
     }]
   })
 }
