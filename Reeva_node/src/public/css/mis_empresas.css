@@ -187,3 +187,233 @@ body.theme-dark .empresa-card,
 body.theme-dark .crear-empresa-card {
     box-shadow: 0 25px 60px -35px rgba(15, 23, 42, 0.75) !important;
 }
+
+/* ===== RESPONSIVE - ACHICANDO LETRAS SUAVEMENTE ===== */
+
+/* Tablet (768px y más pequeño) */
+@media (max-width: 1024px) {
+    .header-section h1 {
+        font-size: 2.125rem;
+    }
+
+    .header-section p {
+        font-size: 0.975rem;
+    }
+
+    .empresa-card h3 {
+        font-size: 1.1875rem;
+    }
+
+    .info-estructura {
+        font-size: 12.5px;
+    }
+
+    .badge-seleccionada {
+        font-size: 11.5px;
+    }
+}
+
+/* Tablet pequeño (768px) */
+@media (max-width: 768px) {
+    .header-section {
+        padding: 19px;
+        margin-bottom: 26px;
+    }
+
+    .header-section h1 {
+        font-size: 1.875rem;
+    }
+
+    .header-section p {
+        font-size: 0.9375rem;
+    }
+
+    .crear-empresa-card h3 {
+        font-size: 1.0625rem;
+    }
+
+    .crear-empresa-card p {
+        font-size: 0.875rem;
+    }
+
+    .empresa-card h3 {
+        font-size: 1.0625rem;
+    }
+
+    .info-estructura {
+        font-size: 12px;
+        padding: 7px 11px;
+    }
+
+    .empresa-card .text-sm {
+        font-size: 0.875rem;
+    }
+
+    .btn-seleccionar,
+    .btn-activa {
+        font-size: 0.975rem;
+    }
+
+    .badge-seleccionada {
+        font-size: 11px;
+    }
+}
+
+/* Celular grande (600px) */
+@media (max-width: 640px) {
+    .header-section {
+        padding: 17px;
+        margin-bottom: 22px;
+    }
+
+    .header-section h1 {
+        font-size: 1.6875rem;
+    }
+
+    .header-section p {
+        font-size: 0.9125rem;
+    }
+
+    .crear-empresa-card h3 {
+        font-size: 1.0312rem;
+    }
+
+    .crear-empresa-card p {
+        font-size: 0.85rem;
+    }
+
+    .empresa-card h3 {
+        font-size: 1.0312rem;
+    }
+
+    .info-estructura {
+        font-size: 11.5px;
+        padding: 6px 9px;
+    }
+
+    .empresa-card .text-sm {
+        font-size: 0.8375rem;
+    }
+
+    .btn-seleccionar,
+    .btn-activa {
+        font-size: 0.9375rem;
+    }
+
+    .badge-seleccionada {
+        font-size: 10px;
+    }
+}
+
+/* Celular (480px) */
+@media (max-width: 480px) {
+    .header-section {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .header-section h1 {
+        font-size: 1.5rem;
+    }
+
+    .header-section p {
+        font-size: 0.875rem;
+    }
+
+    .crear-empresa-card {
+        min-height: 200px;
+    }
+
+    .crear-empresa-card h3 {
+        font-size: 1rem;
+    }
+
+    .crear-empresa-card p {
+        font-size: 0.8125rem;
+    }
+
+    .empresa-card h3 {
+        font-size: 1rem;
+    }
+
+    .empresa-card .text-4xl {
+        font-size: 2.25rem;
+    }
+
+    .info-estructura {
+        font-size: 11px;
+        padding: 5.5px 8.5px;
+    }
+
+    .empresa-card .text-sm {
+        font-size: 0.8125rem;
+    }
+
+    .btn-editar,
+    .btn-eliminar {
+        font-size: 0.875rem;
+    }
+
+    .btn-seleccionar,
+    .btn-activa {
+        font-size: 0.9rem;
+    }
+
+    .badge-seleccionada {
+        font-size: 9px;
+    }
+}
+
+/* Celular muy pequeño (360px) */
+@media (max-width: 360px) {
+    .header-section {
+        padding: 13px;
+        margin-bottom: 16px;
+    }
+
+    .header-section h1 {
+        font-size: 1.3125rem;
+    }
+
+    .header-section p {
+        font-size: 0.8125rem;
+    }
+
+    .crear-empresa-card {
+        min-height: 180px;
+    }
+
+    .crear-empresa-card h3 {
+        font-size: 0.9375rem;
+    }
+
+    .crear-empresa-card p {
+        font-size: 0.78125rem;
+    }
+
+    .empresa-card h3 {
+        font-size: 0.9375rem;
+    }
+
+    .empresa-card .text-4xl {
+        font-size: 2rem;
+    }
+
+    .info-estructura {
+        font-size: 10.5px;
+        padding: 5px 8px;
+    }
+
+    .empresa-card .text-sm {
+        font-size: 0.78125rem;
+    }
+
+    .btn-seleccionar,
+    .btn-activa {
+        font-size: 0.875rem;
+    }
+
+    .badge-seleccionada {
+        font-size: 8px;
+    }
+}

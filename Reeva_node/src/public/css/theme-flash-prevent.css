@@ -1,0 +1,38 @@
+/* Anti-flash CSS: Prevenir parpadeo blanco al cargar cuando estas en modo oscuro */
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+html.theme-dark {
+  background-color: #0f172a;
+  color: #e5e7eb;
+  color-scheme: dark;
+}
+
+html.theme-light {
+  background-color: #f9fafb;
+  color: #111827;
+  color-scheme: light;
+}
+
+body {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+body.theme-dark {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+body.theme-light {
+  background-color: #f9fafb;
+  color: #111827;
+}
+

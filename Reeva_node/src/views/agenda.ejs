@@ -108,13 +108,15 @@
         </div>
         <form id="eventoForm" method="post" action="/add_evento/<%= mesa.id %>" class="space-y-6">
           <div id="addError" class="hidden mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200"></div>
-          <div>
-            <label class="block text-sm text-gray-600 mb-2"><%= singularizar(parametrizacionLabels?.nivel2Plural) || 'Mesa' %></label>
-            <input type="text" name="mesa_id" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= mesa.nombre %>"/>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-600 mb-2"><%= singularizar(parametrizacionLabels?.nivel1Plural) || 'Sala' %></label>
-            <input type="text" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= mesa.pasilloNombre %>"/>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm text-gray-600 mb-2"><%= singularizar(parametrizacionLabels?.nivel2Plural) || 'Mesa' %></label>
+              <input type="text" name="mesa_id" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= mesa.nombre %>"/>
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 mb-2"><%= singularizar(parametrizacionLabels?.nivel1Plural) || 'Sala' %></label>
+              <input type="text" class="w-full border rounded p-2 bg-gray-100" readonly value="<%= mesa.pasilloNombre %>"/>
+            </div>
           </div>
           <div>
             <div class="flex items-center justify-between mb-1">
@@ -128,9 +130,9 @@
                 Selecciona entre 1 y <%= capacidadMaxima %> ocupante<%= capacidadMaxima === 1 ? '' : 's' %>.
               <% } %>
             </p>
-            <div id="ocupantesChecklist" data-capacidad="<%= capacidadMaxima %>" class="border rounded-lg p-3 max-h-56 overflow-y-auto space-y-2 bg-gray-50">
+            <div id="ocupantesChecklist" data-capacidad="<%= capacidadMaxima %>" class="border rounded-lg p-3 max-h-28 overflow-y-auto space-y-2 bg-gray-50">
               <% (ocupantes_normalizados || []).forEach(ocupante => { %>
-                <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-white hover:shadow-sm rounded-lg px-2 py-1 transition">
+                <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-300 hover:shadow-sm rounded-lg px-2 py-1 transition">
                   <input type="checkbox" class="ocupante-checkbox accent-primary" name="usuario_ids[]" value="<%= ocupante.id %>">
                   <span><%= ocupante.nombre %></span>
                 </label>
@@ -161,7 +163,7 @@
           </div>
           <div>
             <label class="block text-sm text-gray-600 mb-2" data-i18n="agenda.notesLabel"><%= __("agenda.notesLabel") %></label>
-            <textarea name="observaciones" rows="4" class="w-full border rounded p-2"></textarea>
+            <textarea name="observaciones" rows="2" class="w-full border rounded p-2"></textarea>
           </div>
           <div class="flex justify-between">
             <button type="button" onclick="cancelEventoCreation()" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" data-i18n="agenda.cancelBtn"><%= __("agenda.cancelBtn") %></button>
@@ -220,9 +222,9 @@
               <label class="block text-sm text-gray-600"><%= parametrizacionLabels?.nivel3Plural || 'Ocupantes' %></label>
               <span class="text-xs text-gray-500" id="editOcupanteCounter">0 / <%= capacidadMaxima %></span>
             </div>
-            <div id="editOcupantesChecklist" data-capacidad="<%= capacidadMaxima %>" class="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-gray-50">
+            <div id="editOcupantesChecklist" data-capacidad="<%= capacidadMaxima %>" class="border rounded-lg p-3 max-h-28 overflow-y-auto space-y-2 bg-gray-50">
               <% (ocupantes_normalizados || []).forEach(ocupante => { %>
-                <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-white hover:shadow-sm rounded-lg px-2 py-1 transition">
+                <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-300 hover:shadow-sm rounded-lg px-2 py-1 transition">
                   <input type="checkbox" class="edit-ocupante-checkbox accent-primary" name="usuario_ids[]" value="<%= ocupante.id %>">
                   <span><%= ocupante.nombre %></span>
                 </label>
